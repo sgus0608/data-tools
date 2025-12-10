@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8" />
+    <title>DATA 실무 도구 - SQL IN 절 생성기, 값 비교 도구, Excel → SQL INSERT 생성기</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f5f5f7;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+        .container {
+            margin: 40px 16px;
+            max-width: 1100px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            padding: 24px 24px 32px;
+        }
+        h1 {
+            margin: 0 0 4px;
+            font-size: 24px;
+            font-weight: 700;
+        }
+        .subtitle {
+            margin-bottom: 20px;
+            color: #666;
+            font-size: 13px;
+        }
+        label {
+            font-size: 13px;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 6px;
+        }
+        textarea {
+            width: 100%;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            padding: 10px 12px;
+            font-size: 13px;
+            font-family: "JetBrains Mono", "Consolas", monospace;
+            resize: vertical;
+            min-height: 160px;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 2px rgba(79,70,229,0.15);
+        }
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .col {
+            flex: 1 1 280px;
+        }
+        select, input[type="text"], input[type="number"] {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            padding: 7px 10px;
+            font-size: 13px;
+            font-family: inherit;
+        }
+        select:focus, input[type="text"]:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 2px rgba(79,70,229,0.15);
+        }
+        .options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 8px;
+            font-size: 12px;
+        }
+        .options label {
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-bottom: 0;
+        }
+        .btn-row {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        button {
+            border-radius: 999px;
+            border: none;
+            padding: 8px 18px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-primary {
+            background: #4f46e5;
+            color: white;
+        }
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #111827;
+        }
+        .btn-primary:active,
+        .btn-secondary:active {
+            transform: translateY(1px);
+        }
+        .result-wrapper {
+            margin-top: 24px;
+        }
+        .small-text {
+            font-size: 11px;
+            color: #888;
+            margin-top: 4px;
+        }
+        .stats {
+            margin-top: 4px;
+            font-size: 12px;
+            color: #555;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            background: #eef2ff;
+            color: #4338ca;
+            margin-left: 8px;
+        }
+        /* 탭 스타일 */
+        .tabs {
+            margin-top: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            border-bottom: 1px solid #e5e7eb;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        .tab-button {
+            border: none;
+            background: transparent;
+            padding: 10px 16px;
+            font-size: 13px;
+            cursor: pointer;
+            border-radius: 999px 999px 0 0;
+            color: #6b7280;
+        }
+        .tab-button.active {
+            background: #eef2ff;
+            color: #111827;
+            font-weight: 600;
+        }
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.2s ease-out;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        footer {
+            margin-top: 32px;
+            text-align: center;
+            font-size: 11px;
+            color: #aaa;
+        }
+        @media (max-width: 700px) {
+            .container {
+                margin-top: 20px;
+                padding: 18px 16px 24px;
+            }
+            h1 {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>DATA 실무 도구</h1>
+    <div class="subtitle">
+        데이터 관리하는 전문가를 위한 유틸리티 사이트입니다.
+        <span class="badge">Made by 임상현 (광고 및 후원 문의 인스타 : 1imsangh)</span>
+    </div>
+
+    <!-- 탭 버튼 -->
+    <div class="tabs">
+        <button class="tab-button active" data-tab="inTab">IN 절 생성기</button>
+        <button class="tab-button" data-tab="compareTab">값 비교 도구</button>
+        <button class="tab-button" data-tab="insertTab">Excel → SQL INSERT 생성기</button>
+    </div>
+
+    <!-- IN 절 생성기 탭 -->
+    <section id="inTab" class="tab-content active">
+        <div class="subtitle" style="margin-top: 4px;">
+            한 줄당 하나씩 값 붙여넣으면 자동으로 <strong>IN (...)</strong> 형식으로 만들어줍니다.
+        </div>
+
+        <label for="inputValues">입력값 (한 줄에 하나씩 / 쉼표, 공백 모두 구분자로 인식)</label>
+        <textarea id="inputValues" placeholder="예시)
+4041420011181A
+4041494107956A
+4041493011337A"></textarea>
+        <div class="small-text">
+            ※ 공백·중복은 자동 제거됩니다. 데이터 양 제한 없이 사용 가능합니다.
+        </div>
+
+        <div class="row" style="margin-top: 20px;">
+            <div class="col">
+                <label for="wrapType">문자열 감싸기</label>
+                <select id="wrapType">
+                    <option value="single">'단일따옴표'</option>
+                    <option value="double">"쌍따옴표"</option>
+                    <option value="none">감싸지 않음</option>
+                </select>
+            </div>
+            <div class="col">
+                <label for="separator">구분자</label>
+                <select id="separator">
+                    <option value="comma">쉼표 + 공백 (, )</option>
+                    <option value="comma_no_space">쉼표만 (,)</option>
+                    <option value="newline">줄바꿈</option>
+                </select>
+            </div>
+            <div class="col">
+                <label for="template">템플릿</label>
+                <select id="template">
+                    <option value="in_only">괄호만: ( ... )</option>
+                    <option value="with_in">IN ( ... )</option>
+                    <option value="none">그냥 값만</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <label for="prefix">앞에 붙일 문자열</label>
+                <input id="prefix" type="text" placeholder="예) AND COL_NM IN " />
+            </div>
+            <div class="col">
+                <label for="suffix">뒤에 붙일 문자열</label>
+                <input id="suffix" type="text" placeholder="예) /* comment */" />
+            </div>
+            <div class="col">
+                <label for="maxPerLine">한 줄당 최대 개수 (줄바꿈)</label>
+                <input id="maxPerLine" type="number" min="0" value="0" />
+                <div class="small-text">0이면 강제 줄바꿈 없음</div>
+            </div>
+        </div>
+
+        <div class="options">
+            <label>
+                <input type="checkbox" id="dedupe" checked />
+                중복 제거
+            </label>
+            <label>
+                <input type="checkbox" id="sortAsc" />
+                오름차순 정렬
+            </label>
+            <label>
+                <input type="checkbox" id="ignoreEmpty" checked />
+                빈 값 무시
+            </label>
+        </div>
+
+        <div class="btn-row">
+            <button class="btn-primary" id="generateBtn">IN 절 생성</button>
+            <button class="btn-secondary" id="copyBtn">복사하기</button>
+        </div>
+
+        <div class="result-wrapper">
+            <label for="outputValues">결과</label>
+            <textarea id="outputValues" readonly placeholder="여기에 결과가 표시됩니다."></textarea>
+            <div class="stats" id="statsText"></div>
+        </div>
+    </section>
+
+    <!-- 값 비교 도구 탭 -->
+    <section id="compareTab" class="tab-content">
+        <div class="subtitle" style="margin-top: 4px;">
+            두 개의 값 목록을 붙여넣고, 공통값과 차이값을 한 번에 확인해보세요.
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <label for="inputA">A 값 목록</label>
+                <textarea id="inputA" placeholder="예시)
+apple
+tomato
+banana"></textarea>
+                <div class="small-text">※ 한 줄에 하나씩, 또는 쉼표/공백으로 구분해서 넣어도 됩니다.</div>
+            </div>
+            <div class="col">
+                <label for="inputB">B 값 목록</label>
+                <textarea id="inputB" placeholder="예시)
+banana
+orange
+melon"></textarea>
+                <div class="small-text">※ 공백·빈 줄은 자동으로 무시됩니다.</div>
+            </div>
+        </div>
+
+        <div class="row" style="margin-top: 20px;">
+            <div class="col">
+                <label for="delimiter">구분 방식</label>
+                <select id="delimiter">
+                    <option value="auto">자동 (줄바꿈 + 쉼표 + 공백)</option>
+                    <option value="newline">줄바꿈 기준</option>
+                    <option value="comma">쉼표 기준</option>
+                    <option value="space">공백 기준</option>
+                </select>
+                <div class="small-text">자동 모드는 줄바꿈/쉼표/공백을 모두 구분자로 사용합니다.</div>
+            </div>
+            <div class="col">
+                <label>옵션</label>
+                <div class="options">
+                    <label>
+                        <input type="checkbox" id="dedupeCompare" checked />
+                        중복 제거
+                    </label>
+                    <label>
+                        <input type="checkbox" id="sortAscCompare" checked />
+                        오름차순 정렬
+                    </label>
+                    <label>
+                        <input type="checkbox" id="trimSpaceCompare" checked />
+                        앞뒤 공백 제거
+                    </label>
+                    <label>
+                        <input type="checkbox" id="caseSensitiveCompare" />
+                        대소문자 구분
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="btn-row">
+            <button class="btn-primary" id="compareBtn">값 비교하기</button>
+            <button class="btn-secondary" id="swapBtn">A ↔ B 교환</button>
+        </div>
+
+        <div class="result-wrapper">
+            <div class="row">
+                <div class="col">
+                    <label for="commonValues">공통 값 (A ∩ B)</label>
+                    <textarea id="commonValues" readonly></textarea>
+                    <div class="stats" id="commonStats"></div>
+                </div>
+                <div class="col">
+                    <label for="onlyAValues">A에만 있는 값 (A - B)</label>
+                    <textarea id="onlyAValues" readonly></textarea>
+                    <div class="stats" id="onlyAStats"></div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <label for="onlyBValues">B에만 있는 값 (B - A)</label>
+                    <textarea id="onlyBValues" readonly></textarea>
+                    <div class="stats" id="onlyBStats"></div>
+                </div>
+                <div class="col">
+                    <label for="allValues">전체 유니크 값 (A ∪ B)</label>
+                    <textarea id="allValues" readonly></textarea>
+                    <div class="stats" id="allStats"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Excel → SQL INSERT 생성기 탭 -->
+    <section id="insertTab" class="tab-content">
+        <div class="subtitle" style="margin-top: 4px;">
+            엑셀에서 복사한 데이터를 붙여넣고, SQL INSERT 문으로 한 번에 생성하세요.
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <label for="tableName">테이블명</label>
+                <input id="tableName" type="text" placeholder="예) TB_USER, TB_ORDER 등" />
+            </div>
+            <div class="col">
+                <label for="insertMode">INSERT 모드</label>
+                <select id="insertMode">
+                    <option value="multi">한 문장에 여러 VALUES (기본)</option>
+                    <option value="single">행마다 INSERT 한 줄씩</option>
+                </select>
+            </div>
+            <div class="col">
+                <label for="rowDelimiter">행 구분</label>
+                <select id="rowDelimiter">
+                    <option value="newline">줄바꿈 기준 (엑셀에서 그대로 복붙)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <label for="columns">컬럼 목록</label>
+                <textarea id="columns" placeholder="예시)
+id
+name
+age"></textarea>
+                <div class="small-text">
+                    줄바꿈 또는 쉼표로 컬럼명 입력 가능. (id,name,age 또는 줄마다 하나씩)
+                </div>
+            </div>
+            <div class="col">
+                <label for="excelData">Excel 데이터 붙여넣기</label>
+                <textarea id="excelData" placeholder="엑셀에서 행/열 선택 후 그대로 붙여넣기
+예)
+1[TAB]홍길동[TAB]30
+2[TAB]김철수[TAB]25"></textarea>
+                <div class="small-text">
+                    각 행은 줄바꿈으로, 각 열은 탭(엑셀 복사 기본) 또는 쉼표로 구분됩니다.
+                </div>
+            </div>
+        </div>
+
+        <div class="options">
+            <label>
+                <input type="checkbox" id="includeColumns" checked />
+                INSERT 문에 컬럼명 포함
+            </label>
+            <label>
+                <input type="checkbox" id="detectNumber" checked />
+                숫자는 따옴표 없이 사용
+            </label>
+            <label>
+                <input type="checkbox" id="emptyToNull" checked />
+                빈 값은 NULL 처리
+            </label>
+            <label>
+                <input type="checkbox" id="trimCell" checked />
+                셀 앞뒤 공백 제거
+            </label>
+            <label>
+                <input type="checkbox" id="semicolonEnd" checked />
+                문장 끝에 세미콜론(;) 추가
+            </label>
+        </div>
+
+        <div class="btn-row">
+            <button class="btn-primary" id="generateInsertBtn">INSERT 문 생성</button>
+            <button class="btn-secondary" id="copyInsertBtn">복사하기</button>
+        </div>
+
+        <div class="result-wrapper">
+            <label for="insertResult">결과 INSERT 문</label>
+            <textarea id="insertResult" readonly placeholder="INSERT 문이 여기에 표시됩니다."></textarea>
+            <div class="stats" id="insertStats"></div>
+        </div>
+    </section>
+
+    <footer>
+        © 2025 Made by 임상현 (Sanghyun Im)
+    </footer>
+</div>
+
+<script>
+    // 탭 전환
+    document.querySelectorAll(".tab-button").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const target = btn.getAttribute("data-tab");
+
+            document.querySelectorAll(".tab-button").forEach(b => b.classList.remove("active"));
+            document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+
+            btn.classList.add("active");
+            document.getElementById(target).classList.add("active");
+        });
+    });
+
+    // --- IN 절 생성기 로직 ---
+    function parseInputIn(raw) {
+        const tokens = raw
+            .split(/[\n,\s]+/g)
+            .map(v => v.trim())
+            .filter(v => v.length > 0);
+        return tokens;
+    }
+
+    function formatValues(values, options) {
+        let arr = [...values];
+
+        if (options.ignoreEmpty) {
+            arr = arr.filter(v => v && v.trim().length > 0);
+        }
+
+        if (options.dedupe) {
+            arr = Array.from(new Set(arr));
+        }
+
+        if (options.sortAsc) {
+            arr.sort();
+        }
+
+        if (options.wrapType !== "none") {
+            const quote = options.wrapType === "single" ? "'" : '"';
+            arr = arr.map(v => quote + v.replace(new RegExp(quote, "g"), quote + quote) + quote);
+        }
+
+        let joined = "";
+        if (options.maxPerLine && options.maxPerLine > 0) {
+            const chunks = [];
+            for (let i = 0; i < arr.length; i += options.maxPerLine) {
+                chunks.push(arr.slice(i, i + options.maxPerLine));
+            }
+            const sep = options.separator === "newline"
+                ? ",\n  "
+                : (options.separator === "comma_no_space" ? "," : ", ");
+            joined = chunks
+                .map(c => c.join(sep))
+                .join(",\n  ");
+        } else {
+            if (options.separator === "newline") {
+                joined = arr.join(",\n");
+            } else if (options.separator === "comma_no_space") {
+                joined = arr.join(",");
+            } else {
+                joined = arr.join(", ");
+            }
+        }
+
+        if (options.template === "in_only") {
+            joined = "(" + joined + ")";
+        } else if (options.template === "with_in") {
+            joined = "IN (" + joined + ")";
+        }
+
+        joined = (options.prefix || "") + joined + (options.suffix || "");
+
+        return {
+            text: joined,
+            count: arr.length
+        };
+    }
+
+    document.getElementById("generateBtn").addEventListener("click", () => {
+        const raw = document.getElementById("inputValues").value || "";
+        const values = parseInputIn(raw);
+
+        const options = {
+            wrapType: document.getElementById("wrapType").value,
+            separator: document.getElementById("separator").value,
+            template: document.getElementById("template").value,
+            prefix: document.getElementById("prefix").value,
+            suffix: document.getElementById("suffix").value,
+            maxPerLine: parseInt(document.getElementById("maxPerLine").value || "0", 10),
+            dedupe: document.getElementById("dedupe").checked,
+            sortAsc: document.getElementById("sortAsc").checked,
+            ignoreEmpty: document.getElementById("ignoreEmpty").checked
+        };
+
+        const result = formatValues(values, options);
+        document.getElementById("outputValues").value = result.text;
+        document.getElementById("statsText").textContent =
+            `원본: ${values.length}개 / 최종: ${result.count}개`;
+    });
+
+    document.getElementById("copyBtn").addEventListener("click", async () => {
+        const out = document.getElementById("outputValues").value;
+        if (!out) {
+            alert("복사할 내용이 없습니다.");
+            return;
+        }
+        try {
+            await navigator.clipboard.writeText(out);
+            alert("복사되었습니다.");
+        } catch (e) {
+            document.getElementById("outputValues").select();
+            document.execCommand("copy");
+            alert("복사되었습니다. (execCommand)");
+        }
+    });
+
+    // --- 값 비교 도구 로직 ---
+    function splitByDelimiter(raw, mode) {
+        if (!raw) return [];
+        let pattern;
+        switch (mode) {
+            case "newline":
+                pattern = /[\n]+/g;
+                break;
+            case "comma":
+                pattern = /[,]+/g;
+                break;
+            case "space":
+                pattern = /[\s]+/g;
+                break;
+            case "auto":
+            default:
+                pattern = /[\n,\s]+/g;
+                break;
+        }
+        return raw.split(pattern);
+    }
+
+    function parseInputCompare(raw, options) {
+        let arr = splitByDelimiter(raw, options.delimiter);
+
+        if (options.trimSpace) {
+            arr = arr.map(v => v.trim());
+        }
+        arr = arr.filter(v => v.length > 0);
+
+        if (!options.caseSensitive) {
+            arr = arr.map(v => v.toLowerCase());
+        }
+        return arr;
+    }
+
+    function unique(arr) {
+        return Array.from(new Set(arr));
+    }
+
+    function compareArrays(aArr, bArr, options) {
+        let a = options.dedupe ? unique(aArr) : [...aArr];
+        let b = options.dedupe ? unique(bArr) : [...bArr];
+
+        const setA = new Set(a);
+        const setB = new Set(b);
+
+        const common = [];
+        const onlyA = [];
+        const onlyB = [];
+
+        for (const v of a) {
+            if (setB.has(v)) {
+                common.push(v);
+            } else {
+                onlyA.push(v);
+            }
+        }
+
+        for (const v of b) {
+            if (!setA.has(v)) {
+                onlyB.push(v);
+            }
+        }
+
+        const all = unique([...a, ...b]);
+
+        const maybeSort = (arr) => {
+            if (options.sortAsc) {
+                return [...arr].sort();
+            }
+            return arr;
+        };
+
+        return {
+            common: maybeSort(common),
+            onlyA: maybeSort(onlyA),
+            onlyB: maybeSort(onlyB),
+            all: maybeSort(all),
+            counts: {
+                aCount: aArr.length,
+                bCount: bArr.length,
+                aUnique: a.length,
+                bUnique: b.length,
+                common: common.length,
+                onlyA: onlyA.length,
+                onlyB: onlyB.length,
+                all: all.length
+            }
+        };
+    }
+
+    document.getElementById("compareBtn").addEventListener("click", () => {
+        const rawA = document.getElementById("inputA").value || "";
+        const rawB = document.getElementById("inputB").value || "";
+
+        const options = {
+            delimiter: document.getElementById("delimiter").value,
+            dedupe: document.getElementById("dedupeCompare").checked,
+            sortAsc: document.getElementById("sortAscCompare").checked,
+            trimSpace: document.getElementById("trimSpaceCompare").checked,
+            caseSensitive: document.getElementById("caseSensitiveCompare").checked
+        };
+
+        const parsedA = parseInputCompare(rawA, options);
+        const parsedB = parseInputCompare(rawB, options);
+
+        const result = compareArrays(parsedA, parsedB, options);
+        const joiner = "\n";
+
+        document.getElementById("commonValues").value = result.common.join(joiner);
+        document.getElementById("onlyAValues").value = result.onlyA.join(joiner);
+        document.getElementById("onlyBValues").value = result.onlyB.join(joiner);
+        document.getElementById("allValues").value = result.all.join(joiner);
+
+        document.getElementById("commonStats").textContent =
+            `공통 값: ${result.counts.common}개`;
+        document.getElementById("onlyAStats").textContent =
+            `A에만 있는 값: ${result.counts.onlyA}개 (A 원본 ${result.counts.aCount}개 / 유니크 ${result.counts.aUnique}개)`;
+        document.getElementById("onlyBStats").textContent =
+            `B에만 있는 값: ${result.counts.onlyB}개 (B 원본 ${result.counts.bCount}개 / 유니크 ${result.counts.bUnique}개)`;
+        document.getElementById("allStats").textContent =
+            `전체 유니크 값: ${result.counts.all}개`;
+    });
+
+    document.getElementById("swapBtn").addEventListener("click", () => {
+        const a = document.getElementById("inputA").value;
+        const b = document.getElementById("inputB").value;
+        document.getElementById("inputA").value = b;
+        document.getElementById("inputB").value = a;
+    });
+
+    // --- Excel → SQL INSERT 생성기 로직 ---
+    function parseColumns(raw) {
+        if (!raw) return [];
+        let cols = raw.includes("\n") ? raw.split(/[\n]+/g) : raw.split(/[,]+/g);
+        return cols
+            .map(c => c.trim())
+            .filter(c => c.length > 0);
+    }
+
+    function parseExcelData(raw) {
+        if (!raw) return [];
+        const lines = raw.split(/\n+/g).map(l => l.trim()).filter(l => l.length > 0);
+        return lines.map(line => {
+            // 기본: 탭으로 split, 탭 없으면 쉼표
+            if (line.includes("\t")) {
+                return line.split("\t");
+            }
+            if (line.includes(",")) {
+                return line.split(",");
+            }
+            // 구분자가 없으면 한 컬럼만 있는 행
+            return [line];
+        });
+    }
+
+    function isNumericValue(str) {
+        if (str === null || str === undefined) return false;
+        const s = String(str).trim();
+        if (s === "") return false;
+        // 숫자 형식: 정수 또는 소수, 음수 포함
+        return /^-?\d+(\.\d+)?$/.test(s);
+    }
+
+    function escapeSingleQuote(str) {
+        return String(str).replace(/'/g, "''");
+    }
+
+    document.getElementById("generateInsertBtn").addEventListener("click", () => {
+        const tableName = (document.getElementById("tableName").value || "").trim();
+        const insertMode = document.getElementById("insertMode").value;
+        const columnsRaw = document.getElementById("columns").value || "";
+        const excelRaw = document.getElementById("excelData").value || "";
+
+        const includeColumns = document.getElementById("includeColumns").checked;
+        const detectNumber = document.getElementById("detectNumber").checked;
+        const emptyToNull = document.getElementById("emptyToNull").checked;
+        const trimCell = document.getElementById("trimCell").checked;
+        const semicolonEnd = document.getElementById("semicolonEnd").checked;
+
+        if (!tableName) {
+            alert("테이블명을 입력해주세요.");
+            return;
+        }
+        if (!excelRaw.trim()) {
+            alert("Excel 데이터를 붙여넣어주세요.");
+            return;
+        }
+
+        const cols = parseColumns(columnsRaw);
+        const rows = parseExcelData(excelRaw);
+
+        if (cols.length === 0) {
+            // 컬럼이 없는 경우, 자동으로 컬럼수만큼 컬럼 이름 col1, col2 ...
+            const maxLen = rows.reduce((m, r) => Math.max(m, r.length), 0);
+            for (let i = 1; i <= maxLen; i++) {
+                cols.push("col" + i);
+            }
+        }
+
+        // 각 행의 셀 수가 컬럼 수보다 적으면 빈값으로 채움
+        const normalizedRows = rows.map(r => {
+            const copy = [...r];
+            while (copy.length < cols.length) {
+                copy.push("");
+            }
+            if (copy.length > cols.length) {
+                copy.length = cols.length;
+            }
+            return copy;
+        });
+
+        const valueStrings = normalizedRows.map(row => {
+            const cells = row.map(cell => {
+                let v = cell;
+                if (trimCell && typeof v === "string") {
+                    v = v.trim();
+                }
+
+                if (emptyToNull && (v === "" || v === null || v === undefined)) {
+                    return "NULL";
+                }
+
+                if (detectNumber && isNumericValue(v)) {
+                    return String(v).trim();
+                }
+
+                // 문자열로 처리
+                return "'" + escapeSingleQuote(v) + "'";
+            });
+
+            return "(" + cells.join(", ") + ")";
+        });
+
+        let sql = "";
+        const colPart = includeColumns ? " (" + cols.join(", ") + ")" : "";
+
+        if (insertMode === "multi") {
+            sql = "INSERT INTO " + tableName + colPart + "\nVALUES\n  " + valueStrings.join(",\n  ");
+            if (semicolonEnd) sql += ";";
+        } else {
+            // single
+            sql = valueStrings
+                .map(v => "INSERT INTO " + tableName + colPart + " VALUES " + v + (semicolonEnd ? ";" : ""))
+                .join("\n");
+        }
+
+        document.getElementById("insertResult").value = sql;
+        document.getElementById("insertStats").textContent =
+            `생성된 행 수: ${normalizedRows.length}행 / 컬럼 수: ${cols.length}개`;
+    });
+
+    document.getElementById("copyInsertBtn").addEventListener("click", async () => {
+        const out = document.getElementById("insertResult").value;
+        if (!out) {
+            alert("복사할 내용이 없습니다.");
+            return;
+        }
+        try {
+            await navigator.clipboard.writeText(out);
+            alert("복사되었습니다.");
+        } catch (e) {
+            document.getElementById("insertResult").select();
+            document.execCommand("copy");
+            alert("복사되었습니다. (execCommand)");
+        }
+    });
+
+    console.log("SQL 실무 도구 — Made by Sanghyun Im (임상현)");
+</script>
+</body>
+</html>
