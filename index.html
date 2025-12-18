@@ -5,8 +5,8 @@
             crossorigin="anonymous"></script>
     <meta charset="UTF-8" />
     <meta name="description" content="SQL IN 절 자동 생성, 값 비교, Excel 데이터를 SQL INSERT로 변환하는 실무 개발자 도구. 무료, 갯수 제한 없음. Made by 임상현." />
-    <meta name="keywords" content="SQL IN 절 생성기, Excel SQL 생성기, 데이터 비교, 값 차집합 도구, SQL 쿼리 자동 생성기, 개발자 도구, SHA-256 해시 생성기" />
-    <title>DATA 실무 도구 - SQL IN 절 생성기, 값 비교 도구, Excel → SQL INSERT 생성기, SHA-256 해시 생성기</title>
+    <meta name="keywords" content="SQL IN 절 생성기, Excel SQL 생성기, 데이터 비교, 값 차집합 도구, SQL 쿼리 자동 생성기, 개발자 도구, SHA-256 해시 생성기, RSA 암호화, JSON 비교" />
+    <title>DATA 실무 도구 - SQL IN 절 생성기, 값 비교 도구, Excel → SQL INSERT 생성기, SHA-256 해시 생성기, RSA 암호화, JSON 비교</title>
 
     <style>
         * { box-sizing: border-box; }
@@ -237,6 +237,7 @@
         <button class="tab-button" data-tab="compareTab">값 비교 도구</button>
         <button class="tab-button" data-tab="insertTab">Excel → SQL INSERT 생성기</button>
         <button class="tab-button" data-tab="shaTab">SHA-256 해시 생성기</button>
+        <button class="tab-button" data-tab="rsaTab">RSA 암호화</button>
         <button class="tab-button" data-tab="jsonTab">JSON 비교</button>
     </div>
 
@@ -531,79 +532,79 @@ user@example.com
             <div class="small-text" id="shaHashInfo"></div>
         </div>
     </section>
-    <hr style="border:none;border-top:1px solid #eee;margin:28px 0;" />
-
-    <div class="subtitle" style="margin-top: 0;">
-        RSA 공개키로 암호화 / 개인키로 복호화 (브라우저에서만 처리)
-        <span class="badge">WebCrypto</span>
-    </div>
-
-    <div class="row" style="margin-top: 10px;">
-        <div class="col">
-            <label for="rsaKeySize">키 길이</label>
-            <select id="rsaKeySize">
-                <option value="2048" selected>2048 (권장)</option>
-                <option value="3072">3072</option>
-                <option value="4096">4096</option>
-            </select>
-            <div class="small-text">키가 클수록 안전하지만 생성/연산이 느려질 수 있어요.</div>
+    <section id="rsaTab" class="tab-content">
+        <div class="subtitle" style="margin-top: 0;">
+            RSA 공개키로 암호화 / 개인키로 복호화 (브라우저에서만 처리)
+            <span class="badge">WebCrypto</span>
         </div>
-        <div class="col">
-            <label for="rsaHashAlg">OAEP 해시</label>
-            <select id="rsaHashAlg">
-                <option value="SHA-256" selected>SHA-256</option>
-                <option value="SHA-384">SHA-384</option>
-                <option value="SHA-512">SHA-512</option>
-            </select>
-            <div class="small-text">RSA-OAEP 패딩에 사용되는 해시 알고리즘입니다.</div>
-        </div>
-    </div>
 
-    <div class="btn-row" style="margin-top: 12px;">
-        <button class="btn-primary" id="rsaGenKeyBtn">RSA 키 생성</button>
-        <button class="btn-secondary" id="rsaCopyPubBtn">공개키 복사</button>
-        <button class="btn-secondary" id="rsaCopyPrivBtn">개인키 복사</button>
-        <button class="btn-secondary" id="rsaClearKeyBtn">키 초기화</button>
-    </div>
-
-    <div class="row">
-        <div class="col">
-            <label for="rsaPublicKeyPem">공개키 (PEM)</label>
-            <textarea id="rsaPublicKeyPem" placeholder="RSA 키 생성 후 여기에 표시됩니다." readonly></textarea>
-        </div>
-        <div class="col">
-            <label for="rsaPrivateKeyPem">개인키 (PEM)</label>
-            <textarea id="rsaPrivateKeyPem" placeholder="RSA 키 생성 후 여기에 표시됩니다." readonly></textarea>
-            <div class="small-text">※ 개인키는 민감정보입니다. 공유/노출에 주의하세요.</div>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="col">
-            <label for="rsaPlainText">평문(암호화할 텍스트)</label>
-            <textarea id="rsaPlainText" placeholder="여기에 암호화할 텍스트를 입력하세요."></textarea>
-            <div class="small-text">
-                ※ RSA는 긴 텍스트를 직접 암호화하기에 적합하지 않습니다(제한 있음). 긴 데이터는 보통 AES(대칭키)+RSA(키 암호화) 조합을 사용합니다.
+        <div class="row" style="margin-top: 10px;">
+            <div class="col">
+                <label for="rsaKeySize">키 길이</label>
+                <select id="rsaKeySize">
+                    <option value="2048" selected>2048 (권장)</option>
+                    <option value="3072">3072</option>
+                    <option value="4096">4096</option>
+                </select>
+                <div class="small-text">키가 클수록 안전하지만 생성/연산이 느려질 수 있어요.</div>
+            </div>
+            <div class="col">
+                <label for="rsaHashAlg">OAEP 해시</label>
+                <select id="rsaHashAlg">
+                    <option value="SHA-256" selected>SHA-256</option>
+                    <option value="SHA-384">SHA-384</option>
+                    <option value="SHA-512">SHA-512</option>
+                </select>
+                <div class="small-text">RSA-OAEP 패딩에 사용되는 해시 알고리즘입니다.</div>
             </div>
         </div>
-        <div class="col">
-            <label for="rsaCipherText">암호문(Base64)</label>
-            <textarea id="rsaCipherText" placeholder="암호화 결과(Base64)가 여기에 표시됩니다."></textarea>
+
+        <div class="btn-row" style="margin-top: 12px;">
+            <button class="btn-primary" id="rsaGenKeyBtn">RSA 키 생성</button>
+            <button class="btn-secondary" id="rsaCopyPubBtn">공개키 복사</button>
+            <button class="btn-secondary" id="rsaCopyPrivBtn">개인키 복사</button>
+            <button class="btn-secondary" id="rsaClearKeyBtn">키 초기화</button>
         </div>
-    </div>
 
-    <div class="btn-row">
-        <button class="btn-primary" id="rsaEncryptBtn">공개키로 암호화</button>
-        <button class="btn-primary" id="rsaDecryptBtn">개인키로 복호화</button>
-        <button class="btn-secondary" id="rsaCopyCipherBtn">암호문 복사</button>
-        <button class="btn-secondary" id="rsaClearMsgBtn">메시지 초기화</button>
-    </div>
+        <div class="row">
+            <div class="col">
+                <label for="rsaPublicKeyPem">공개키 (PEM)</label>
+                <textarea id="rsaPublicKeyPem" placeholder="RSA 키 생성 후 여기에 표시됩니다." readonly></textarea>
+            </div>
+            <div class="col">
+                <label for="rsaPrivateKeyPem">개인키 (PEM)</label>
+                <textarea id="rsaPrivateKeyPem" placeholder="RSA 키 생성 후 여기에 표시됩니다." readonly></textarea>
+                <div class="small-text">※ 개인키는 민감정보입니다. 공유/노출에 주의하세요.</div>
+            </div>
+        </div>
 
-    <div class="result-wrapper">
-        <label>복호화 결과(평문)</label>
-        <div id="rsaDecryptedOut" class="hash-output"></div>
-        <div class="small-text" id="rsaInfo"></div>
-    </div>
+        <div class="row">
+            <div class="col">
+                <label for="rsaPlainText">평문(암호화할 텍스트)</label>
+                <textarea id="rsaPlainText" placeholder="여기에 암호화할 텍스트를 입력하세요."></textarea>
+                <div class="small-text">
+                    ※ RSA는 긴 텍스트를 직접 암호화하기에 적합하지 않습니다(제한 있음). 긴 데이터는 보통 AES(대칭키)+RSA(키 암호화) 조합을 사용합니다.
+                </div>
+            </div>
+            <div class="col">
+                <label for="rsaCipherText">암호문(Base64)</label>
+                <textarea id="rsaCipherText" placeholder="암호화 결과(Base64)가 여기에 표시됩니다."></textarea>
+            </div>
+        </div>
+
+        <div class="btn-row">
+            <button class="btn-primary" id="rsaEncryptBtn">공개키로 암호화</button>
+            <button class="btn-primary" id="rsaDecryptBtn">개인키로 복호화</button>
+            <button class="btn-secondary" id="rsaCopyCipherBtn">암호문 복사</button>
+            <button class="btn-secondary" id="rsaClearMsgBtn">메시지 초기화</button>
+        </div>
+
+        <div class="result-wrapper">
+            <label>복호화 결과(평문)</label>
+            <div id="rsaDecryptedOut" class="hash-output"></div>
+            <div class="small-text" id="rsaInfo"></div>
+        </div>
+    </section>
     <section id="jsonTab" class="tab-content">
         <div class="subtitle" style="margin-top: 4px;">
             JSON 두 개를 붙여넣고 차이점을 비교합니다. (브라우저에서만 처리)
