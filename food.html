@@ -1,0 +1,1039 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>오늘 저녁 뭐먹지? (색다른 추천)</title>
+    <style>
+        :root{
+            --bg: #0b0f19;
+            --card: rgba(255,255,255,.06);
+            --card2: rgba(255,255,255,.08);
+            --text: rgba(255,255,255,.92);
+            --muted: rgba(255,255,255,.65);
+            --line: rgba(255,255,255,.12);
+            --accent: #8b5cf6;
+            --accent2:#22c55e;
+            --danger:#ef4444;
+            --warn:#f59e0b;
+            --shadow: 0 10px 35px rgba(0,0,0,.35);
+            --radius: 18px;
+        }
+        *{ box-sizing:border-box; }
+        body{
+            margin:0;
+            font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Apple SD Gothic Neo, "Noto Sans KR", sans-serif;
+            color: var(--text);
+            background:
+                    radial-gradient(900px 500px at 20% 10%, rgba(139,92,246,.28), transparent 55%),
+                    radial-gradient(900px 500px at 80% 0%, rgba(34,197,94,.22), transparent 55%),
+                    radial-gradient(900px 500px at 60% 100%, rgba(245,158,11,.18), transparent 55%),
+                    var(--bg);
+            min-height:100vh;
+            padding: 28px 16px 60px;
+        }
+        .wrap{ max-width: 980px; margin:0 auto; }
+        header{
+            display:flex; align-items:flex-end; justify-content:space-between; gap:12px;
+            margin-bottom: 16px;
+        }
+        h1{ margin:0; font-size: 26px; letter-spacing:-.5px; }
+        .sub{ margin:6px 0 0; color: var(--muted); font-size: 13px; }
+        .pill{
+            display:inline-flex; align-items:center; gap:8px;
+            padding:8px 12px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            background: rgba(255,255,255,.04);
+            box-shadow: var(--shadow);
+            color: var(--muted);
+            font-size: 12px;
+            white-space:nowrap;
+        }
+        .grid{
+            display:grid;
+            grid-template-columns: 1.1fr .9fr;
+            gap: 14px;
+        }
+        @media (max-width: 880px){
+            .grid{ grid-template-columns: 1fr; }
+            header{ flex-direction:column; align-items:flex-start; }
+        }
+        .card{
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 16px;
+        }
+        .card h2{
+            margin:0 0 12px;
+            font-size: 15px;
+            color: rgba(255,255,255,.86);
+            display:flex;
+            align-items:center;
+            gap:10px;
+        }
+        .tabs{
+            display:flex; flex-wrap:wrap; gap:8px;
+            margin-bottom: 12px;
+        }
+        .tab{
+            padding:10px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: rgba(255,255,255,.03);
+            color: var(--muted);
+            font-size: 13px;
+            cursor:pointer;
+            user-select:none;
+            transition: .15s ease;
+        }
+        .tab:hover{ background: rgba(255,255,255,.06); color: rgba(255,255,255,.86); }
+        .tab.active{
+            background: rgba(139,92,246,.22);
+            border-color: rgba(139,92,246,.5);
+            color: rgba(255,255,255,.92);
+        }
+        .section{ display:none; }
+        .section.active{ display:block; }
+        .row{ display:flex; gap:10px; flex-wrap:wrap; }
+        .field{
+            flex:1;
+            min-width: 180px;
+        }
+        label{
+            display:block;
+            font-size: 12px;
+            color: var(--muted);
+            margin: 0 0 6px;
+        }
+        select, input, textarea{
+            width:100%;
+            padding: 12px 12px;
+            border-radius: 12px;
+            border: 1px solid var(--line);
+            outline: none;
+            background: rgba(255,255,255,.03);
+            color: rgba(255,255,255,.9);
+        }
+        textarea{ min-height: 96px; resize: vertical; line-height: 1.35; }
+        .btns{ display:flex; gap:10px; flex-wrap:wrap; margin-top: 10px; }
+        button{
+            border: 0;
+            padding: 12px 14px;
+            border-radius: 14px;
+            cursor:pointer;
+            font-weight: 700;
+            color: rgba(255,255,255,.92);
+            background: rgba(139,92,246,.35);
+            border: 1px solid rgba(139,92,246,.55);
+            transition: .15s ease;
+        }
+        button:hover{ transform: translateY(-1px); background: rgba(139,92,246,.45); }
+        button.secondary{
+            background: rgba(255,255,255,.06);
+            border: 1px solid var(--line);
+            color: rgba(255,255,255,.86);
+            font-weight: 650;
+        }
+        button.secondary:hover{ background: rgba(255,255,255,.09); }
+        button.danger{
+            background: rgba(239,68,68,.22);
+            border-color: rgba(239,68,68,.45);
+        }
+        button.danger:hover{ background: rgba(239,68,68,.3); }
+        .result{
+            margin-top: 12px;
+            padding: 14px;
+            border-radius: var(--radius);
+            border: 1px solid var(--line);
+            background: var(--card2);
+        }
+        .result .big{
+            font-size: 22px;
+            font-weight: 900;
+            letter-spacing: -.5px;
+            margin: 0 0 8px;
+        }
+        .result .meta{
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.45;
+            margin:0;
+        }
+        .kbd{
+            display:inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: rgba(0,0,0,.12);
+            color: rgba(255,255,255,.78);
+            font-size: 12px;
+            margin-right: 6px;
+        }
+        .list{
+            display:flex; flex-wrap:wrap; gap:8px;
+            margin-top: 10px;
+        }
+        .chip{
+            padding: 8px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: rgba(255,255,255,.04);
+            color: rgba(255,255,255,.82);
+            font-size: 12px;
+            display:inline-flex;
+            gap:6px;
+            align-items:center;
+        }
+        .chip b{ color: rgba(255,255,255,.92); }
+        .mini{
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 8px;
+            line-height: 1.4;
+        }
+        .mono{
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            background: rgba(0,0,0,.18);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 12px;
+            white-space: pre-wrap;
+            word-break: break-word;
+            color: rgba(255,255,255,.88);
+            line-height: 1.45;
+            margin: 10px 0 0;
+        }
+        footer{
+            margin-top: 14px;
+            color: rgba(255,255,255,.5);
+            font-size: 12px;
+            text-align:center;
+        }
+        .right .card{ position: sticky; top: 16px; }
+        @media (max-width: 880px){
+            .right .card{ position: static; }
+        }
+        .twoCol{
+            display:grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        @media (max-width: 520px){
+            .twoCol{ grid-template-columns: 1fr; }
+        }
+        select{
+            background: rgba(255,255,255,.06);
+            color: rgba(255,255,255,.92);
+        }
+
+        /* 펼쳐진 목록(option)은 브라우저가 따로 렌더링해서 따로 지정 필요 */
+        select option{
+            background: #111827; /* 진한 배경 */
+            color: #ffffff;      /* 흰 글씨 */
+        }
+
+        /* (일부 브라우저에서) optgroup도 같이 */
+        select optgroup{
+            background: #111827;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <header>
+        <div>
+            <h1>오늘 저녁 뭐먹지? 🍽️ <span style="opacity:.7;">(색다른 추천)</span></h1>
+            <p class="sub">상태 기반 · 강제 결정 · 개발자 쿼리 모드 + 최근/블랙리스트 저장</p>
+        </div>
+        <div class="pill">
+            <span>⚡ 빠르게 결정</span>
+            <span style="opacity:.55;">|</span>
+            <span id="today"></span>
+        </div>
+    </header>
+
+    <div class="grid">
+        <!-- LEFT -->
+        <div class="left">
+            <div class="card">
+                <h2>모드 선택</h2>
+                <div class="tabs" id="tabs">
+                    <div class="tab active" data-tab="mood">상태 기반 추천</div>
+                    <div class="tab" data-tab="force">강제 결정</div>
+                    <div class="tab" data-tab="dev">개발자 쿼리</div>
+                </div>
+
+                <!-- 상태 기반 -->
+                <div class="section active" id="sec-mood">
+                    <div class="row">
+                        <div class="field">
+                            <label>오늘 기분</label>
+                            <select id="mood">
+                                <option value="tired">😵‍💫 지침</option>
+                                <option value="calm">😌 평온</option>
+                                <option value="angry">😡 빡침</option>
+                                <option value="happy">😄 기분 좋음</option>
+                                <option value="sleepy">😴 졸림</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>배고픔</label>
+                            <select id="hunger">
+                                <option value="low">🙂 조금</option>
+                                <option value="mid">😋 보통</option>
+                                <option value="high">🤤 매우</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>오늘 날씨(체감)</label>
+                            <select id="weather">
+                                <option value="normal">🌤 보통</option>
+                                <option value="cold">🥶 추움</option>
+                                <option value="hot">🥵 더움</option>
+                                <option value="rainy">🌧 비옴/축축</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>상황</label>
+                            <select id="situation">
+                                <option value="solo">🙋‍♂️ 혼밥</option>
+                                <option value="coworker">👥 동료/친구</option>
+                                <option value="family">👨‍👩‍👧‍👦 가족</option>
+                                <option value="date">💘 데이트</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row" style="margin-top:10px;">
+                        <div class="field">
+                            <label>점심 뭐 먹었어? (겹치면 제외)</label>
+                            <input id="lunch" placeholder="예: 제육 / 김치찌개 / 샐러드" />
+                        </div>
+                        <div class="field">
+                            <label>제외하고 싶은 키워드 (쉼표로 구분)</label>
+                            <input id="excludeKeywords" placeholder="예: 매운, 해산물, 밀가루" />
+                        </div>
+                    </div>
+
+                    <div class="btns">
+                        <button id="btnRecommendMood">추천해줘</button>
+                        <button class="secondary" id="btnSaveLunch">점심 저장</button>
+                        <button class="secondary" id="btnAddBlacklistFromInput">블랙리스트 추가</button>
+                    </div>
+
+                    <div class="result" id="moodResult" style="display:none;">
+                        <div class="big" id="moodTitle"></div>
+                        <p class="meta" id="moodMeta"></p>
+                        <div class="list" id="moodTags"></div>
+                        <div class="mini">Tip: 결과가 마음에 안 들면 “추천해줘”를 다시 눌러.</div>
+                    </div>
+                </div>
+
+                <!-- 강제 결정 -->
+                <div class="section" id="sec-force">
+                    <div class="twoCol">
+                        <div class="field">
+                            <label>결정 방식</label>
+                            <select id="forceMode">
+                                <option value="hard">🟥 고민 금지 (1개 확정)</option>
+                                <option value="two">🟨 후보 2개만</option>
+                                <option value="explain">🟩 설명 듣고 고를래</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>예산</label>
+                            <select id="budget">
+                                <option value="low">₩ 5천~8천</option>
+                                <option value="mid">₩ 9천~1.2만</option>
+                                <option value="high">₩ 1.3만~</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>설거지/조리 귀찮음</label>
+                            <select id="effort">
+                                <option value="zero">🧼 0 (배달/밖에서)</option>
+                                <option value="low">🍳 10분 내</option>
+                                <option value="mid">🧑‍🍳 20~30분</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>냄새 묻어도 됨?</label>
+                            <select id="smell">
+                                <option value="no">🙅‍♂️ 안 됨</option>
+                                <option value="ok">👌 상관없음</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="btns">
+                        <button id="btnForce">결정해줘</button>
+                        <button class="secondary" id="btnRerollForce">다시 굴려</button>
+                    </div>
+
+                    <div class="result" id="forceResult" style="display:none;">
+                        <div class="big" id="forceTitle"></div>
+                        <p class="meta" id="forceMeta"></p>
+                        <div class="list" id="forceTags"></div>
+                        <div class="mini">“다시 굴려”는 같은 조건으로 재추천.</div>
+                    </div>
+                </div>
+
+                <!-- 개발자 쿼리 -->
+                <div class="section" id="sec-dev">
+                    <div class="row">
+                        <div class="field" style="flex:1.2;">
+                            <label>아무렇게나 써도 됨 (예: 퇴근=늦음, 배고픔=MAX, 설거지=싫음)</label>
+                            <textarea id="devInput" placeholder="예)
+퇴근=늦음
+배고픔=MAX
+설거지=싫음
+매운거=OK
+해산물=NO"></textarea>
+                        </div>
+                        <div class="field" style="flex:.8;">
+                            <label>프리셋</label>
+                            <select id="devPreset">
+                                <option value="">선택 안 함</option>
+                                <option value="p1">야근+에너지 바닥</option>
+                                <option value="p2">다이어트+단백질</option>
+                                <option value="p3">비오는 날+국물</option>
+                                <option value="p4">데이트+무난</option>
+                            </select>
+
+                            <div class="btns" style="margin-top:10px;">
+                                <button id="btnDevRun">RUN</button>
+                                <button class="secondary" id="btnDevExplain">쿼리로 설명</button>
+                            </div>
+
+                            <div class="mini">
+                                결과는 “현실 DB”에서 뽑아옴 😎<br/>
+                                (사실은 룰 기반 추천)
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="result" id="devResult" style="display:none;">
+                        <div class="big" id="devTitle"></div>
+                        <p class="meta" id="devMeta"></p>
+                        <div class="mono" id="devQuery"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT -->
+        <div class="right">
+            <div class="card">
+                <h2>내 설정</h2>
+
+                <div class="row">
+                    <div class="field">
+                        <label>최근 먹은 메뉴 (자동 저장)</label>
+                        <div class="list" id="recentList"></div>
+                        <div class="btns">
+                            <button class="secondary" id="btnClearRecent">최근 초기화</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row" style="margin-top: 10px;">
+                    <div class="field">
+                        <label>블랙리스트 (자동 제외)</label>
+                        <div class="list" id="blackList"></div>
+                        <div class="btns">
+                            <button class="secondary" id="btnClearBlacklist">블랙리스트 초기화</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row" style="margin-top: 10px;">
+                    <div class="field">
+                        <label>직접 블랙리스트 추가</label>
+                        <input id="blackAdd" placeholder="예: 곱창, 회, 치킨" />
+                        <div class="btns">
+                            <button class="secondary" id="btnAddBlacklist">추가</button>
+                        </div>
+                        <div class="mini">쉼표로 여러 개 입력 가능. 키워드 포함 메뉴는 추천에서 제외돼.</div>
+                    </div>
+                </div>
+
+                <hr style="border:0;border-top:1px solid var(--line); margin: 12px 0;" />
+
+                <div class="mini">
+                    <span class="kbd">Tip</span>
+                    결과 메뉴를 클릭하면 “최근 메뉴”에 저장돼서, 다음 추천에서 겹침을 줄여줘.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>© Dinner Decision Engine — localStorage only (서버 없음)</footer>
+</div>
+
+<script>
+    // ===== 날짜 표시 =====
+    const todayEl = document.getElementById('today');
+    const now = new Date();
+    const pad2 = n => String(n).padStart(2,'0');
+    todayEl.textContent = `${now.getFullYear()}-${pad2(now.getMonth()+1)}-${pad2(now.getDate())}`;
+
+    // ===== 데이터 (실무 감성: 태그 기반) =====
+    // tags: spicy, soup, light, heavy, rice, noodle, meat, seafood, fried, clean, fast, date, group, solo, budget_low, budget_mid, budget_high, smell, no_smell
+    const MENUS = [
+        { name:"국밥", tags:["soup","heavy","rice","fast","solo","budget_low"] },
+        { name:"김치찌개", tags:["soup","spicy","rice","fast","solo","budget_low","smell"] },
+        { name:"된장찌개", tags:["soup","rice","clean","fast","solo","budget_low"] },
+        { name:"순두부찌개", tags:["soup","spicy","rice","fast","solo","budget_low"] },
+        { name:"쌀국수", tags:["soup","noodle","clean","fast","solo","budget_mid"] },
+        { name:"라멘", tags:["soup","noodle","heavy","fast","solo","budget_mid","smell"] },
+        { name:"파스타", tags:["noodle","clean","date","group","budget_mid","no_smell"] },
+        { name:"샐러드+닭가슴살", tags:["light","clean","fast","solo","budget_mid","no_smell"] },
+        { name:"초밥", tags:["seafood","clean","date","group","budget_high","no_smell"] },
+        { name:"회덮밥", tags:["seafood","rice","clean","solo","budget_mid"] },
+        { name:"제육덮밥", tags:["meat","spicy","rice","heavy","fast","solo","budget_low","smell"] },
+        { name:"불고기", tags:["meat","rice","group","budget_mid","smell"] },
+        { name:"삼겹살", tags:["meat","heavy","group","budget_high","smell"] },
+        { name:"치킨", tags:["fried","heavy","group","budget_mid","smell"] },
+        { name:"돈까스", tags:["fried","heavy","fast","solo","budget_mid"] },
+        { name:"햄버거", tags:["fast","heavy","solo","budget_mid","smell"] },
+        { name:"피자", tags:["heavy","group","budget_high","smell"] },
+        { name:"칼국수", tags:["soup","noodle","heavy","fast","solo","budget_low"] },
+        { name:"우동", tags:["soup","noodle","clean","fast","solo","budget_low"] },
+        { name:"비빔밥", tags:["rice","clean","solo","budget_mid","no_smell"] },
+        { name:"콩나물국밥", tags:["soup","rice","clean","fast","solo","budget_low"] },
+        { name:"마라탕", tags:["soup","spicy","heavy","group","budget_mid","smell"] },
+        { name:"떡볶이+튀김", tags:["spicy","fried","heavy","group","budget_low","smell"] },
+        { name:"샤브샤브", tags:["soup","clean","group","date","budget_high","no_smell"] },
+        { name:"카레", tags:["rice","fast","solo","budget_low","smell"] },
+        { name:"오므라이스", tags:["rice","clean","date","solo","budget_mid","no_smell"] },
+    ];
+
+    // ===== 저장소 =====
+    const LS_RECENT = "dinner_recent_v1";
+    const LS_BLACK = "dinner_black_v1";
+    const LS_LUNCH  = "dinner_lunch_v1";
+
+    const load = (k, def) => {
+        try {
+            const v = JSON.parse(localStorage.getItem(k));
+            return (v === null || v === undefined) ? def : v;
+        } catch(e){ return def; }
+    }
+    const save = (k, v) => localStorage.setItem(k, JSON.stringify(v));
+
+    let recent = load(LS_RECENT, []);
+    let blacklist = load(LS_BLACK, []);
+    let lastForced = null;
+
+    const normalize = s => (s||"").toString().trim().toLowerCase();
+
+    // ===== UI helpers =====
+    const recentListEl = document.getElementById("recentList");
+    const blackListEl = document.getElementById("blackList");
+
+    function renderChips(el, items, kind){
+        el.innerHTML = "";
+        if(!items.length){
+            const empty = document.createElement("div");
+            empty.className="chip";
+            empty.style.opacity=.55;
+            empty.textContent = kind === "recent" ? "아직 없음" : "비어있음";
+            el.appendChild(empty);
+            return;
+        }
+        items.forEach((it, idx) => {
+            const chip = document.createElement("div");
+            chip.className="chip";
+            if(kind === "recent"){
+                chip.innerHTML = `<b>🍽</b> ${it}`;
+                chip.title="클릭하면 최근목록에서 제거";
+                chip.style.cursor="pointer";
+                chip.onclick = () => {
+                    recent = recent.filter((x,i)=> i!==idx);
+                    save(LS_RECENT, recent);
+                    renderAll();
+                };
+            } else {
+                chip.innerHTML = `<b>⛔</b> ${it} <span style="opacity:.6;">×</span>`;
+                chip.title="클릭하면 블랙리스트에서 제거";
+                chip.style.cursor="pointer";
+                chip.onclick = () => {
+                    blacklist = blacklist.filter((x,i)=> i!==idx);
+                    save(LS_BLACK, blacklist);
+                    renderAll();
+                };
+            }
+            el.appendChild(chip);
+        });
+    }
+
+    function addRecent(menuName){
+        const n = menuName.trim();
+        if(!n) return;
+        recent = [n, ...recent.filter(x => x !== n)].slice(0, 14);
+        save(LS_RECENT, recent);
+        renderAll();
+    }
+
+    function addBlacklistFromText(text){
+        const parts = (text||"").split(",").map(s => s.trim()).filter(Boolean);
+        if(!parts.length) return;
+        parts.forEach(p => {
+            const key = p.toLowerCase();
+            if(!blacklist.map(x=>x.toLowerCase()).includes(key)){
+                blacklist.unshift(p);
+            }
+        });
+        // 길이 제한
+        blacklist = blacklist.slice(0, 40);
+        save(LS_BLACK, blacklist);
+        renderAll();
+    }
+
+    function renderAll(){
+        renderChips(recentListEl, recent, "recent");
+        renderChips(blackListEl, blacklist, "black");
+        // 점심 표시
+        const lunchSaved = load(LS_LUNCH, "");
+        const lunchInput = document.getElementById("lunch");
+        if(lunchSaved && !lunchInput.value) lunchInput.value = lunchSaved;
+    }
+
+    // ===== 탭 전환 =====
+    const tabs = document.querySelectorAll(".tab");
+    tabs.forEach(t => {
+        t.addEventListener("click", () => {
+            tabs.forEach(x=>x.classList.remove("active"));
+            t.classList.add("active");
+            const id = t.dataset.tab;
+            document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+            document.getElementById("sec-"+id).classList.add("active");
+        });
+    });
+
+    // ===== 추천 엔진 =====
+    function isBlacklisted(menuName, extraKeywords=[]){
+        const all = [...blacklist, ...extraKeywords].map(normalize).filter(Boolean);
+        const target = normalize(menuName);
+        return all.some(k => k && target.includes(k));
+    }
+
+    function tagScore(menu, wants=[], avoids=[]){
+        // wants/avoids: tag strings
+        let score = 10; // base
+        wants.forEach(t => { if(menu.tags.includes(t)) score += 6; });
+        avoids.forEach(t => { if(menu.tags.includes(t)) score -= 8; });
+        // 가끔 다양성
+        score += Math.floor(Math.random() * 4);
+        return score;
+    }
+
+    function pickOne(candidates){
+        if(!candidates.length) return null;
+        candidates.sort((a,b)=> b.score - a.score);
+        // 상위 6개에서 랜덤 선택 (너무 뻔하지 않게)
+        const top = candidates.slice(0, Math.min(6, candidates.length));
+        return top[Math.floor(Math.random()*top.length)];
+    }
+
+    function lunchToExcludeKeywords(lunchText){
+        const t = normalize(lunchText);
+        if(!t) return [];
+        // 너무 정교하게 안 하고, 대표 키워드만
+        const map = [
+            { k:["치킨","닭"], out:["치킨","닭"] },
+            { k:["제육","삼겹","고기","불고기"], out:["제육","삼겹","불고기","고기"] },
+            { k:["국밥","찌개","국","탕"], out:["국밥","찌개","국","탕"] },
+            { k:["면","라멘","우동","파스타","쌀국수","칼국수"], out:["면","라멘","우동","파스타","쌀국수","칼국수"] },
+            { k:["초밥","회","해산물"], out:["초밥","회","해산물"] },
+        ];
+        for(const m of map){
+            if(m.k.some(x => t.includes(x))) return m.out;
+        }
+        // 기본: 점심 단어를 그대로 일부 제외 키워드로 사용
+        const rough = lunchText.split(/[\s/]+/).map(s=>s.trim()).filter(s=>s.length>=2);
+        return rough.slice(0,3);
+    }
+
+    function recommendByMood(){
+        const mood = document.getElementById("mood").value;
+        const hunger = document.getElementById("hunger").value;
+        const weather = document.getElementById("weather").value;
+        const situation = document.getElementById("situation").value;
+        const lunch = document.getElementById("lunch").value;
+        const excludeKeywords = document.getElementById("excludeKeywords").value;
+
+        const extraExclude = [
+            ...lunchToExcludeKeywords(lunch),
+            ...(excludeKeywords||"").split(",").map(s=>s.trim()).filter(Boolean)
+        ];
+
+        // wants/avoids tags
+        const wants = [];
+        const avoids = [];
+
+        // mood rules
+        if(mood === "tired"){ wants.push("soup","fast"); avoids.push("heavy"); }
+        if(mood === "sleepy"){ wants.push("fast"); avoids.push("heavy"); }
+        if(mood === "angry"){ wants.push("spicy","heavy"); }
+        if(mood === "calm"){ wants.push("clean"); avoids.push("spicy"); }
+        if(mood === "happy"){ wants.push("group"); wants.push("fried"); }
+
+        // hunger rules
+        if(hunger === "low"){ wants.push("light"); avoids.push("heavy"); }
+        if(hunger === "mid"){ /* noop */ }
+        if(hunger === "high"){ wants.push("heavy"); }
+
+        // weather rules
+        if(weather === "cold" || weather === "rainy"){ wants.push("soup"); }
+        if(weather === "hot"){ wants.push("clean","light"); avoids.push("heavy"); }
+
+        // situation rules
+        if(situation === "solo"){ wants.push("solo","fast"); }
+        if(situation === "coworker"){ wants.push("group"); }
+        if(situation === "family"){ wants.push("group"); }
+        if(situation === "date"){ wants.push("date","clean"); avoids.push("smell"); }
+
+        // candidates
+        const candidates = [];
+        MENUS.forEach(m => {
+            if(isBlacklisted(m.name, extraExclude)) return;
+            // recent에 있는 메뉴는 점수 감소 (완전 제외는 아님)
+            const recentPenalty = recent.includes(m.name) ? 6 : 0;
+            const score = tagScore(m, wants, avoids) - recentPenalty;
+            candidates.push({ menu:m, score });
+        });
+
+        const picked = pickOne(candidates);
+        return { picked, wants, avoids, extraExclude };
+    }
+
+    function recommendForce(){
+        const mode = document.getElementById("forceMode").value;
+        const budget = document.getElementById("budget").value;
+        const effort = document.getElementById("effort").value;
+        const smell = document.getElementById("smell").value;
+
+        const wants = [];
+        const avoids = [];
+
+        // budget tags
+        if(budget === "low") wants.push("budget_low");
+        if(budget === "mid") wants.push("budget_mid");
+        if(budget === "high") wants.push("budget_high");
+
+        // effort
+        if(effort === "zero") wants.push("fast");
+        if(effort === "low") wants.push("fast");
+        if(effort === "mid") { /* ok */ }
+
+        // smell
+        if(smell === "no") avoids.push("smell");
+
+        const candidates = [];
+        MENUS.forEach(m => {
+            if(isBlacklisted(m.name)) return;
+            const recentPenalty = recent.includes(m.name) ? 5 : 0;
+            const score = tagScore(m, wants, avoids) - recentPenalty;
+            candidates.push({ menu:m, score });
+        });
+
+        candidates.sort((a,b)=> b.score - a.score);
+        const top = candidates.slice(0, Math.min(10, candidates.length));
+
+        if(mode === "hard"){
+            return { mode, picks: [ top[Math.floor(Math.random()*Math.min(6, top.length))] ], wants, avoids };
+        }
+        if(mode === "two"){
+            const a = top[Math.floor(Math.random()*Math.min(6, top.length))];
+            let b = top[Math.floor(Math.random()*Math.min(6, top.length))];
+            if(b?.menu?.name === a?.menu?.name) b = top[Math.min(5, top.length-1)];
+            return { mode, picks: [a,b].filter(Boolean), wants, avoids };
+        }
+        // explain
+        const picks = top.slice(0,3);
+        return { mode, picks, wants, avoids };
+    }
+
+    function parseDevInput(raw){
+        const lines = (raw||"").split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+        const map = {};
+        lines.forEach(line => {
+            const m = line.split("=");
+            if(m.length>=2){
+                const k = m[0].trim().toLowerCase();
+                const v = m.slice(1).join("=").trim().toLowerCase();
+                map[k]=v;
+            } else {
+                // 단독 키워드
+                map[line.toLowerCase()] = "true";
+            }
+        });
+        return map;
+    }
+
+    function devRecommend(raw){
+        const kv = parseDevInput(raw);
+        const wants = [];
+        const avoids = [];
+
+        // 룰: 대충 해석
+        const hunger = kv["배고픔"] || kv["hunger"] || "";
+        const late = kv["퇴근"] || kv["야근"] || "";
+        const dish = kv["설거지"] || kv["요리"] || "";
+        const spicy = kv["매운거"] || kv["spicy"] || "";
+        const seafood = kv["해산물"] || kv["seafood"] || "";
+        const smell = kv["냄새"] || "";
+
+        if(hunger.includes("max") || hunger.includes("매우") || hunger.includes("많이")) wants.push("heavy");
+        if(late.includes("늦") || late.includes("야근") || kv["야근"]){ wants.push("fast"); wants.push("soup"); }
+        if(dish.includes("싫") || dish.includes("no") || dish.includes("0")) wants.push("fast");
+        if(spicy.includes("ok") || spicy.includes("yes") || spicy.includes("true")) wants.push("spicy");
+        if(spicy.includes("no")) avoids.push("spicy");
+        if(seafood.includes("no")) avoids.push("seafood");
+        if(seafood.includes("ok") || seafood.includes("yes")) wants.push("seafood");
+        if(smell.includes("no") || smell.includes("x")) avoids.push("smell");
+
+        // 기본값: 혼밥이면 solo 살짝
+        if(kv["혼밥"] || kv["solo"]) wants.push("solo");
+
+        const candidates = [];
+        MENUS.forEach(m => {
+            if(isBlacklisted(m.name)) return;
+            const recentPenalty = recent.includes(m.name) ? 6 : 0;
+            const score = tagScore(m, wants, avoids) - recentPenalty;
+            candidates.push({ menu:m, score });
+        });
+
+        const picked = pickOne(candidates);
+
+        // query text
+        const where = [];
+        wants.forEach(t => where.push(`tags CONTAINS '${t}'`));
+        avoids.forEach(t => where.push(`tags NOT CONTAINS '${t}'`));
+        where.push(`blacklist NOT MATCH`);
+        where.push(`recent PENALTY`);
+        const sql =
+            `SELECT dinner_menu
+FROM 현실_DB
+WHERE
+  ${where.join("\n  AND ")}
+ORDER BY score DESC
+LIMIT 1;`;
+
+        return { picked, wants, avoids, sql, kv };
+    }
+
+    // ===== 결과 렌더 =====
+    function showMoodResult(res){
+        const box = document.getElementById("moodResult");
+        const title = document.getElementById("moodTitle");
+        const meta = document.getElementById("moodMeta");
+        const tags = document.getElementById("moodTags");
+
+        if(!res.picked){
+            box.style.display="block";
+            title.textContent = "추천 실패 😵";
+            meta.textContent = "블랙리스트/제외 키워드가 너무 많아서 후보가 없어. 제외 조건을 줄여봐.";
+            tags.innerHTML = "";
+            return;
+        }
+
+        const menuName = res.picked.menu.name;
+        title.textContent = `👉 오늘 저녁: ${menuName}`;
+        meta.innerHTML =
+            `적용 조건: <span class="kbd">WANTS</span> ${res.wants.join(", ") || "없음"} · ` +
+            `<span class="kbd">AVOIDS</span> ${res.avoids.join(", ") || "없음"}<br/>` +
+            `자동 제외: ${res.extraExclude.length ? res.extraExclude.join(", ") : "없음"} · 최근 패널티: ${recent.includes(menuName) ? "적용됨" : "없음"}`;
+
+        tags.innerHTML = "";
+        res.picked.menu.tags.slice(0,8).forEach(t => {
+            const chip = document.createElement("div");
+            chip.className="chip";
+            chip.textContent = "#"+t;
+            tags.appendChild(chip);
+        });
+
+        box.style.display="block";
+        // 클릭하면 최근 저장
+        title.style.cursor="pointer";
+        title.title="클릭하면 최근 메뉴로 저장";
+        title.onclick = () => addRecent(menuName);
+    }
+
+    function showForceResult(res){
+        const box = document.getElementById("forceResult");
+        const title = document.getElementById("forceTitle");
+        const meta = document.getElementById("forceMeta");
+        const tags = document.getElementById("forceTags");
+
+        if(!res.picks?.length){
+            box.style.display="block";
+            title.textContent = "후보 없음 😵";
+            meta.textContent = "블랙리스트가 너무 강함. 블랙리스트를 줄여봐.";
+            tags.innerHTML = "";
+            return;
+        }
+
+        tags.innerHTML = "";
+        const names = res.picks.map(p => p.menu.name);
+
+        if(res.mode === "hard"){
+            title.textContent = `❗ 고민 금지: ${names[0]}`;
+            meta.textContent = `조건: wants(${res.wants.join(", ")||"없음"}) / avoids(${res.avoids.join(", ")||"없음"})`;
+            const chip = document.createElement("div");
+            chip.className="chip";
+            chip.innerHTML = "<b>확정</b> 클릭하면 최근 저장";
+            tags.appendChild(chip);
+
+            title.style.cursor="pointer";
+            title.onclick = () => addRecent(names[0]);
+        }
+
+        if(res.mode === "two"){
+            title.textContent = `🟨 후보 2개: ${names[0]} vs ${names[1]}`;
+            meta.textContent = `둘 중 하나만 골라. (클릭하면 최근 저장)`;
+            names.forEach(n => {
+                const chip = document.createElement("div");
+                chip.className="chip";
+                chip.style.cursor="pointer";
+                chip.textContent = n;
+                chip.onclick = () => addRecent(n);
+                tags.appendChild(chip);
+            });
+        }
+
+        if(res.mode === "explain"){
+            title.textContent = `🟩 상위 후보 TOP 3`;
+            meta.textContent = `설명: 조건에 가장 잘 맞는 순서. (클릭하면 최근 저장)`;
+            res.picks.forEach(p => {
+                const chip = document.createElement("div");
+                chip.className="chip";
+                chip.style.cursor="pointer";
+                chip.innerHTML = `<b>${p.menu.name}</b> <span style="opacity:.65;">score ${p.score}</span>`;
+                chip.onclick = () => addRecent(p.menu.name);
+                tags.appendChild(chip);
+            });
+        }
+
+        box.style.display="block";
+    }
+
+    function showDevResult(res, explain=false){
+        const box = document.getElementById("devResult");
+        const title = document.getElementById("devTitle");
+        const meta = document.getElementById("devMeta");
+        const query = document.getElementById("devQuery");
+
+        if(!res.picked){
+            box.style.display="block";
+            title.textContent = "결과 없음 😵";
+            meta.textContent = "블랙리스트가 너무 강함. 블랙리스트를 줄여봐.";
+            query.textContent = res.sql || "";
+            return;
+        }
+
+        const name = res.picked.menu.name;
+        title.textContent = `✅ RESULT: ${name}`;
+        title.style.cursor="pointer";
+        title.title="클릭하면 최근 메뉴로 저장";
+        title.onclick = () => addRecent(name);
+
+        meta.textContent = explain
+            ? `해석: wants(${res.wants.join(", ")||"없음"}) / avoids(${res.avoids.join(", ")||"없음"}) — 룰 기반 추천`
+            : `입력 파싱 완료. (클릭하면 최근 저장)`;
+
+        query.textContent = res.sql;
+        box.style.display="block";
+    }
+
+    // ===== 버튼 이벤트 =====
+    document.getElementById("btnRecommendMood").onclick = () => {
+        const res = recommendByMood();
+        showMoodResult(res);
+    };
+
+    document.getElementById("btnSaveLunch").onclick = () => {
+        const lunch = document.getElementById("lunch").value || "";
+        save(LS_LUNCH, lunch);
+        alert("점심 저장 완료!");
+    };
+
+    document.getElementById("btnAddBlacklistFromInput").onclick = () => {
+        const ex = document.getElementById("excludeKeywords").value || "";
+        if(!ex.trim()){
+            alert("제외 키워드를 먼저 입력해줘. (쉼표로 구분)");
+            return;
+        }
+        addBlacklistFromText(ex);
+        alert("블랙리스트에 추가했어!");
+    };
+
+    document.getElementById("btnAddBlacklist").onclick = () => {
+        const v = document.getElementById("blackAdd").value || "";
+        if(!v.trim()){
+            alert("추가할 키워드를 입력해줘.");
+            return;
+        }
+        addBlacklistFromText(v);
+        document.getElementById("blackAdd").value = "";
+    };
+
+    document.getElementById("btnClearRecent").onclick = () => {
+        if(!confirm("최근 메뉴를 초기화할까?")) return;
+        recent = [];
+        save(LS_RECENT, recent);
+        renderAll();
+    };
+
+    document.getElementById("btnClearBlacklist").onclick = () => {
+        if(!confirm("블랙리스트를 초기화할까?")) return;
+        blacklist = [];
+        save(LS_BLACK, blacklist);
+        renderAll();
+    };
+
+    document.getElementById("btnForce").onclick = () => {
+        lastForced = recommendForce();
+        showForceResult(lastForced);
+    };
+
+    document.getElementById("btnRerollForce").onclick = () => {
+        // 같은 조건으로 다시 추천하려면 그냥 다시 실행 (조건 값은 유지)
+        lastForced = recommendForce();
+        showForceResult(lastForced);
+    };
+
+    document.getElementById("devPreset").onchange = (e) => {
+        const v = e.target.value;
+        const input = document.getElementById("devInput");
+        const presets = {
+            p1: "퇴근=늦음\n배고픔=MAX\n설거지=싫음\n매운거=OK",
+            p2: "다이어트=true\n배고픔=mid\n매운거=NO\n혼밥=true",
+            p3: "날씨=rainy\n퇴근=보통\n배고픔=high\n국물=true",
+            p4: "데이트=true\n냄새=NO\n배고픔=mid\n매운거=NO"
+        };
+        if(presets[v]) input.value = presets[v];
+    };
+
+    document.getElementById("btnDevRun").onclick = () => {
+        const raw = document.getElementById("devInput").value || "";
+        const res = devRecommend(raw);
+        showDevResult(res, false);
+    };
+
+    document.getElementById("btnDevExplain").onclick = () => {
+        const raw = document.getElementById("devInput").value || "";
+        const res = devRecommend(raw);
+        showDevResult(res, true);
+    };
+
+    // 초기 렌더
+    renderAll();
+</script>
+</body>
+</html>
