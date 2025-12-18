@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5975580696697245"
-     crossorigin="anonymous"></script>
+            crossorigin="anonymous"></script>
     <meta charset="UTF-8" />
     <meta name="description" content="SQL IN 절 자동 생성, 값 비교, Excel 데이터를 SQL INSERT로 변환하는 실무 개발자 도구. 무료, 갯수 제한 없음. Made by 임상현." />
     <meta name="keywords" content="SQL IN 절 생성기, Excel SQL 생성기, 데이터 비교, 값 차집합 도구, SQL 쿼리 자동 생성기, 개발자 도구, SHA-256 해시 생성기" />
@@ -217,10 +217,10 @@
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-V7H9N1Q5Q0"></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-V7H9N1Q5Q0');
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-V7H9N1Q5Q0');
     </script>
 </head>
 <body>
@@ -237,6 +237,7 @@
         <button class="tab-button" data-tab="compareTab">값 비교 도구</button>
         <button class="tab-button" data-tab="insertTab">Excel → SQL INSERT 생성기</button>
         <button class="tab-button" data-tab="shaTab">SHA-256 해시 생성기</button>
+        <button class="tab-button" data-tab="jsonTab">JSON 비교</button>
     </div>
 
     <!-- IN 절 생성기 탭 -->
@@ -528,6 +529,49 @@ user@example.com
             <label>결과 해시값 (HEX)</label>
             <div id="shaHashOutput" class="hash-output"></div>
             <div class="small-text" id="shaHashInfo"></div>
+        </div>
+    </section>
+    <section id="jsonTab" class="tab-content">
+        <div class="subtitle" style="margin-top: 4px;">
+            JSON 두 개를 붙여넣고 차이점을 비교합니다. (브라우저에서만 처리)
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <label for="jsonA">JSON A</label>
+                <textarea id="jsonA" placeholder='예) {"a":1,"b":{"c":2}}'></textarea>
+                <div class="small-text">※ JSON 문자열 그대로 붙여넣기</div>
+            </div>
+            <div class="col">
+                <label for="jsonB">JSON B</label>
+                <textarea id="jsonB" placeholder='예) {"a":1,"b":{"c":3}}'></textarea>
+                <div class="small-text">※ JSON 문자열 그대로 붙여넣기</div>
+            </div>
+        </div>
+
+        <div class="options" style="margin-top: 12px;">
+            <label><input type="checkbox" id="jsonSortKeys" checked /> 키 정렬(안정적 비교)</label>
+            <label><input type="checkbox" id="jsonIgnoreArrayOrder" /> 배열 순서 무시(값 set 비교)</label>
+            <label><input type="checkbox" id="jsonTrimString" checked /> 문자열 앞뒤 공백 trim</label>
+        </div>
+
+        <div class="btn-row">
+            <button class="btn-primary" id="jsonCompareBtn">JSON 비교</button>
+            <button class="btn-secondary" id="jsonFormatBtn">A/B 포맷(정렬+들여쓰기)</button>
+            <button class="btn-secondary" id="jsonSwapBtn">A ↔ B 교환</button>
+            <button class="btn-secondary" id="jsonCopyDiffBtn">Diff 복사</button>
+        </div>
+
+        <div class="result-wrapper">
+            <label>결과 요약</label>
+            <div id="jsonSummary" class="hash-output"></div>
+            <div class="small-text" id="jsonStats"></div>
+        </div>
+
+        <div class="result-wrapper">
+            <label>Diff (경로 기준)</label>
+            <textarea id="jsonDiffOut" readonly placeholder="차이점이 여기에 표시됩니다."></textarea>
+            <div class="small-text">형식: [경로] A값 → B값</div>
         </div>
     </section>
 
@@ -977,6 +1021,182 @@ user@example.com
         shaInputEl.focus();
     });
 
+    function safeJsonParse(raw) {
+        const s = (raw || "").trim();
+        if (!s) throw new Error("JSON이 비어있습니다.");
+        return JSON.parse(s);
+    }
+
+    function normalizeJson(value, opts) {
+        // 문자열 trim 옵션
+        if (opts.trimString && typeof value === "string") {
+            return value.trim();
+        }
+
+        if (Array.isArray(value)) {
+            const arr = value.map(v => normalizeJson(v, opts));
+            if (opts.ignoreArrayOrder) {
+                // 배열 순서 무시: stringify 기준 정렬(간단+안정)
+                return arr
+                    .map(v => ({ v, k: JSON.stringify(v) }))
+                    .sort((a, b) => (a.k > b.k ? 1 : a.k < b.k ? -1 : 0))
+                    .map(x => x.v);
+            }
+            return arr;
+        }
+
+        if (value && typeof value === "object") {
+            const keys = Object.keys(value);
+            if (opts.sortKeys) keys.sort();
+            const out = {};
+            for (const k of keys) {
+                out[k] = normalizeJson(value[k], opts);
+            }
+            return out;
+        }
+
+        return value;
+    }
+
+    function isEqual(a, b) {
+        return JSON.stringify(a) === JSON.stringify(b);
+    }
+
+    function diffJson(a, b, path = "$", diffs = []) {
+        // 타입 다르면 바로 diff
+        const typeA = Array.isArray(a) ? "array" : (a === null ? "null" : typeof a);
+        const typeB = Array.isArray(b) ? "array" : (b === null ? "null" : typeof b);
+
+        if (typeA !== typeB) {
+            diffs.push({ path, a, b, reason: "type" });
+            return diffs;
+        }
+
+        // 원시값
+        if (typeA !== "object" && typeA !== "array") {
+            if (a !== b) diffs.push({ path, a, b, reason: "value" });
+            return diffs;
+        }
+
+        // null
+        if (a === null || b === null) {
+            if (a !== b) diffs.push({ path, a, b, reason: "null" });
+            return diffs;
+        }
+
+        // 배열
+        if (typeA === "array") {
+            const lenA = a.length;
+            const lenB = b.length;
+            const max = Math.max(lenA, lenB);
+            for (let i = 0; i < max; i++) {
+                const p = `${path}[${i}]`;
+                if (i >= lenA) diffs.push({ path: p, a: undefined, b: b[i], reason: "added" });
+                else if (i >= lenB) diffs.push({ path: p, a: a[i], b: undefined, reason: "removed" });
+                else diffJson(a[i], b[i], p, diffs);
+            }
+            return diffs;
+        }
+
+        // 객체
+        const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+        const sortedKeys = Array.from(keys).sort();
+        for (const k of sortedKeys) {
+            const p = `${path}.${k}`;
+            if (!(k in a)) diffs.push({ path: p, a: undefined, b: b[k], reason: "added" });
+            else if (!(k in b)) diffs.push({ path: p, a: a[k], b: undefined, reason: "removed" });
+            else diffJson(a[k], b[k], p, diffs);
+        }
+        return diffs;
+    }
+
+    function pretty(v) {
+        if (v === undefined) return "(없음)";
+        if (typeof v === "string") return `"${v}"`;
+        return JSON.stringify(v);
+    }
+
+    const jsonAEl = document.getElementById("jsonA");
+    const jsonBEl = document.getElementById("jsonB");
+    const jsonSummaryEl = document.getElementById("jsonSummary");
+    const jsonStatsEl = document.getElementById("jsonStats");
+    const jsonDiffOutEl = document.getElementById("jsonDiffOut");
+
+    document.getElementById("jsonSwapBtn").addEventListener("click", () => {
+        const a = jsonAEl.value;
+        const b = jsonBEl.value;
+        jsonAEl.value = b;
+        jsonBEl.value = a;
+    });
+
+    document.getElementById("jsonFormatBtn").addEventListener("click", () => {
+        try {
+            const opts = {
+                sortKeys: document.getElementById("jsonSortKeys").checked,
+                ignoreArrayOrder: document.getElementById("jsonIgnoreArrayOrder").checked,
+                trimString: document.getElementById("jsonTrimString").checked
+            };
+            const a = normalizeJson(safeJsonParse(jsonAEl.value), opts);
+            const b = normalizeJson(safeJsonParse(jsonBEl.value), opts);
+            jsonAEl.value = JSON.stringify(a, null, 2);
+            jsonBEl.value = JSON.stringify(b, null, 2);
+            alert("포맷 완료!");
+        } catch (e) {
+            alert("포맷 실패: " + e.message);
+        }
+    });
+
+    document.getElementById("jsonCompareBtn").addEventListener("click", () => {
+        try {
+            const opts = {
+                sortKeys: document.getElementById("jsonSortKeys").checked,
+                ignoreArrayOrder: document.getElementById("jsonIgnoreArrayOrder").checked,
+                trimString: document.getElementById("jsonTrimString").checked
+            };
+
+            const aRaw = safeJsonParse(jsonAEl.value);
+            const bRaw = safeJsonParse(jsonBEl.value);
+
+            const a = normalizeJson(aRaw, opts);
+            const b = normalizeJson(bRaw, opts);
+
+            const same = isEqual(a, b);
+            const diffs = same ? [] : diffJson(a, b);
+
+            jsonSummaryEl.textContent = same ? "✅ 동일합니다 (Normalized 기준)" : "❌ 다릅니다 (Normalized 기준)";
+            jsonStatsEl.textContent = `차이 ${diffs.length}개 · 옵션: 키정렬=${opts.sortKeys ? "ON" : "OFF"}, 배열순서무시=${opts.ignoreArrayOrder ? "ON" : "OFF"}, 문자열trim=${opts.trimString ? "ON" : "OFF"}`;
+
+            if (same) {
+                jsonDiffOutEl.value = "";
+                return;
+            }
+
+            jsonDiffOutEl.value = diffs
+                .map(d => `[${d.path}] ${pretty(d.a)} → ${pretty(d.b)} (${d.reason})`)
+                .join("\n");
+        } catch (e) {
+            jsonSummaryEl.textContent = "⚠️ 비교 실패";
+            jsonStatsEl.textContent = e.message || String(e);
+            jsonDiffOutEl.value = "";
+            alert("비교 실패: " + (e.message || e));
+        }
+    });
+
+    document.getElementById("jsonCopyDiffBtn").addEventListener("click", async () => {
+        const out = jsonDiffOutEl.value || "";
+        if (!out) {
+            alert("복사할 Diff가 없습니다.");
+            return;
+        }
+        try {
+            await navigator.clipboard.writeText(out);
+            alert("복사되었습니다.");
+        } catch (e) {
+            jsonDiffOutEl.select();
+            document.execCommand("copy");
+            alert("복사되었습니다. (execCommand)");
+        }
+    });
     console.log("SQL 실무 도구 — Made by Sanghyun Im (임상현)");
 </script>
 </body>
