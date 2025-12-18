@@ -285,7 +285,6 @@
         <button class="tab-button" data-tab="shaTab" data-i18n="tab.sha">SHA-256 해시 생성기</button>
         <button class="tab-button" data-tab="rsaTab" data-i18n="tab.rsa">RSA 암호화</button>
         <button class="tab-button" data-tab="jsonTab" data-i18n="tab.json">JSON 비교</button>
-        <button class="tab-button" data-tab="oracleFmtTab" data-i18n="tab.oracle">SQL 정리(Oracle)</button>
     </div>
 
     <!-- IN 절 생성기 탭 -->
@@ -700,43 +699,6 @@ user@example.com
         </div>
     </section>
 
-    <!-- Oracle SQL 정리 탭 -->
-    <section id="oracleFmtTab" class="tab-content">
-        <div class="subtitle" style="margin-top: 4px;" data-i18n="ora.desc">
-            JPA/Hibernate 로그처럼 한 줄로 찍힌 SQL을 <strong>Oracle 기준</strong>으로 보기 좋게 정리합니다. (브라우저에서만 처리)
-        </div>
-
-        <div class="row">
-            <div class="col">
-                <label for="oracleSqlIn" data-i18n="ora.in.label">원본 SQL (한 줄 로그 그대로)</label>
-                <textarea id="oracleSqlIn" data-i18n-placeholder="ora.in.ph" placeholder="여기에 한 줄 SQL을 붙여넣으세요."></textarea>
-                <div class="small-text" data-i18n="ora.in.note">※ 서버 전송 없음 · 브라우저에서만 포맷합니다.</div>
-            </div>
-            <div class="col">
-                <label for="oracleSqlOut" data-i18n="ora.out.label">정리된 SQL</label>
-                <textarea id="oracleSqlOut" readonly data-i18n-placeholder="ora.out.ph" placeholder="정리 결과가 여기에 표시됩니다."></textarea>
-                <div class="stats" id="oracleSqlStats"></div>
-            </div>
-        </div>
-
-        <div class="options" style="margin-top: 10px;">
-            <label><input type="checkbox" id="oracleUpperKeyword" checked /> <span data-i18n="ora.opt.upper">키워드 대문자(SELECT/WHERE...)</span></label>
-            <label><input type="checkbox" id="oracleBreakSelectCols" checked /> <span data-i18n="ora.opt.cols">SELECT 컬럼 줄바꿈</span></label>
-            <label><input type="checkbox" id="oracleAlignJoins" checked /> <span data-i18n="ora.opt.joins">JOIN/ON 줄 정리</span></label>
-            <label><input type="checkbox" id="oracleCaseMultiline" checked /> <span data-i18n="ora.opt.case">CASE 줄바꿈</span></label>
-            <label title="(a<>b) 같은 boolean 컬럼을 Oracle-safe CASE로 바꿉니다.">
-                <input type="checkbox" id="oracleBooleanToCase" checked />
-                <span data-i18n="ora.opt.bool">boolean 컬럼 → CASE(Oracle-safe)</span>
-            </label>
-        </div>
-
-        <div class="btn-row">
-            <button class="btn-primary" id="oracleFormatBtn" data-i18n="ora.btn.format">SQL 정리</button>
-            <button class="btn-secondary" id="oracleCopyBtn" data-i18n="ora.btn.copy">복사하기</button>
-            <button class="btn-secondary" id="oracleClearBtn" data-i18n="ora.btn.clear">초기화</button>
-        </div>
-    </section>
-
     <footer>
         <span data-i18n="footer">© 2025 Made by 임상현 (Sanghyun Im)</span>
     </footer>
@@ -758,7 +720,6 @@ user@example.com
             "tab.sha": "SHA-256 해시 생성기",
             "tab.rsa": "RSA 암호화",
             "tab.json": "JSON 비교",
-            "tab.oracle": "SQL 정리(Oracle)",
 
             "common.result": "결과",
             "common.result.ph": "여기에 결과가 표시됩니다.",
@@ -896,21 +857,6 @@ user@example.com
             "json.out.diffph": "차이점이 여기에 표시됩니다.",
             "json.out.format": "형식: [경로] A값 → B값",
 
-            "ora.desc": "JPA/Hibernate 로그처럼 한 줄로 찍힌 SQL을 <strong>Oracle 기준</strong>으로 보기 좋게 정리합니다. (브라우저에서만 처리)",
-            "ora.in.label": "원본 SQL (한 줄 로그 그대로)",
-            "ora.in.ph": "여기에 한 줄 SQL을 붙여넣으세요.",
-            "ora.in.note": "※ 서버 전송 없음 · 브라우저에서만 포맷합니다.",
-            "ora.out.label": "정리된 SQL",
-            "ora.out.ph": "정리 결과가 여기에 표시됩니다.",
-            "ora.opt.upper": "키워드 대문자(SELECT/WHERE...)",
-            "ora.opt.cols": "SELECT 컬럼 줄바꿈",
-            "ora.opt.joins": "JOIN/ON 줄 정리",
-            "ora.opt.case": "CASE 줄바꿈",
-            "ora.opt.bool": "boolean 컬럼 → CASE(Oracle-safe)",
-            "ora.btn.format": "SQL 정리",
-            "ora.btn.copy": "복사하기",
-            "ora.btn.clear": "초기화",
-
             "footer": "© 2025 Made by 임상현 (Sanghyun Im)",
 
             // Alerts / runtime texts
@@ -951,7 +897,6 @@ user@example.com
             "tab.sha": "SHA-256 Hasher",
             "tab.rsa": "RSA Encrypt/Decrypt",
             "tab.json": "JSON Diff",
-            "tab.oracle": "SQL Formatter (Oracle)",
 
             "common.result": "Result",
             "common.result.ph": "Result will appear here.",
@@ -1088,21 +1033,6 @@ user@example.com
             "json.out.diff": "Diff (by path)",
             "json.out.diffph": "Differences will appear here.",
             "json.out.format": "Format: [path] A → B",
-
-            "ora.desc": "Format one-line SQL logs (JPA/Hibernate style) nicely for <strong>Oracle</strong> (browser-only).",
-            "ora.in.label": "Raw SQL (one-line log)",
-            "ora.in.ph": "Paste one-line SQL here.",
-            "ora.in.note": "※ No server request · formatted in your browser.",
-            "ora.out.label": "Formatted SQL",
-            "ora.out.ph": "Formatted SQL will appear here.",
-            "ora.opt.upper": "Uppercase keywords (SELECT/WHERE...)",
-            "ora.opt.cols": "Break SELECT columns into lines",
-            "ora.opt.joins": "Align JOIN/ON blocks",
-            "ora.opt.case": "Multiline CASE",
-            "ora.opt.bool": "Boolean expr → CASE (Oracle-safe)",
-            "ora.btn.format": "Format SQL",
-            "ora.btn.copy": "Copy",
-            "ora.btn.clear": "Clear",
 
             "footer": "© 2025 Made by Sanghyun Im",
 
@@ -2076,211 +2006,6 @@ user@example.com
         rsaCipherTextEl.value = "";
         rsaDecryptedOutEl.textContent = "";
         rsaInfoEl.textContent = "";
-    });
-
-    // --- Oracle formatter ---
-    const oracleInEl = document.getElementById("oracleSqlIn");
-    const oracleOutEl = document.getElementById("oracleSqlOut");
-    const oracleStatsEl = document.getElementById("oracleSqlStats");
-
-    function normalizeSpaces(sql) {
-        return (sql || "")
-            .replace(/\u00A0/g, " ")
-            .replace(/\s+/g, " ")
-            .trim();
-    }
-
-    function upperKeywords(sql) {
-        const kws = [
-            "select","from","where","order by","group by","having",
-            "left join","right join","inner join","full join","join",
-            "on","and","or",
-            "case","when","then","else","end",
-            "as"
-        ];
-
-        kws.sort((a,b)=>b.length-a.length);
-
-        let out = sql;
-        for (const kw of kws) {
-            const re = new RegExp(`\\b${kw.replace(/\s+/g, "\\s+")}\\b`, "gi");
-            out = out.replace(re, kw.toUpperCase().replace(/\s+/g, " "));
-        }
-        return out;
-    }
-
-    function splitSelectColumns(selectBody) {
-        const cols = [];
-        let buf = "";
-        let depth = 0;
-        let inS = false;
-        let inD = false;
-
-        for (let i = 0; i < selectBody.length; i++) {
-            const ch = selectBody[i];
-            const prev = selectBody[i - 1];
-
-            if (!inD && ch === "'" && prev !== "\\") inS = !inS;
-            if (!inS && ch === '"' && prev !== "\\") inD = !inD;
-
-            if (!inS && !inD) {
-                if (ch === "(") depth++;
-                if (ch === ")") depth = Math.max(0, depth - 1);
-                if (ch === "," && depth === 0) {
-                    cols.push(buf.trim());
-                    buf = "";
-                    continue;
-                }
-            }
-            buf += ch;
-        }
-        if (buf.trim()) cols.push(buf.trim());
-        return cols;
-    }
-
-    function multilineCase(expr) {
-        return expr
-            .replace(/\bCASE\b/gi, "CASE")
-            .replace(/\bWHEN\b/gi, "\n        WHEN")
-            .replace(/\bTHEN\b/gi, " THEN")
-            .replace(/\bELSE\b/gi, "\n        ELSE")
-            .replace(/\bEND\b/gi, "\n    END");
-    }
-
-    function booleanExprToCase(colExpr) {
-        const t = colExpr.trim();
-        const m = t.match(/^\(\s*([a-zA-Z0-9_\.]+)\s*(<>|!=|=|<=|>=|<|>)\s*([a-zA-Z0-9_\.]+)\s*\)\s*$/);
-        if (!m) return null;
-
-        const left = m[1], op = (m[2] === "!=" ? "<>" : m[2]), right = m[3];
-        return `CASE WHEN ${left} ${op} ${right} THEN 1 ELSE 0 END AS is_modified`;
-    }
-
-    function formatOracleSql(raw, opts) {
-        let sql = normalizeSpaces(raw);
-        if (!sql) return { text: "", lineCount: 0 };
-
-        if (opts.upperKeyword) sql = upperKeywords(sql);
-
-        const selIdx = sql.match(/\bSELECT\b/i)?.index ?? -1;
-        const fromMatch = sql.match(/\bFROM\b/i);
-        if (selIdx !== 0 || !fromMatch) {
-            let fallback = sql
-                .replace(/\bFROM\b/gi, "\nFROM")
-                .replace(/\bWHERE\b/gi, "\nWHERE")
-                .replace(/\bORDER BY\b/gi, "\nORDER BY")
-                .replace(/\bGROUP BY\b/gi, "\nGROUP BY")
-                .replace(/\bHAVING\b/gi, "\nHAVING")
-                .replace(/\bLEFT JOIN\b/gi, "\nLEFT JOIN")
-                .replace(/\bRIGHT JOIN\b/gi, "\nRIGHT JOIN")
-                .replace(/\bINNER JOIN\b/gi, "\nINNER JOIN")
-                .replace(/\bFULL JOIN\b/gi, "\nFULL JOIN")
-                .replace(/\bJOIN\b/gi, "\nJOIN")
-                .replace(/\bON\b/gi, "\n  ON")
-                .replace(/\bAND\b/gi, "\n  AND");
-            fallback = fallback.trim();
-            return { text: fallback, lineCount: fallback.split("\n").length };
-        }
-
-        const fromIdx = fromMatch.index;
-        const selectPart = sql.slice(0, fromIdx).trim();
-        const restPart = sql.slice(fromIdx).trim();
-
-        let selectBody = selectPart.replace(/^SELECT\s+/i, "").trim();
-
-        let formattedSelect = "SELECT";
-        if (opts.breakSelectCols) {
-            let cols = splitSelectColumns(selectBody);
-
-            if (opts.booleanToCase) {
-                cols = cols.map(c => {
-                    const converted = booleanExprToCase(c);
-                    return converted ? converted : c;
-                });
-            }
-
-            if (opts.caseMultiline) {
-                cols = cols.map(c => (/\bCASE\b/i.test(c) ? multilineCase(c) : c));
-            }
-
-            formattedSelect += "\n    " + cols.join(",\n    ");
-        } else {
-            formattedSelect += " " + selectBody;
-        }
-
-        let formattedRest = restPart
-            .replace(/\bFROM\b/gi, "\nFROM")
-            .replace(/\bWHERE\b/gi, "\nWHERE")
-            .replace(/\bORDER BY\b/gi, "\nORDER BY")
-            .replace(/\bGROUP BY\b/gi, "\nGROUP BY")
-            .replace(/\bHAVING\b/gi, "\nHAVING");
-
-        if (opts.alignJoins) {
-            formattedRest = formattedRest
-                .replace(/\bLEFT JOIN\b/gi, "\nLEFT JOIN")
-                .replace(/\bRIGHT JOIN\b/gi, "\nRIGHT JOIN")
-                .replace(/\bINNER JOIN\b/gi, "\nINNER JOIN")
-                .replace(/\bFULL JOIN\b/gi, "\nFULL JOIN")
-                .replace(/\bJOIN\b/gi, "\nJOIN")
-                .replace(/\bON\b/gi, "\n    ON")
-                .replace(/\bAND\b/gi, "\n   AND")
-                .replace(/\bOR\b/gi, "\n   OR");
-        }
-
-        formattedRest = formattedRest
-            .replace(/\nWHERE\s+/i, "\nWHERE ")
-            .replace(/\nWHERE (.+)/i, (m) => m);
-
-        let out = (formattedSelect + "\n" + formattedRest).trim();
-        out = out.replace(/\n{3,}/g, "\n\n");
-
-        const lineCount = out ? out.split("\n").length : 0;
-        return { text: out, lineCount };
-    }
-
-    document.getElementById("oracleFormatBtn").addEventListener("click", () => {
-        const raw = oracleInEl.value || "";
-        const opts = {
-            upperKeyword: document.getElementById("oracleUpperKeyword").checked,
-            breakSelectCols: document.getElementById("oracleBreakSelectCols").checked,
-            alignJoins: document.getElementById("oracleAlignJoins").checked,
-            caseMultiline: document.getElementById("oracleCaseMultiline").checked,
-            booleanToCase: document.getElementById("oracleBooleanToCase").checked
-        };
-
-        const start = performance.now();
-        const { text, lineCount } = formatOracleSql(raw, opts);
-        const end = performance.now();
-
-        oracleOutEl.value = text;
-        oracleStatsEl.textContent = text
-            ? ((currentLang === "en")
-                ? `Done · ${lineCount} lines · ${(end - start).toFixed(2)}ms`
-                : `완료 · ${lineCount}줄 · ${(end - start).toFixed(2)}ms`)
-            : "";
-    });
-
-    document.getElementById("oracleCopyBtn").addEventListener("click", async () => {
-        const out = oracleOutEl.value || "";
-        if (!out.trim()) {
-            alert(t("alert.noCopy"));
-            return;
-        }
-        try {
-            await navigator.clipboard.writeText(out);
-            alert(t("alert.copied"));
-        } catch (e) {
-            oracleOutEl.select();
-            document.execCommand("copy");
-            alert(t("alert.copiedExec"));
-        }
-    });
-
-    document.getElementById("oracleClearBtn").addEventListener("click", () => {
-        oracleInEl.value = "";
-        oracleOutEl.value = "";
-        oracleStatsEl.textContent = "";
-        oracleInEl.focus();
     });
 
     console.log("SQL Utility Tools — Made by Sanghyun Im (임상현)");
