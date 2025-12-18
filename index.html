@@ -239,6 +239,7 @@
         <button class="tab-button" data-tab="shaTab">SHA-256 해시 생성기</button>
         <button class="tab-button" data-tab="rsaTab">RSA 암호화</button>
         <button class="tab-button" data-tab="jsonTab">JSON 비교</button>
+        <button class="tab-button" data-tab="oracleFmtTab">SQL 정리(Oracle)</button>
     </div>
 
     <!-- IN 절 생성기 탭 -->
@@ -648,7 +649,41 @@ user@example.com
             <div class="small-text">형식: [경로] A값 → B값</div>
         </div>
     </section>
+    <section id="oracleFmtTab" class="tab-content">
+        <div class="subtitle" style="margin-top: 4px;">
+            JPA/Hibernate 로그처럼 한 줄로 찍힌 SQL을 <strong>Oracle 기준</strong>으로 보기 좋게 정리합니다. (브라우저에서만 처리)
+        </div>
 
+        <div class="row">
+            <div class="col">
+                <label for="oracleSqlIn">원본 SQL (한 줄 로그 그대로)</label>
+                <textarea id="oracleSqlIn" placeholder="여기에 한 줄 SQL을 붙여넣으세요."></textarea>
+                <div class="small-text">※ 서버 전송 없음 · 브라우저에서만 포맷합니다.</div>
+            </div>
+            <div class="col">
+                <label for="oracleSqlOut">정리된 SQL</label>
+                <textarea id="oracleSqlOut" readonly placeholder="정리 결과가 여기에 표시됩니다."></textarea>
+                <div class="stats" id="oracleSqlStats"></div>
+            </div>
+        </div>
+
+        <div class="options" style="margin-top: 10px;">
+            <label><input type="checkbox" id="oracleUpperKeyword" checked /> 키워드 대문자(SELECT/WHERE...)</label>
+            <label><input type="checkbox" id="oracleBreakSelectCols" checked /> SELECT 컬럼 줄바꿈</label>
+            <label><input type="checkbox" id="oracleAlignJoins" checked /> JOIN/ON 줄 정리</label>
+            <label><input type="checkbox" id="oracleCaseMultiline" checked /> CASE 줄바꿈</label>
+            <label title="(a<>b) 같은 boolean 컬럼을 Oracle-safe CASE로 바꿉니다.">
+                <input type="checkbox" id="oracleBooleanToCase" checked />
+                boolean 컬럼 → CASE(Oracle-safe)
+            </label>
+        </div>
+
+        <div class="btn-row">
+            <button class="btn-primary" id="oracleFormatBtn">SQL 정리</button>
+            <button class="btn-secondary" id="oracleCopyBtn">복사하기</button>
+            <button class="btn-secondary" id="oracleClearBtn">초기화</button>
+        </div>
+    </section>
     <footer>
         © 2025 Made by 임상현 (Sanghyun Im)
     </footer>
@@ -1521,6 +1556,226 @@ user@example.com
         rsaCipherTextEl.value = "";
         rsaDecryptedOutEl.textContent = "";
         rsaInfoEl.textContent = "";
+    });
+    const oracleInEl = document.getElementById("oracleSqlIn");
+    const oracleOutEl = document.getElementById("oracleSqlOut");
+    const oracleStatsEl = document.getElementById("oracleSqlStats");
+
+    function normalizeSpaces(sql) {
+        return (sql || "")
+            .replace(/\u00A0/g, " ")
+            .replace(/\s+/g, " ")
+            .trim();
+    }
+
+    function upperKeywords(sql) {
+        // 과하게 전부 대문자 하지 않고, 주요 키워드만
+        const kws = [
+            "select","from","where","order by","group by","having",
+            "left join","right join","inner join","full join","join",
+            "on","and","or",
+            "case","when","then","else","end",
+            "as"
+        ];
+
+        // 긴 키워드 먼저 치환
+        kws.sort((a,b)=>b.length-a.length);
+
+        let out = sql;
+        for (const kw of kws) {
+            const re = new RegExp(`\\b${kw.replace(/\s+/g, "\\s+")}\\b`, "gi");
+            out = out.replace(re, kw.toUpperCase().replace(/\s+/g, " "));
+        }
+        return out;
+    }
+
+    function splitSelectColumns(selectBody) {
+        // SELECT ... FROM 사이에서 최상위 콤마 기준으로 split
+        // 괄호/따옴표/CASE 등 고려해 간단 상태머신
+        const cols = [];
+        let buf = "";
+        let depth = 0;
+        let inS = false;
+        let inD = false;
+
+        for (let i = 0; i < selectBody.length; i++) {
+            const ch = selectBody[i];
+            const prev = selectBody[i - 1];
+
+            if (!inD && ch === "'" && prev !== "\\") inS = !inS;
+            if (!inS && ch === '"' && prev !== "\\") inD = !inD;
+
+            if (!inS && !inD) {
+                if (ch === "(") depth++;
+                if (ch === ")") depth = Math.max(0, depth - 1);
+                if (ch === "," && depth === 0) {
+                    cols.push(buf.trim());
+                    buf = "";
+                    continue;
+                }
+            }
+            buf += ch;
+        }
+        if (buf.trim()) cols.push(buf.trim());
+        return cols;
+    }
+
+    function multilineCase(expr) {
+        // CASE WHEN THEN ELSE END를 보기 좋게
+        // 너무 복잡한 파싱은 피하고, 키워드 기준 줄바꿈만
+        return expr
+            .replace(/\bCASE\b/gi, "CASE")
+            .replace(/\bWHEN\b/gi, "\n        WHEN")
+            .replace(/\bTHEN\b/gi, " THEN")
+            .replace(/\bELSE\b/gi, "\n        ELSE")
+            .replace(/\bEND\b/gi, "\n    END");
+    }
+
+    function booleanExprToCase(colExpr) {
+        // SELECT 컬럼이 "(a<>b)" 같은 형태로 끝나면 Oracle-safe로 변환
+        // 패턴: 괄호로 감싼 비교식 1개
+        const t = colExpr.trim();
+        const m = t.match(/^\(\s*([a-zA-Z0-9_\.]+)\s*(<>|!=|=|<=|>=|<|>)\s*([a-zA-Z0-9_\.]+)\s*\)\s*$/);
+        if (!m) return null;
+
+        const left = m[1], op = (m[2] === "!=" ? "<>" : m[2]), right = m[3];
+        return `CASE WHEN ${left} ${op} ${right} THEN 1 ELSE 0 END AS is_modified`;
+    }
+
+    function formatOracleSql(raw, opts) {
+        let sql = normalizeSpaces(raw);
+        if (!sql) return { text: "", lineCount: 0 };
+
+        if (opts.upperKeyword) sql = upperKeywords(sql);
+
+        // SELECT ... FROM 분리
+        const selIdx = sql.match(/\bSELECT\b/i)?.index ?? -1;
+        const fromMatch = sql.match(/\bFROM\b/i);
+        if (selIdx !== 0 || !fromMatch) {
+            // SELECT가 아니거나 FROM이 없으면 키워드 줄바꿈만
+            let fallback = sql
+                .replace(/\bFROM\b/gi, "\nFROM")
+                .replace(/\bWHERE\b/gi, "\nWHERE")
+                .replace(/\bORDER BY\b/gi, "\nORDER BY")
+                .replace(/\bGROUP BY\b/gi, "\nGROUP BY")
+                .replace(/\bHAVING\b/gi, "\nHAVING")
+                .replace(/\bLEFT JOIN\b/gi, "\nLEFT JOIN")
+                .replace(/\bRIGHT JOIN\b/gi, "\nRIGHT JOIN")
+                .replace(/\bINNER JOIN\b/gi, "\nINNER JOIN")
+                .replace(/\bFULL JOIN\b/gi, "\nFULL JOIN")
+                .replace(/\bJOIN\b/gi, "\nJOIN")
+                .replace(/\bON\b/gi, "\n  ON")
+                .replace(/\bAND\b/gi, "\n  AND");
+            fallback = fallback.trim();
+            return { text: fallback, lineCount: fallback.split("\n").length };
+        }
+
+        const fromIdx = fromMatch.index;
+        const selectPart = sql.slice(0, fromIdx).trim(); // SELECT ...
+        const restPart = sql.slice(fromIdx).trim();      // FROM ...
+
+        let selectBody = selectPart.replace(/^SELECT\s+/i, "").trim();
+
+        let formattedSelect = "SELECT";
+        if (opts.breakSelectCols) {
+            let cols = splitSelectColumns(selectBody);
+
+            // (옵션) boolean 컬럼을 CASE로 치환
+            if (opts.booleanToCase) {
+                cols = cols.map(c => {
+                    const converted = booleanExprToCase(c);
+                    return converted ? converted : c;
+                });
+            }
+
+            if (opts.caseMultiline) {
+                cols = cols.map(c => (/\bCASE\b/i.test(c) ? multilineCase(c) : c));
+            }
+
+            formattedSelect += "\n    " + cols.join(",\n    ");
+        } else {
+            formattedSelect += " " + selectBody;
+        }
+
+        // FROM 이하 키워드 줄바꿈
+        let formattedRest = restPart
+            .replace(/\bFROM\b/gi, "\nFROM")
+            .replace(/\bWHERE\b/gi, "\nWHERE")
+            .replace(/\bORDER BY\b/gi, "\nORDER BY")
+            .replace(/\bGROUP BY\b/gi, "\nGROUP BY")
+            .replace(/\bHAVING\b/gi, "\nHAVING");
+
+        if (opts.alignJoins) {
+            formattedRest = formattedRest
+                .replace(/\bLEFT JOIN\b/gi, "\nLEFT JOIN")
+                .replace(/\bRIGHT JOIN\b/gi, "\nRIGHT JOIN")
+                .replace(/\bINNER JOIN\b/gi, "\nINNER JOIN")
+                .replace(/\bFULL JOIN\b/gi, "\nFULL JOIN")
+                .replace(/\bJOIN\b/gi, "\nJOIN")
+                .replace(/\bON\b/gi, "\n    ON")
+                .replace(/\bAND\b/gi, "\n   AND")
+                .replace(/\bOR\b/gi, "\n   OR");
+        }
+
+        // WHERE절 AND 정리(너무 과하면 JOIN ON도 같이 깨질 수 있어서 이미 alignJoins에서 처리)
+        formattedRest = formattedRest
+            .replace(/\nWHERE\s+/i, "\nWHERE ")
+            .replace(/\nWHERE (.+)/i, (m) => m); // noop
+
+        // 보기 좋게 앞/뒤 공백 정리
+        let out = (formattedSelect + "\n" + formattedRest).trim();
+
+        // 중복 줄바꿈 정리
+        out = out.replace(/\n{3,}/g, "\n\n");
+
+        // FROM 줄이 맨 위에 오도록(SELECT 다음 줄이 FROM이면 OK)
+        // 이미 \nFROM 처리했으므로 SELECT 아래에 FROM이 붙음
+
+        const lineCount = out ? out.split("\n").length : 0;
+        return { text: out, lineCount };
+    }
+
+    document.getElementById("oracleFormatBtn").addEventListener("click", () => {
+        const raw = oracleInEl.value || "";
+        const opts = {
+            upperKeyword: document.getElementById("oracleUpperKeyword").checked,
+            breakSelectCols: document.getElementById("oracleBreakSelectCols").checked,
+            alignJoins: document.getElementById("oracleAlignJoins").checked,
+            caseMultiline: document.getElementById("oracleCaseMultiline").checked,
+            booleanToCase: document.getElementById("oracleBooleanToCase").checked
+        };
+
+        const start = performance.now();
+        const { text, lineCount } = formatOracleSql(raw, opts);
+        const end = performance.now();
+
+        oracleOutEl.value = text;
+        oracleStatsEl.textContent = text
+            ? `완료 · ${lineCount}줄 · ${(end - start).toFixed(2)}ms`
+            : "";
+    });
+
+    document.getElementById("oracleCopyBtn").addEventListener("click", async () => {
+        const out = oracleOutEl.value || "";
+        if (!out.trim()) {
+            alert("복사할 내용이 없습니다.");
+            return;
+        }
+        try {
+            await navigator.clipboard.writeText(out);
+            alert("복사되었습니다.");
+        } catch (e) {
+            oracleOutEl.select();
+            document.execCommand("copy");
+            alert("복사되었습니다. (execCommand)");
+        }
+    });
+
+    document.getElementById("oracleClearBtn").addEventListener("click", () => {
+        oracleInEl.value = "";
+        oracleOutEl.value = "";
+        oracleStatsEl.textContent = "";
+        oracleInEl.focus();
     });
     console.log("SQL 실무 도구 — Made by Sanghyun Im (임상현)");
 </script>
