@@ -5,8 +5,8 @@
             crossorigin="anonymous"></script>
     <meta charset="UTF-8" />
     <meta name="description" content="SQL IN 절 자동 생성, 값 비교, Excel 데이터를 SQL INSERT로 변환하는 실무 개발자 도구. 무료, 갯수 제한 없음. Made by 임상현." />
-    <meta name="keywords" content="SQL IN 절 생성기, Excel SQL 생성기, 데이터 비교, 값 차집합 도구, SQL 쿼리 자동 생성기, 개발자 도구, SHA-256 해시 생성기, SJON 비교" />
-    <title>DATA 실무 도구 - SQL IN 절 생성기, 값 비교 도구, Excel → SQL INSERT 생성기, SHA-256 해시 생성기, SJON 비교</title>
+    <meta name="keywords" content="SQL IN 절 생성기, Excel SQL 생성기, 데이터 비교, 값 차집합 도구, SQL 쿼리 자동 생성기, 개발자 도구, SHA-256 해시 생성기" />
+    <title>DATA 실무 도구 - SQL IN 절 생성기, 값 비교 도구, Excel → SQL INSERT 생성기, SHA-256 해시 생성기</title>
 
     <style>
         * { box-sizing: border-box; }
@@ -531,6 +531,79 @@ user@example.com
             <div class="small-text" id="shaHashInfo"></div>
         </div>
     </section>
+    <hr style="border:none;border-top:1px solid #eee;margin:28px 0;" />
+
+    <div class="subtitle" style="margin-top: 0;">
+        RSA 공개키로 암호화 / 개인키로 복호화 (브라우저에서만 처리)
+        <span class="badge">WebCrypto</span>
+    </div>
+
+    <div class="row" style="margin-top: 10px;">
+        <div class="col">
+            <label for="rsaKeySize">키 길이</label>
+            <select id="rsaKeySize">
+                <option value="2048" selected>2048 (권장)</option>
+                <option value="3072">3072</option>
+                <option value="4096">4096</option>
+            </select>
+            <div class="small-text">키가 클수록 안전하지만 생성/연산이 느려질 수 있어요.</div>
+        </div>
+        <div class="col">
+            <label for="rsaHashAlg">OAEP 해시</label>
+            <select id="rsaHashAlg">
+                <option value="SHA-256" selected>SHA-256</option>
+                <option value="SHA-384">SHA-384</option>
+                <option value="SHA-512">SHA-512</option>
+            </select>
+            <div class="small-text">RSA-OAEP 패딩에 사용되는 해시 알고리즘입니다.</div>
+        </div>
+    </div>
+
+    <div class="btn-row" style="margin-top: 12px;">
+        <button class="btn-primary" id="rsaGenKeyBtn">RSA 키 생성</button>
+        <button class="btn-secondary" id="rsaCopyPubBtn">공개키 복사</button>
+        <button class="btn-secondary" id="rsaCopyPrivBtn">개인키 복사</button>
+        <button class="btn-secondary" id="rsaClearKeyBtn">키 초기화</button>
+    </div>
+
+    <div class="row">
+        <div class="col">
+            <label for="rsaPublicKeyPem">공개키 (PEM)</label>
+            <textarea id="rsaPublicKeyPem" placeholder="RSA 키 생성 후 여기에 표시됩니다." readonly></textarea>
+        </div>
+        <div class="col">
+            <label for="rsaPrivateKeyPem">개인키 (PEM)</label>
+            <textarea id="rsaPrivateKeyPem" placeholder="RSA 키 생성 후 여기에 표시됩니다." readonly></textarea>
+            <div class="small-text">※ 개인키는 민감정보입니다. 공유/노출에 주의하세요.</div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col">
+            <label for="rsaPlainText">평문(암호화할 텍스트)</label>
+            <textarea id="rsaPlainText" placeholder="여기에 암호화할 텍스트를 입력하세요."></textarea>
+            <div class="small-text">
+                ※ RSA는 긴 텍스트를 직접 암호화하기에 적합하지 않습니다(제한 있음). 긴 데이터는 보통 AES(대칭키)+RSA(키 암호화) 조합을 사용합니다.
+            </div>
+        </div>
+        <div class="col">
+            <label for="rsaCipherText">암호문(Base64)</label>
+            <textarea id="rsaCipherText" placeholder="암호화 결과(Base64)가 여기에 표시됩니다."></textarea>
+        </div>
+    </div>
+
+    <div class="btn-row">
+        <button class="btn-primary" id="rsaEncryptBtn">공개키로 암호화</button>
+        <button class="btn-primary" id="rsaDecryptBtn">개인키로 복호화</button>
+        <button class="btn-secondary" id="rsaCopyCipherBtn">암호문 복사</button>
+        <button class="btn-secondary" id="rsaClearMsgBtn">메시지 초기화</button>
+    </div>
+
+    <div class="result-wrapper">
+        <label>복호화 결과(평문)</label>
+        <div id="rsaDecryptedOut" class="hash-output"></div>
+        <div class="small-text" id="rsaInfo"></div>
+    </div>
     <section id="jsonTab" class="tab-content">
         <div class="subtitle" style="margin-top: 4px;">
             JSON 두 개를 붙여넣고 차이점을 비교합니다. (브라우저에서만 처리)
@@ -1196,6 +1269,257 @@ user@example.com
             document.execCommand("copy");
             alert("복사되었습니다. (execCommand)");
         }
+    });
+    function ensureWebCrypto() {
+        if (!(window.crypto && window.crypto.subtle && window.TextEncoder && window.TextDecoder)) {
+            throw new Error("이 브라우저는 WebCrypto를 지원하지 않습니다. 최신 Chrome/Edge/Safari를 사용해주세요.");
+        }
+    }
+
+    function arrayBufferToBase64(buf) {
+        const bytes = new Uint8Array(buf);
+        let binary = "";
+        for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+        return btoa(binary);
+    }
+
+    function base64ToArrayBuffer(b64) {
+        const binary = atob(b64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        return bytes.buffer;
+    }
+
+    function toPem(base64, label) {
+        const lines = base64.match(/.{1,64}/g) || [];
+        return `-----BEGIN ${label}-----\n${lines.join("\n")}\n-----END ${label}-----`;
+    }
+
+    function pemToBase64(pem) {
+        return pem
+            .replace(/-----BEGIN [^-]+-----/g, "")
+            .replace(/-----END [^-]+-----/g, "")
+            .replace(/\s+/g, "")
+            .trim();
+    }
+
+    async function exportPublicKeyPem(publicKey) {
+        const spki = await crypto.subtle.exportKey("spki", publicKey);
+        return toPem(arrayBufferToBase64(spki), "PUBLIC KEY");
+    }
+
+    async function exportPrivateKeyPem(privateKey) {
+        const pkcs8 = await crypto.subtle.exportKey("pkcs8", privateKey);
+        return toPem(arrayBufferToBase64(pkcs8), "PRIVATE KEY");
+    }
+
+    async function importPublicKeyPem(pem, hashAlg) {
+        const b64 = pemToBase64(pem);
+        const buf = base64ToArrayBuffer(b64);
+        return crypto.subtle.importKey(
+            "spki",
+            buf,
+            { name: "RSA-OAEP", hash: hashAlg },
+            true,
+            ["encrypt"]
+        );
+    }
+
+    async function importPrivateKeyPem(pem, hashAlg) {
+        const b64 = pemToBase64(pem);
+        const buf = base64ToArrayBuffer(b64);
+        return crypto.subtle.importKey(
+            "pkcs8",
+            buf,
+            { name: "RSA-OAEP", hash: hashAlg },
+            true,
+            ["decrypt"]
+        );
+    }
+
+    function getRsaOptions() {
+        return {
+            modulusLength: parseInt(document.getElementById("rsaKeySize").value, 10),
+            hashAlg: document.getElementById("rsaHashAlg").value
+        };
+    }
+
+    const rsaPublicKeyPemEl = document.getElementById("rsaPublicKeyPem");
+    const rsaPrivateKeyPemEl = document.getElementById("rsaPrivateKeyPem");
+    const rsaPlainTextEl = document.getElementById("rsaPlainText");
+    const rsaCipherTextEl = document.getElementById("rsaCipherText");
+    const rsaDecryptedOutEl = document.getElementById("rsaDecryptedOut");
+    const rsaInfoEl = document.getElementById("rsaInfo");
+
+    let rsaKeyPair = null;
+
+    document.getElementById("rsaGenKeyBtn").addEventListener("click", async () => {
+        try {
+            ensureWebCrypto();
+            rsaInfoEl.textContent = "";
+            rsaDecryptedOutEl.textContent = "";
+
+            const { modulusLength, hashAlg } = getRsaOptions();
+
+            rsaInfoEl.textContent = "키 생성 중...";
+            const start = performance.now();
+
+            rsaKeyPair = await crypto.subtle.generateKey(
+                {
+                    name: "RSA-OAEP",
+                    modulusLength,
+                    publicExponent: new Uint8Array([1, 0, 1]),
+                    hash: hashAlg
+                },
+                true,
+                ["encrypt", "decrypt"]
+            );
+
+            const pubPem = await exportPublicKeyPem(rsaKeyPair.publicKey);
+            const privPem = await exportPrivateKeyPem(rsaKeyPair.privateKey);
+
+            rsaPublicKeyPemEl.value = pubPem;
+            rsaPrivateKeyPemEl.value = privPem;
+
+            const end = performance.now();
+            rsaInfoEl.textContent = `RSA 키 생성 완료 · ${modulusLength}bit · ${hashAlg} · ${(end - start).toFixed(2)}ms`;
+        } catch (e) {
+            alert("RSA 키 생성 실패: " + (e.message || e));
+            rsaInfoEl.textContent = e.message || String(e);
+        }
+    });
+
+    document.getElementById("rsaEncryptBtn").addEventListener("click", async () => {
+        try {
+            ensureWebCrypto();
+            const { hashAlg } = getRsaOptions();
+
+            const plain = (rsaPlainTextEl.value || "");
+            if (!plain.trim()) {
+                alert("암호화할 텍스트를 입력해주세요.");
+                return;
+            }
+
+            // 공개키 우선: 화면의 PEM이 있으면 import, 없으면 생성된 keyPair 사용
+            let publicKey = null;
+            if ((rsaPublicKeyPemEl.value || "").trim()) {
+                publicKey = await importPublicKeyPem(rsaPublicKeyPemEl.value, hashAlg);
+            } else if (rsaKeyPair?.publicKey) {
+                publicKey = rsaKeyPair.publicKey;
+            } else {
+                alert("공개키가 없습니다. 먼저 RSA 키를 생성하거나 공개키 PEM을 넣어주세요.");
+                return;
+            }
+
+            const encoder = new TextEncoder();
+            const data = encoder.encode(plain);
+
+            // RSA-OAEP 입력 길이 제한 안내(대략)
+            // 최대길이: k - 2*hLen - 2 (k: 바이트, hLen: 해시 바이트)
+            const k = (parseInt(document.getElementById("rsaKeySize").value, 10) / 8);
+            const hLen = hashAlg === "SHA-256" ? 32 : (hashAlg === "SHA-384" ? 48 : 64);
+            const maxLen = k - 2 * hLen - 2;
+            if (data.length > maxLen) {
+                alert(`텍스트가 너무 깁니다. (현재 ${data.length}bytes, 최대 약 ${maxLen}bytes)\n긴 데이터는 AES+RSA(하이브리드) 방식을 추천해요.`);
+                return;
+            }
+
+            const cipherBuf = await crypto.subtle.encrypt({ name: "RSA-OAEP" }, publicKey, data);
+            const cipherB64 = arrayBufferToBase64(cipherBuf);
+
+            rsaCipherTextEl.value = cipherB64;
+            rsaInfoEl.textContent = `암호화 완료 · 입력 ${data.length}bytes`;
+        } catch (e) {
+            alert("암호화 실패: " + (e.message || e));
+            rsaInfoEl.textContent = e.message || String(e);
+        }
+    });
+
+    document.getElementById("rsaDecryptBtn").addEventListener("click", async () => {
+        try {
+            ensureWebCrypto();
+            const { hashAlg } = getRsaOptions();
+
+            const cipherB64 = (rsaCipherTextEl.value || "").trim();
+            if (!cipherB64) {
+                alert("복호화할 암호문(Base64)을 입력해주세요.");
+                return;
+            }
+
+            let privateKey = null;
+            if ((rsaPrivateKeyPemEl.value || "").trim()) {
+                privateKey = await importPrivateKeyPem(rsaPrivateKeyPemEl.value, hashAlg);
+            } else if (rsaKeyPair?.privateKey) {
+                privateKey = rsaKeyPair.privateKey;
+            } else {
+                alert("개인키가 없습니다. 먼저 RSA 키를 생성하거나 개인키 PEM을 넣어주세요.");
+                return;
+            }
+
+            const cipherBuf = base64ToArrayBuffer(cipherB64);
+            const plainBuf = await crypto.subtle.decrypt({ name: "RSA-OAEP" }, privateKey, cipherBuf);
+
+            const decoder = new TextDecoder();
+            const plain = decoder.decode(plainBuf);
+
+            rsaDecryptedOutEl.textContent = plain;
+            rsaInfoEl.textContent = `복호화 완료 · 출력 ${plainBuf.byteLength}bytes`;
+        } catch (e) {
+            alert("복호화 실패: " + (e.message || e));
+            rsaInfoEl.textContent = e.message || String(e);
+            rsaDecryptedOutEl.textContent = "";
+        }
+    });
+
+    async function copyTextFromEl(el, emptyMsg) {
+        const txt = (el.value !== undefined ? el.value : el.textContent) || "";
+        if (!txt.trim()) {
+            alert(emptyMsg);
+            return;
+        }
+        try {
+            await navigator.clipboard.writeText(txt);
+            alert("복사되었습니다.");
+        } catch {
+            if (el.select) {
+                el.select();
+                document.execCommand("copy");
+                alert("복사되었습니다. (execCommand)");
+            } else {
+                const temp = document.createElement("textarea");
+                temp.value = txt;
+                document.body.appendChild(temp);
+                temp.select();
+                document.execCommand("copy");
+                document.body.removeChild(temp);
+                alert("복사되었습니다. (execCommand)");
+            }
+        }
+    }
+
+    document.getElementById("rsaCopyPubBtn").addEventListener("click", () =>
+        copyTextFromEl(rsaPublicKeyPemEl, "복사할 공개키가 없습니다.")
+    );
+    document.getElementById("rsaCopyPrivBtn").addEventListener("click", () =>
+        copyTextFromEl(rsaPrivateKeyPemEl, "복사할 개인키가 없습니다.")
+    );
+    document.getElementById("rsaCopyCipherBtn").addEventListener("click", () =>
+        copyTextFromEl(rsaCipherTextEl, "복사할 암호문이 없습니다.")
+    );
+
+    document.getElementById("rsaClearKeyBtn").addEventListener("click", () => {
+        rsaKeyPair = null;
+        rsaPublicKeyPemEl.value = "";
+        rsaPrivateKeyPemEl.value = "";
+        rsaInfoEl.textContent = "";
+        alert("키가 초기화되었습니다.");
+    });
+
+    document.getElementById("rsaClearMsgBtn").addEventListener("click", () => {
+        rsaPlainTextEl.value = "";
+        rsaCipherTextEl.value = "";
+        rsaDecryptedOutEl.textContent = "";
+        rsaInfoEl.textContent = "";
     });
     console.log("SQL 실무 도구 — Made by Sanghyun Im (임상현)");
 </script>
