@@ -1,0 +1,2452 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5975580696697245"
+            crossorigin="anonymous"></script>
+    <meta charset="UTF-8" />
+    <meta name="description" content="SQL IN 절 자동 생성, 값 비교, Excel 데이터를 SQL INSERT로 변환하는 실무 개발자 도구. 무료, 갯수 제한 없음. Made by 임상현." />
+    <meta name="keywords" content="SQL IN 절 생성기, Excel SQL 생성기, 데이터 비교, 값 차집합 도구, SQL 쿼리 자동 생성기, 개발자 도구, SHA-256 해시 생성기, RSA 암호화, JSON 비교" />
+    <title>DATA 실무 도구 - SQL IN 절 생성기, 값 비교 도구, Excel → SQL INSERT 생성기, SHA-256 해시 생성기, RSA 암호화, JSON 비교</title>
+    <link rel="icon" href="/favicon.ico">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f5f5f7;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+        .container {
+            margin: 40px 16px;
+            max-width: 1100px;
+            width: 100%;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+            padding: 24px 24px 32px;
+        }
+
+        /* Top bar */
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .lang-toggle {
+            display: inline-flex;
+            gap: 6px;
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            padding: 6px;
+            border-radius: 999px;
+            align-items: center;
+            height: fit-content;
+        }
+        .lang-btn {
+            border: none;
+            padding: 6px 10px;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 700;
+            background: transparent;
+            color: #6b7280;
+        }
+        .lang-btn.active {
+            background: #111827;
+            color: #fff;
+        }
+
+        h1 {
+            margin: 0 0 4px;
+            font-size: 24px;
+            font-weight: 700;
+        }
+        .subtitle {
+            margin-bottom: 20px;
+            color: #666;
+            font-size: 13px;
+        }
+        label {
+            font-size: 13px;
+            font-weight: 600;
+            display: block;
+            margin-bottom: 6px;
+        }
+        /* ✅ 회의 요약은 긴 문장도 자동 줄바꿈 */
+        .wrap-output{
+            white-space: pre-wrap;     /* 줄바꿈 유지 + 자동 줄바꿈 */
+            word-break: break-word;
+            overflow-wrap: anywhere;   /* 어떤 문자열도 박스 밖으로 못 나가게 */
+            overflow-x: hidden;        /* 가로 스크롤 대신 줄바꿈 */
+            max-width: 100%;
+        }
+
+        textarea {
+            width: 100%;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            padding: 10px 12px;
+            font-size: 13px;
+            font-family: "JetBrains Mono", "Consolas", monospace;
+            resize: vertical;
+            min-height: 160px;
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 2px rgba(79,70,229,0.15);
+        }
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 16px;
+        }
+        .col {
+            flex: 1 1 280px;
+        }
+        select, input[type="text"], input[type="number"] {
+            width: 100%;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            padding: 7px 10px;
+            font-size: 13px;
+            font-family: inherit;
+        }
+        select:focus, input[type="text"]:focus, input[type="number"]:focus {
+            outline: none;
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 2px rgba(79,70,229,0.15);
+        }
+        .options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 8px;
+            font-size: 12px;
+        }
+        .options label {
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            margin-bottom: 0;
+        }
+        .btn-row {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        button {
+            border-radius: 999px;
+            border: none;
+            padding: 8px 18px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-primary {
+            background: #4f46e5;
+            color: white;
+        }
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #111827;
+        }
+        .btn-primary:active,
+        .btn-secondary:active {
+            transform: translateY(1px);
+        }
+        .result-wrapper {
+            margin-top: 24px;
+        }
+        .small-text {
+            font-size: 11px;
+            color: #888;
+            margin-top: 4px;
+        }
+        .stats {
+            margin-top: 4px;
+            font-size: 12px;
+            color: #555;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 11px;
+            background: #eef2ff;
+            color: #4338ca;
+            margin-left: 8px;
+        }
+
+        /* 탭 스타일 */
+        .tabs {
+            margin-top: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            border-bottom: 1px solid #e5e7eb;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+        .tab-button {
+            border: none;
+            background: transparent;
+            padding: 10px 16px;
+            font-size: 13px;
+            cursor: pointer;
+            border-radius: 999px 999px 0 0;
+            color: #6b7280;
+        }
+        .tab-button.active {
+            background: #eef2ff;
+            color: #111827;
+            font-weight: 600;
+        }
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.2s ease-out;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* SHA 결과 박스 */
+        .hash-output {
+            font-family: "JetBrains Mono", Consolas, monospace;
+            word-break: break-all;
+            min-height: 40px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+            font-size: 13px;
+            background: #f9fafb;
+            white-space: pre;
+            overflow-x: auto;
+        }
+
+        /* Meeting summary cards */
+        .ms-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 14px;
+            padding: 14px 14px 12px;
+            background: #fff;
+        }
+        .ms-card-title {
+            font-weight: 800;
+            font-size: 13px;
+            margin-bottom: 8px;
+            color: #111827;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .ms-list {
+            margin: 0;
+            padding-left: 18px;
+        }
+        .ms-list li {
+            margin: 6px 0;
+            line-height: 1.45;
+            color: #111827;
+        }
+        .ms-empty {
+            color: #9ca3af;
+            font-size: 12px;
+        }
+
+        footer {
+            margin-top: 32px;
+            text-align: center;
+            font-size: 11px;
+            color: #aaa;
+        }
+        @media (max-width: 700px) {
+            .container {
+                margin-top: 20px;
+                padding: 18px 16px 24px;
+            }
+            h1 {
+                font-size: 20px;
+            }
+            .topbar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+        .summary-grid {
+            min-width: 0;
+            max-width: 100%;
+        }
+
+        /* 화면 넓으면 2컬럼 */
+        @media (min-width: 880px) {
+            .summary-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .summary-card {
+            min-width: 0;
+            max-width: 100%;
+        }
+
+        .summary-card h3 {
+            margin: 0 0 8px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #111827;
+        }
+        .summary-text {
+            white-space: pre-wrap;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+            max-width: 100%;
+        }
+        .summary-card .summary-text {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", sans-serif;
+            font-size: 13px;
+            line-height: 1.6;
+            color: #111827;
+            white-space: pre-wrap;      /* ✅ 줄바꿈 유지 + 자동 줄바꿈 */
+            word-break: break-word;     /* ✅ 긴 단어/URL 줄바꿈 */
+            overflow-wrap: anywhere;    /* ✅ 어떤 문자열도 박스 밖으로 안 나가게 */
+        }
+
+        /* 리스트 기본 스타일 초기화 + 보기 좋게 */
+        .summary-list {
+            margin: 0;
+            padding-left: 18px;         /* ✅ 기본 들여쓰기 통일 */
+            color: #111827;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .summary-list li {
+            margin: 6px 0;
+            word-break: break-word;
+            overflow-wrap: anywhere;
+        }
+
+        /* 작은 메타 정보 */
+        .summary-meta {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #6b7280;
+        }
+        .row, .col, .ms-card, .summary-card, .summary-grid {
+            min-width: 0;
+        }
+        .meeting-wrap {
+            white-space: pre-wrap;     /* 줄바꿈 + 자동개행 */
+            word-break: break-word;    /* 긴 단어 분해 */
+            overflow-wrap: anywhere;   /* URL/숫자열도 강제 분해 */
+            overflow-x: hidden;        /* 가로 스크롤 완전 차단 */
+        }
+    </style>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-V7H9N1Q5Q0"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-V7H9N1Q5Q0');
+    </script>
+</head>
+<body>
+<div class="container">
+    <div class="topbar">
+        <div>
+            <h1 data-i18n="app.title">DATA 실무 도구</h1>
+            <div class="subtitle">
+                <span data-i18n="app.subtitle">데이터 관리하는 전문가를 위한 유틸리티 사이트입니다.</span>
+                <span class="badge" data-i18n="app.badge">Made by 임상현 (광고 및 후원 문의 인스타 : 1imsangh)</span>
+            </div>
+        </div>
+
+        <div class="lang-toggle" aria-label="Language toggle">
+            <button type="button" class="lang-btn active" data-lang="ko">KR</button>
+            <button type="button" class="lang-btn" data-lang="en">EN</button>
+        </div>
+    </div>
+
+    <!-- 탭 버튼 -->
+    <div class="tabs">
+        <button class="tab-button active" data-tab="inTab" data-i18n="tab.in">IN 절 생성기</button>
+        <button class="tab-button" data-tab="compareTab" data-i18n="tab.compare">값 비교 도구</button>
+        <button class="tab-button" data-tab="insertTab" data-i18n="tab.insert">Excel → SQL INSERT 생성기</button>
+        <button class="tab-button" data-tab="shaTab" data-i18n="tab.sha">SHA-256 해시 생성기</button>
+        <button class="tab-button" data-tab="rsaTab" data-i18n="tab.rsa">RSA 암호화</button>
+        <button class="tab-button" data-tab="jsonTab" data-i18n="tab.json">JSON 비교</button>
+        <!-- ✅ 추가: 회의 요약 탭 -->
+        <button class="tab-button" data-tab="meetingTab" data-i18n="tab.meeting">회의 요약</button>
+    </div>
+
+    <!-- IN 절 생성기 탭 -->
+    <section id="inTab" class="tab-content active">
+        <div class="subtitle" style="margin-top: 4px;">
+            <span data-i18n="in.desc">한 줄당 하나씩 값 붙여넣으면 자동으로 <strong>IN (...)</strong> 형식으로 만들어줍니다.</span>
+        </div>
+
+        <label for="inputValues" data-i18n="in.input.label">입력값 (한 줄에 하나씩 / 쉼표, 공백 모두 구분자로 인식)</label>
+        <textarea id="inputValues" data-i18n-placeholder="in.input.ph" placeholder="예시)
+4041420011181A
+4041494107956A
+4041493011337A"></textarea>
+        <div class="small-text" data-i18n="in.note">
+            ※ 공백·중복은 자동 제거됩니다. 데이터 양 제한 없이 사용 가능합니다.
+        </div>
+
+        <div class="row" style="margin-top: 20px;">
+            <div class="col">
+                <label for="wrapType" data-i18n="in.wrap.label">문자열 감싸기</label>
+                <select id="wrapType">
+                    <option value="single" data-i18n="in.wrap.single">'단일따옴표'</option>
+                    <option value="double" data-i18n="in.wrap.double">"쌍따옴표"</option>
+                    <option value="none" data-i18n="in.wrap.none">감싸지 않음</option>
+                </select>
+            </div>
+            <div class="col">
+                <label for="separator" data-i18n="in.sep.label">구분자</label>
+                <select id="separator">
+                    <option value="comma" data-i18n="in.sep.comma">쉼표 + 공백 (, )</option>
+                    <option value="comma_no_space" data-i18n="in.sep.commaNoSpace">쉼표만 (,)</option>
+                    <option value="newline" data-i18n="in.sep.newline">줄바꿈</option>
+                </select>
+            </div>
+            <div class="col">
+                <label for="template" data-i18n="in.tpl.label">템플릿</label>
+                <select id="template">
+                    <option value="in_only" data-i18n="in.tpl.only">괄호만: ( ... )</option>
+                    <option value="with_in" data-i18n="in.tpl.withIn">IN ( ... )</option>
+                    <option value="none" data-i18n="in.tpl.none">그냥 값만</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <label for="prefix" data-i18n="in.prefix.label">앞에 붙일 문자열</label>
+                <input id="prefix" type="text" data-i18n-placeholder="in.prefix.ph" placeholder="예) AND COL_NM IN " />
+            </div>
+            <div class="col">
+                <label for="suffix" data-i18n="in.suffix.label">뒤에 붙일 문자열</label>
+                <input id="suffix" type="text" data-i18n-placeholder="in.suffix.ph" placeholder="예) /* comment */" />
+            </div>
+            <div class="col">
+                <label for="maxPerLine" data-i18n="in.max.label">한 줄당 최대 개수 (줄바꿈)</label>
+                <input id="maxPerLine" type="number" min="0" value="0" />
+                <div class="small-text" data-i18n="in.max.note">0이면 강제 줄바꿈 없음</div>
+            </div>
+        </div>
+
+        <div class="options">
+            <label>
+                <input type="checkbox" id="dedupe" checked />
+                <span data-i18n="in.opt.dedupe">중복 제거</span>
+            </label>
+            <label>
+                <input type="checkbox" id="sortAsc" />
+                <span data-i18n="in.opt.sort">오름차순 정렬</span>
+            </label>
+            <label>
+                <input type="checkbox" id="ignoreEmpty" checked />
+                <span data-i18n="in.opt.ignoreEmpty">빈 값 무시</span>
+            </label>
+        </div>
+
+        <div class="btn-row">
+            <button class="btn-primary" id="generateBtn" data-i18n="in.btn.generate">IN 절 생성</button>
+            <button class="btn-secondary" id="copyBtn" data-i18n="in.btn.copy">복사하기</button>
+        </div>
+
+        <div class="result-wrapper">
+            <label for="outputValues" data-i18n="common.result">결과</label>
+            <textarea id="outputValues" readonly data-i18n-placeholder="common.result.ph" placeholder="여기에 결과가 표시됩니다."></textarea>
+            <div class="stats" id="statsText"></div>
+        </div>
+    </section>
+
+    <!-- 값 비교 도구 탭 -->
+    <section id="compareTab" class="tab-content">
+        <div class="subtitle" style="margin-top: 4px;" data-i18n="cmp.desc">
+            두 개의 값 목록을 붙여넣고, 공통값과 차이값을 한 번에 확인해보세요.
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <label for="inputA" data-i18n="cmp.a.label">A 값 목록</label>
+                <textarea id="inputA" data-i18n-placeholder="cmp.a.ph" placeholder="예시)
+apple
+tomato
+banana"></textarea>
+                <div class="small-text" data-i18n="cmp.a.note">※ 한 줄에 하나씩, 또는 쉼표/공백으로 구분해서 넣어도 됩니다.</div>
+            </div>
+            <div class="col">
+                <label for="inputB" data-i18n="cmp.b.label">B 값 목록</label>
+                <textarea id="inputB" data-i18n-placeholder="cmp.b.ph" placeholder="예시)
+banana
+orange
+melon"></textarea>
+                <div class="small-text" data-i18n="cmp.b.note">※ 공백·빈 줄은 자동으로 무시됩니다.</div>
+            </div>
+        </div>
+
+        <div class="row" style="margin-top: 20px;">
+            <div class="col">
+                <label for="delimiter" data-i18n="cmp.delim.label">구분 방식</label>
+                <select id="delimiter">
+                    <option value="auto" data-i18n="cmp.delim.auto">자동 (줄바꿈 + 쉼표 + 공백)</option>
+                    <option value="newline" data-i18n="cmp.delim.newline">줄바꿈 기준</option>
+                    <option value="comma" data-i18n="cmp.delim.comma">쉼표 기준</option>
+                    <option value="space" data-i18n="cmp.delim.space">공백 기준</option>
+                </select>
+                <div class="small-text" data-i18n="cmp.delim.note">자동 모드는 줄바꿈/쉼표/공백을 모두 구분자로 사용합니다.</div>
+            </div>
+            <div class="col">
+                <label data-i18n="cmp.opt.title">옵션</label>
+                <div class="options">
+                    <label>
+                        <input type="checkbox" id="dedupeCompare" checked />
+                        <span data-i18n="cmp.opt.dedupe">중복 제거</span>
+                    </label>
+                    <label>
+                        <input type="checkbox" id="sortAscCompare" checked />
+                        <span data-i18n="cmp.opt.sort">오름차순 정렬</span>
+                    </label>
+                    <label>
+                        <input type="checkbox" id="trimSpaceCompare" checked />
+                        <span data-i18n="cmp.opt.trim">앞뒤 공백 제거</span>
+                    </label>
+                    <label>
+                        <input type="checkbox" id="caseSensitiveCompare" />
+                        <span data-i18n="cmp.opt.case">대소문자 구분</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="btn-row">
+            <button class="btn-primary" id="compareBtn" data-i18n="cmp.btn.compare">값 비교하기</button>
+            <button class="btn-secondary" id="swapBtn" data-i18n="cmp.btn.swap">A ↔ B 교환</button>
+        </div>
+
+        <div class="result-wrapper">
+            <div class="row">
+                <div class="col">
+                    <label for="commonValues" data-i18n="cmp.out.common">공통 값 (A ∩ B)</label>
+                    <textarea id="commonValues" readonly></textarea>
+                    <div class="stats" id="commonStats"></div>
+                </div>
+                <div class="col">
+                    <label for="onlyAValues" data-i18n="cmp.out.onlyA">A에만 있는 값 (A - B)</label>
+                    <textarea id="onlyAValues" readonly></textarea>
+                    <div class="stats" id="onlyAStats"></div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <label for="onlyBValues" data-i18n="cmp.out.onlyB">B에만 있는 값 (B - A)</label>
+                    <textarea id="onlyBValues" readonly></textarea>
+                    <div class="stats" id="onlyBStats"></div>
+                </div>
+                <div class="col">
+                    <label for="allValues" data-i18n="cmp.out.all">전체 유니크 값 (A ∪ B)</label>
+                    <textarea id="allValues" readonly></textarea>
+                    <div class="stats" id="allStats"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Excel → SQL INSERT 생성기 탭 -->
+    <section id="insertTab" class="tab-content">
+        <div class="subtitle" style="margin-top: 4px;" data-i18n="ins.desc">
+            엑셀에서 복사한 데이터를 붙여넣고, SQL INSERT 문으로 한 번에 생성하세요.
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <label for="tableName" data-i18n="ins.table.label">테이블명</label>
+                <input id="tableName" type="text" data-i18n-placeholder="ins.table.ph" placeholder="예) TB_USER, TB_ORDER 등" />
+            </div>
+            <div class="col">
+                <label for="insertMode" data-i18n="ins.mode.label">INSERT 모드</label>
+                <select id="insertMode">
+                    <option value="multi" data-i18n="ins.mode.multi">한 문장에 여러 VALUES (기본)</option>
+                    <option value="single" data-i18n="ins.mode.single">행마다 INSERT 한 줄씩</option>
+                </select>
+            </div>
+            <div class="col">
+                <label for="rowDelimiter" data-i18n="ins.rowdelim.label">행 구분</label>
+                <select id="rowDelimiter">
+                    <option value="newline" data-i18n="ins.rowdelim.newline">줄바꿈 기준 (엑셀에서 그대로 복붙)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <label for="columns" data-i18n="ins.cols.label">컬럼 목록</label>
+                <textarea id="columns" data-i18n-placeholder="ins.cols.ph" placeholder="예시)
+id
+name
+age"></textarea>
+                <div class="small-text" data-i18n="ins.cols.note">
+                    줄바꿈 또는 쉼표로 컬럼명 입력 가능. (id,name,age 또는 줄마다 하나씩)
+                </div>
+            </div>
+            <div class="col">
+                <label for="excelData" data-i18n="ins.data.label">Excel 데이터 붙여넣기</label>
+                <textarea id="excelData" data-i18n-placeholder="ins.data.ph" placeholder="엑셀에서 행/열 선택 후 그대로 붙여넣기
+예)
+1[TAB]홍길동[TAB]30
+2[TAB]김철수[TAB]25"></textarea>
+                <div class="small-text" data-i18n="ins.data.note">
+                    각 행은 줄바꿈으로, 각 열은 탭(엑셀 복사 기본) 또는 쉼표로 구분됩니다.
+                </div>
+            </div>
+        </div>
+
+        <div class="options">
+            <label>
+                <input type="checkbox" id="includeColumns" checked />
+                <span data-i18n="ins.opt.cols">INSERT 문에 컬럼명 포함</span>
+            </label>
+            <label>
+                <input type="checkbox" id="detectNumber" checked />
+                <span data-i18n="ins.opt.num">숫자는 따옴표 없이 사용</span>
+            </label>
+            <label>
+                <input type="checkbox" id="emptyToNull" checked />
+                <span data-i18n="ins.opt.null">빈 값은 NULL 처리</span>
+            </label>
+            <label>
+                <input type="checkbox" id="trimCell" checked />
+                <span data-i18n="ins.opt.trim">셀 앞뒤 공백 제거</span>
+            </label>
+            <label>
+                <input type="checkbox" id="semicolonEnd" checked />
+                <span data-i18n="ins.opt.semicolon">문장 끝에 세미콜론(;) 추가</span>
+            </label>
+        </div>
+
+        <div class="btn-row">
+            <button class="btn-primary" id="generateInsertBtn" data-i18n="ins.btn.generate">INSERT 문 생성</button>
+            <button class="btn-secondary" id="copyInsertBtn" data-i18n="ins.btn.copy">복사하기</button>
+        </div>
+
+        <div class="result-wrapper">
+            <label for="insertResult" data-i18n="ins.out.label">결과 INSERT 문</label>
+            <textarea id="insertResult" readonly data-i18n-placeholder="ins.out.ph" placeholder="INSERT 문이 여기에 표시됩니다."></textarea>
+            <div class="stats" id="insertStats"></div>
+        </div>
+    </section>
+
+    <!-- SHA-256 해시 생성기 탭 -->
+    <section id="shaTab" class="tab-content">
+        <div class="subtitle" style="margin-top: 4px;" data-i18n="sha.desc">
+            텍스트를 SHA-256 알고리즘으로 해시(단방향 암호화)해주는 도구입니다.
+            여러 줄 입력 시 <strong>줄마다 해시값만</strong> 출력됩니다.
+        </div>
+
+        <label for="shaInputText" data-i18n="sha.input.label">입력 텍스트</label>
+        <textarea id="shaInputText" data-i18n-placeholder="sha.input.ph" placeholder="여기에 해시할 텍스트를 입력하세요.
+예)
+password123
+user@example.com
+임의의 문자열 등"></textarea>
+        <div class="small-text" data-i18n="sha.note">
+            · 입력값은 <strong>절대 서버로 전송되지 않고, 브라우저 안에서만 처리</strong>됩니다.<br/>
+            · SHA-256은 <strong>복호화가 불가능한 단방향 해시</strong>입니다.
+        </div>
+
+        <div class="btn-row">
+            <button class="btn-primary" id="shaHashBtn" data-i18n="sha.btn.hash">SHA-256 해시 생성</button>
+            <button class="btn-secondary" id="shaCopyHashBtn" data-i18n="sha.btn.copy">해시 복사</button>
+            <button class="btn-secondary" id="shaClearBtn" data-i18n="sha.btn.clear">초기화</button>
+        </div>
+
+        <div class="result-wrapper">
+            <label data-i18n="sha.out.label">결과 해시값 (HEX)</label>
+            <div id="shaHashOutput" class="hash-output"></div>
+            <div class="small-text" id="shaHashInfo"></div>
+        </div>
+    </section>
+
+    <!-- RSA 탭 -->
+    <section id="rsaTab" class="tab-content">
+        <div class="subtitle" style="margin-top: 0;">
+            <span data-i18n="rsa.desc">RSA 공개키로 암호화 / 개인키로 복호화 (브라우저에서만 처리)</span>
+            <span class="badge">WebCrypto</span>
+        </div>
+
+        <div class="row" style="margin-top: 10px;">
+            <div class="col">
+                <label for="rsaKeySize" data-i18n="rsa.keysize.label">키 길이</label>
+                <select id="rsaKeySize">
+                    <option value="2048" selected data-i18n="rsa.keysize.2048">2048 (권장)</option>
+                    <option value="3072" data-i18n="rsa.keysize.3072">3072</option>
+                    <option value="4096" data-i18n="rsa.keysize.4096">4096</option>
+                </select>
+                <div class="small-text" data-i18n="rsa.keysize.note">키가 클수록 안전하지만 생성/연산이 느려질 수 있어요.</div>
+            </div>
+            <div class="col">
+                <label for="rsaHashAlg" data-i18n="rsa.hash.label">OAEP 해시</label>
+                <select id="rsaHashAlg">
+                    <option value="SHA-256" selected>SHA-256</option>
+                    <option value="SHA-384">SHA-384</option>
+                    <option value="SHA-512">SHA-512</option>
+                </select>
+                <div class="small-text" data-i18n="rsa.hash.note">RSA-OAEP 패딩에 사용되는 해시 알고리즘입니다.</div>
+            </div>
+        </div>
+
+        <div class="btn-row" style="margin-top: 12px;">
+            <button class="btn-primary" id="rsaGenKeyBtn" data-i18n="rsa.btn.gen">RSA 키 생성</button>
+            <button class="btn-secondary" id="rsaCopyPubBtn" data-i18n="rsa.btn.copyPub">공개키 복사</button>
+            <button class="btn-secondary" id="rsaCopyPrivBtn" data-i18n="rsa.btn.copyPriv">개인키 복사</button>
+            <button class="btn-secondary" id="rsaClearKeyBtn" data-i18n="rsa.btn.clearKey">키 초기화</button>
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <label for="rsaPublicKeyPem" data-i18n="rsa.pub.label">공개키 (PEM)</label>
+                <textarea id="rsaPublicKeyPem" data-i18n-placeholder="rsa.pub.ph" placeholder="RSA 키 생성 후 여기에 표시됩니다." readonly></textarea>
+            </div>
+            <div class="col">
+                <label for="rsaPrivateKeyPem" data-i18n="rsa.priv.label">개인키 (PEM)</label>
+                <textarea id="rsaPrivateKeyPem" data-i18n-placeholder="rsa.priv.ph" placeholder="RSA 키 생성 후 여기에 표시됩니다." readonly></textarea>
+                <div class="small-text" data-i18n="rsa.priv.note">※ 개인키는 민감정보입니다. 공유/노출에 주의하세요.</div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <label for="rsaPlainText" data-i18n="rsa.plain.label">평문(암호화할 텍스트)</label>
+                <textarea id="rsaPlainText" data-i18n-placeholder="rsa.plain.ph" placeholder="여기에 암호화할 텍스트를 입력하세요."></textarea>
+                <div class="small-text" data-i18n="rsa.plain.note">
+                    ※ RSA는 긴 텍스트를 직접 암호화하기에 적합하지 않습니다(제한 있음). 긴 데이터는 보통 AES(대칭키)+RSA(키 암호화) 조합을 사용합니다.
+                </div>
+            </div>
+            <div class="col">
+                <label for="rsaCipherText" data-i18n="rsa.cipher.label">암호문(Base64)</label>
+                <textarea id="rsaCipherText" data-i18n-placeholder="rsa.cipher.ph" placeholder="암호화 결과(Base64)가 여기에 표시됩니다."></textarea>
+            </div>
+        </div>
+
+        <div class="btn-row">
+            <button class="btn-primary" id="rsaEncryptBtn" data-i18n="rsa.btn.encrypt">공개키로 암호화</button>
+            <button class="btn-primary" id="rsaDecryptBtn" data-i18n="rsa.btn.decrypt">개인키로 복호화</button>
+            <button class="btn-secondary" id="rsaCopyCipherBtn" data-i18n="rsa.btn.copyCipher">암호문 복사</button>
+            <button class="btn-secondary" id="rsaClearMsgBtn" data-i18n="rsa.btn.clearMsg">메시지 초기화</button>
+        </div>
+
+        <div class="result-wrapper">
+            <label data-i18n="rsa.out.label">복호화 결과(평문)</label>
+            <div id="rsaDecryptedOut" class="hash-output"></div>
+            <div class="small-text" id="rsaInfo"></div>
+        </div>
+    </section>
+
+    <!-- JSON 비교 탭 -->
+    <section id="jsonTab" class="tab-content">
+        <div class="subtitle" style="margin-top: 4px;" data-i18n="json.desc">
+            JSON 두 개를 붙여넣고 차이점을 비교합니다. (브라우저에서만 처리)
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <label for="jsonA" data-i18n="json.a.label">JSON A</label>
+                <textarea id="jsonA" data-i18n-placeholder="json.a.ph" placeholder='예) {"a":1,"b":{"c":2}}'></textarea>
+                <div class="small-text" data-i18n="json.a.note">※ JSON 문자열 그대로 붙여넣기</div>
+            </div>
+            <div class="col">
+                <label for="jsonB" data-i18n="json.b.label">JSON B</label>
+                <textarea id="jsonB" data-i18n-placeholder="json.b.ph" placeholder='예) {"a":1,"b":{"c":3}}'></textarea>
+                <div class="small-text" data-i18n="json.b.note">※ JSON 문자열 그대로 붙여넣기</div>
+            </div>
+        </div>
+
+        <div class="options" style="margin-top: 12px;">
+            <label><input type="checkbox" id="jsonSortKeys" checked /> <span data-i18n="json.opt.sortKeys">키 정렬(안정적 비교)</span></label>
+            <label><input type="checkbox" id="jsonIgnoreArrayOrder" /> <span data-i18n="json.opt.ignoreArray">배열 순서 무시(값 set 비교)</span></label>
+            <label><input type="checkbox" id="jsonTrimString" checked /> <span data-i18n="json.opt.trimString">문자열 앞뒤 공백 trim</span></label>
+        </div>
+
+        <div class="btn-row">
+            <button class="btn-primary" id="jsonCompareBtn" data-i18n="json.btn.compare">JSON 비교</button>
+            <button class="btn-secondary" id="jsonFormatBtn" data-i18n="json.btn.format">A/B 포맷(정렬+들여쓰기)</button>
+            <button class="btn-secondary" id="jsonSwapBtn" data-i18n="json.btn.swap">A ↔ B 교환</button>
+            <button class="btn-secondary" id="jsonCopyDiffBtn" data-i18n="json.btn.copyDiff">Diff 복사</button>
+        </div>
+
+        <div class="result-wrapper">
+            <label data-i18n="json.out.summary">결과 요약</label>
+            <div id="jsonSummary" class="hash-output"></div>
+            <div class="small-text" id="jsonStats"></div>
+        </div>
+
+        <div class="result-wrapper">
+            <label data-i18n="json.out.diff">Diff (경로 기준)</label>
+            <textarea id="jsonDiffOut" readonly data-i18n-placeholder="json.out.diffph" placeholder="차이점이 여기에 표시됩니다."></textarea>
+            <div class="small-text" data-i18n="json.out.format">형식: [경로] A값 → B값</div>
+        </div>
+    </section>
+
+    <!-- ✅ 회의 요약 탭 -->
+    <section id="meetingTab" class="tab-content">
+        <div class="subtitle" style="margin-top: 4px;" data-i18n="meet.desc">
+            회의 내용을 붙여넣으면, AI가 요약 / 핵심 포인트 / 액션 아이템을 생성합니다.
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <label for="meetingText" data-i18n="meet.input.label">회의 원문</label>
+                <textarea id="meetingText" data-i18n-placeholder="meet.input.ph" placeholder="여기에 회의 내용을 붙여넣으세요."></textarea>
+                <div class="small-text" data-i18n="meet.input.note">
+                    ※ 입력 텍스트가 너무 길면 서버에서 제한될 수 있습니다.
+                </div>
+            </div>
+        </div>
+
+        <div class="btn-row">
+            <button class="btn-primary" id="meetingSummarizeBtn" data-i18n="meet.btn.summarize">회의 요약 생성</button>
+            <button class="btn-secondary" id="meetingCopyAllBtn" data-i18n="meet.btn.copyAll">결과 전체 복사</button>
+            <button class="btn-secondary" id="meetingClearBtn" data-i18n="meet.btn.clear">초기화</button>
+        </div>
+
+        <div class="result-wrapper">
+            <div class="stats" id="meetingStats"></div>
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <div class="ms-card">
+                    <div class="ms-card-title">
+                        <span data-i18n="meet.out.summary">요약</span>
+                        <span class="badge" id="meetingTimeBadge" style="display:none;"></span>
+                    </div>
+                    <div id="meetingSummaryOut" class="hash-output meeting-wrap"></div>
+                    <div class="btn-row" style="margin-top: 10px;">
+                        <button class="btn-secondary" id="meetingCopySummaryBtn" data-i18n="meet.btn.copySummary">요약 복사</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <div class="ms-card">
+                    <div class="ms-card-title" data-i18n="meet.out.keyPoints">핵심 포인트</div>
+                    <ul id="meetingKeyPointsOut" class="ms-list"></ul>
+                    <div id="meetingKeyPointsEmpty" class="ms-empty" style="display:none;"></div>
+                    <div class="btn-row" style="margin-top: 10px;">
+                        <button class="btn-secondary" id="meetingCopyKeyPointsBtn" data-i18n="meet.btn.copyKeyPoints">핵심 포인트 복사</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="ms-card">
+                    <div class="ms-card-title" data-i18n="meet.out.actionItems">액션 아이템</div>
+                    <ul id="meetingActionItemsOut" class="ms-list"></ul>
+                    <div id="meetingActionItemsEmpty" class="ms-empty" style="display:none;"></div>
+                    <div class="btn-row" style="margin-top: 10px;">
+                        <button class="btn-secondary" id="meetingCopyActionItemsBtn" data-i18n="meet.btn.copyActionItems">액션 아이템 복사</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="small-text" data-i18n="meet.note">
+            · 호출 API: <strong>/api/v1/summarize</strong><br/>
+            · 네트워크/CORS 문제가 있으면 개발자 콘솔(F12)에서 에러를 확인하세요.
+        </div>
+    </section>
+
+    <footer>
+        <span data-i18n="footer">© 2025 Made by 임상현 (Sanghyun Im)</span>
+    </footer>
+</div>
+
+<script>
+    /**
+     * i18n dictionary
+     */
+    const I18N = {
+        ko: {
+            "app.title": "DATA 실무 도구",
+            "app.subtitle": "데이터 관리하는 전문가를 위한 유틸리티 사이트입니다.",
+            "app.badge": "Made by 임상현 (광고 및 후원 문의 인스타 : 1imsangh)",
+
+            "tab.in": "IN 절 생성기",
+            "tab.compare": "값 비교 도구",
+            "tab.insert": "Excel → SQL INSERT 생성기",
+            "tab.sha": "SHA-256 해시 생성기",
+            "tab.rsa": "RSA 암호화",
+            "tab.json": "JSON 비교",
+            "tab.meeting": "회의 요약",
+
+            "common.result": "결과",
+            "common.result.ph": "여기에 결과가 표시됩니다.",
+
+            "in.desc": "한 줄당 하나씩 값 붙여넣으면 자동으로 <strong>IN (...)</strong> 형식으로 만들어줍니다.",
+            "in.input.label": "입력값 (한 줄에 하나씩 / 쉼표, 공백 모두 구분자로 인식)",
+            "in.input.ph": "예시)\n4041420011181A\n4041494107956A\n4041493011337A",
+            "in.note": "※ 공백·중복은 자동 제거됩니다. 데이터 양 제한 없이 사용 가능합니다.",
+            "in.wrap.label": "문자열 감싸기",
+            "in.wrap.single": "'단일따옴표'",
+            "in.wrap.double": "\"쌍따옴표\"",
+            "in.wrap.none": "감싸지 않음",
+            "in.sep.label": "구분자",
+            "in.sep.comma": "쉼표 + 공백 (, )",
+            "in.sep.commaNoSpace": "쉼표만 (,)",
+            "in.sep.newline": "줄바꿈",
+            "in.tpl.label": "템플릿",
+            "in.tpl.only": "괄호만: ( ... )",
+            "in.tpl.withIn": "IN ( ... )",
+            "in.tpl.none": "그냥 값만",
+            "in.prefix.label": "앞에 붙일 문자열",
+            "in.prefix.ph": "예) AND COL_NM IN ",
+            "in.suffix.label": "뒤에 붙일 문자열",
+            "in.suffix.ph": "예) /* comment */",
+            "in.max.label": "한 줄당 최대 개수 (줄바꿈)",
+            "in.max.note": "0이면 강제 줄바꿈 없음",
+            "in.opt.dedupe": "중복 제거",
+            "in.opt.sort": "오름차순 정렬",
+            "in.opt.ignoreEmpty": "빈 값 무시",
+            "in.btn.generate": "IN 절 생성",
+            "in.btn.copy": "복사하기",
+
+            "cmp.desc": "두 개의 값 목록을 붙여넣고, 공통값과 차이값을 한 번에 확인해보세요.",
+            "cmp.a.label": "A 값 목록",
+            "cmp.a.ph": "예시)\napple\ntomato\nbanana",
+            "cmp.a.note": "※ 한 줄에 하나씩, 또는 쉼표/공백으로 구분해서 넣어도 됩니다.",
+            "cmp.b.label": "B 값 목록",
+            "cmp.b.ph": "예시)\nbanana\norange\nmelon",
+            "cmp.b.note": "※ 공백·빈 줄은 자동으로 무시됩니다.",
+            "cmp.delim.label": "구분 방식",
+            "cmp.delim.auto": "자동 (줄바꿈 + 쉼표 + 공백)",
+            "cmp.delim.newline": "줄바꿈 기준",
+            "cmp.delim.comma": "쉼표 기준",
+            "cmp.delim.space": "공백 기준",
+            "cmp.delim.note": "자동 모드는 줄바꿈/쉼표/공백을 모두 구분자로 사용합니다.",
+            "cmp.opt.title": "옵션",
+            "cmp.opt.dedupe": "중복 제거",
+            "cmp.opt.sort": "오름차순 정렬",
+            "cmp.opt.trim": "앞뒤 공백 제거",
+            "cmp.opt.case": "대소문자 구분",
+            "cmp.btn.compare": "값 비교하기",
+            "cmp.btn.swap": "A ↔ B 교환",
+            "cmp.out.common": "공통 값 (A ∩ B)",
+            "cmp.out.onlyA": "A에만 있는 값 (A - B)",
+            "cmp.out.onlyB": "B에만 있는 값 (B - A)",
+            "cmp.out.all": "전체 유니크 값 (A ∪ B)",
+
+            "ins.desc": "엑셀에서 복사한 데이터를 붙여넣고, SQL INSERT 문으로 한 번에 생성하세요.",
+            "ins.table.label": "테이블명",
+            "ins.table.ph": "예) TB_USER, TB_ORDER 등",
+            "ins.mode.label": "INSERT 모드",
+            "ins.mode.multi": "한 문장에 여러 VALUES (기본)",
+            "ins.mode.single": "행마다 INSERT 한 줄씩",
+            "ins.rowdelim.label": "행 구분",
+            "ins.rowdelim.newline": "줄바꿈 기준 (엑셀에서 그대로 복붙)",
+            "ins.cols.label": "컬럼 목록",
+            "ins.cols.ph": "예시)\nid\nname\nage",
+            "ins.cols.note": "줄바꿈 또는 쉼표로 컬럼명 입력 가능. (id,name,age 또는 줄마다 하나씩)",
+            "ins.data.label": "Excel 데이터 붙여넣기",
+            "ins.data.ph": "엑셀에서 행/열 선택 후 그대로 붙여넣기\n예)\n1[TAB]홍길동[TAB]30\n2[TAB]김철수[TAB]25",
+            "ins.data.note": "각 행은 줄바꿈으로, 각 열은 탭(엑셀 복사 기본) 또는 쉼표로 구분됩니다.",
+            "ins.opt.cols": "INSERT 문에 컬럼명 포함",
+            "ins.opt.num": "숫자는 따옴표 없이 사용",
+            "ins.opt.null": "빈 값은 NULL 처리",
+            "ins.opt.trim": "셀 앞뒤 공백 제거",
+            "ins.opt.semicolon": "문장 끝에 세미콜론(;) 추가",
+            "ins.btn.generate": "INSERT 문 생성",
+            "ins.btn.copy": "복사하기",
+            "ins.out.label": "결과 INSERT 문",
+            "ins.out.ph": "INSERT 문이 여기에 표시됩니다.",
+
+            "sha.desc": "텍스트를 SHA-256 알고리즘으로 해시(단방향 암호화)해주는 도구입니다.\n여러 줄 입력 시 <strong>줄마다 해시값만</strong> 출력됩니다.",
+            "sha.input.label": "입력 텍스트",
+            "sha.input.ph": "여기에 해시할 텍스트를 입력하세요.\n예)\npassword123\nuser@example.com\n임의의 문자열 등",
+            "sha.note": "· 입력값은 <strong>절대 서버로 전송되지 않고, 브라우저 안에서만 처리</strong>됩니다.<br/>· SHA-256은 <strong>복호화가 불가능한 단방향 해시</strong>입니다.",
+            "sha.btn.hash": "SHA-256 해시 생성",
+            "sha.btn.copy": "해시 복사",
+            "sha.btn.clear": "초기화",
+            "sha.out.label": "결과 해시값 (HEX)",
+
+            "rsa.desc": "RSA 공개키로 암호화 / 개인키로 복호화 (브라우저에서만 처리)",
+            "rsa.keysize.label": "키 길이",
+            "rsa.keysize.2048": "2048 (권장)",
+            "rsa.keysize.3072": "3072",
+            "rsa.keysize.4096": "4096",
+            "rsa.keysize.note": "키가 클수록 안전하지만 생성/연산이 느려질 수 있어요.",
+            "rsa.hash.label": "OAEP 해시",
+            "rsa.hash.note": "RSA-OAEP 패딩에 사용되는 해시 알고리즘입니다.",
+            "rsa.btn.gen": "RSA 키 생성",
+            "rsa.btn.copyPub": "공개키 복사",
+            "rsa.btn.copyPriv": "개인키 복사",
+            "rsa.btn.clearKey": "키 초기화",
+            "rsa.pub.label": "공개키 (PEM)",
+            "rsa.pub.ph": "RSA 키 생성 후 여기에 표시됩니다.",
+            "rsa.priv.label": "개인키 (PEM)",
+            "rsa.priv.ph": "RSA 키 생성 후 여기에 표시됩니다.",
+            "rsa.priv.note": "※ 개인키는 민감정보입니다. 공유/노출에 주의하세요.",
+            "rsa.plain.label": "평문(암호화할 텍스트)",
+            "rsa.plain.ph": "여기에 암호화할 텍스트를 입력하세요.",
+            "rsa.plain.note": "※ RSA는 긴 텍스트를 직접 암호화하기에 적합하지 않습니다(제한 있음). 긴 데이터는 보통 AES(대칭키)+RSA(키 암호화) 조합을 사용합니다.",
+            "rsa.cipher.label": "암호문(Base64)",
+            "rsa.cipher.ph": "암호화 결과(Base64)가 여기에 표시됩니다.",
+            "rsa.btn.encrypt": "공개키로 암호화",
+            "rsa.btn.decrypt": "개인키로 복호화",
+            "rsa.btn.copyCipher": "암호문 복사",
+            "rsa.btn.clearMsg": "메시지 초기화",
+            "rsa.out.label": "복호화 결과(평문)",
+
+            "json.desc": "JSON 두 개를 붙여넣고 차이점을 비교합니다. (브라우저에서만 처리)",
+            "json.a.label": "JSON A",
+            "json.a.ph": "예) {\"a\":1,\"b\":{\"c\":2}}",
+            "json.a.note": "※ JSON 문자열 그대로 붙여넣기",
+            "json.b.label": "JSON B",
+            "json.b.ph": "예) {\"a\":1,\"b\":{\"c\":3}}",
+            "json.b.note": "※ JSON 문자열 그대로 붙여넣기",
+            "json.opt.sortKeys": "키 정렬(안정적 비교)",
+            "json.opt.ignoreArray": "배열 순서 무시(값 set 비교)",
+            "json.opt.trimString": "문자열 앞뒤 공백 trim",
+            "json.btn.compare": "JSON 비교",
+            "json.btn.format": "A/B 포맷(정렬+들여쓰기)",
+            "json.btn.swap": "A ↔ B 교환",
+            "json.btn.copyDiff": "Diff 복사",
+            "json.out.summary": "결과 요약",
+            "json.out.diff": "Diff (경로 기준)",
+            "json.out.diffph": "차이점이 여기에 표시됩니다.",
+            "json.out.format": "형식: [경로] A값 → B값",
+
+            /* ✅ Meeting Summary (KO) */
+            "meet.desc": "회의 내용을 붙여넣으면, AI가 요약 / 핵심 포인트 / 액션 아이템을 생성합니다.",
+            "meet.input.label": "회의 원문",
+            "meet.input.ph": "여기에 회의 내용을 붙여넣으세요.\n예) 오늘 회의에서는 신규 프로젝트에 대해 논의했습니다...",
+            "meet.input.note": "※ 입력 텍스트가 너무 길면 서버에서 제한될 수 있습니다.",
+            "meet.btn.summarize": "회의 요약 생성",
+            "meet.btn.copyAll": "결과 전체 복사",
+            "meet.btn.clear": "초기화",
+            "meet.out.summary": "요약",
+            "meet.out.keyPoints": "핵심 포인트",
+            "meet.out.actionItems": "액션 아이템",
+            "meet.btn.copySummary": "요약 복사",
+            "meet.btn.copyKeyPoints": "핵심 포인트 복사",
+            "meet.btn.copyActionItems": "액션 아이템 복사",
+            "meet.note": "· 호출 API: <strong>/api/v1/summarize</strong><br/>· 네트워크/CORS 문제가 있으면 개발자 콘솔(F12)에서 에러를 확인하세요.",
+
+            "footer": "© 2025 Made by 임상현 (Sanghyun Im)",
+
+            // Alerts / runtime texts
+            "alert.noCopy": "복사할 내용이 없습니다.",
+            "alert.copied": "복사되었습니다.",
+            "alert.copiedExec": "복사되었습니다. (execCommand)",
+            "alert.needTable": "테이블명을 입력해주세요.",
+            "alert.needExcel": "Excel 데이터를 붙여넣어주세요.",
+            "alert.cryptoUnsupported": "이 브라우저에서는 WebCrypto를 지원하지 않습니다. 최신 Chrome/Edge/Safari를 사용해주세요.",
+            "alert.needShaText": "SHA-256으로 변환할 텍스트를 입력해주세요.",
+            "alert.noHashToCopy": "복사할 해시 값이 없습니다.",
+            "alert.formatDone": "포맷 완료!",
+            "alert.formatFail": "포맷 실패: ",
+            "alert.compareFail": "비교 실패: ",
+            "alert.noDiffToCopy": "복사할 Diff가 없습니다.",
+            "alert.rsaKeyCleared": "키가 초기화되었습니다.",
+            "alert.rsaNeedPlain": "암호화할 텍스트를 입력해주세요.",
+            "alert.rsaNeedPub": "공개키가 없습니다. 먼저 RSA 키를 생성하거나 공개키 PEM을 넣어주세요.",
+            "alert.rsaTooLong": "텍스트가 너무 깁니다. (현재 {cur}bytes, 최대 약 {max}bytes)\n긴 데이터는 AES+RSA(하이브리드) 방식을 추천해요.",
+            "alert.rsaNeedCipher": "복호화할 암호문(Base64)을 입력해주세요.",
+            "alert.rsaNeedPriv": "개인키가 없습니다. 먼저 RSA 키를 생성하거나 개인키 PEM을 넣어주세요.",
+            "alert.rsaKeyGenFail": "RSA 키 생성 실패: ",
+            "alert.rsaEncryptFail": "암호화 실패: ",
+            "alert.rsaDecryptFail": "복호화 실패: ",
+            "alert.rsaCopyPubEmpty": "복사할 공개키가 없습니다.",
+            "alert.rsaCopyPrivEmpty": "복사할 개인키가 없습니다.",
+            "alert.rsaCopyCipherEmpty": "복사할 암호문이 없습니다.",
+
+            /* ✅ Meeting alerts (KO) */
+            "alert.meet.needText": "회의 원문을 입력해주세요.",
+            "alert.meet.loading": "요약 생성 중...",
+            "alert.meet.fail": "요약 생성 실패: ",
+            "alert.meet.badResponse": "서버 응답 형식이 예상과 다릅니다.",
+            "alert.meet.copiedAll": "결과 전체가 복사되었습니다."
+        },
+
+        en: {
+            "app.title": "DATA Utility Tools",
+            "app.subtitle": "A practical toolbox for people who work with data.",
+            "app.badge": "Made by Sanghyun Im (Ads/Sponsor: Instagram @1imsangh)",
+
+            "tab.in": "IN Clause Builder",
+            "tab.compare": "Compare Lists",
+            "tab.insert": "Excel → SQL INSERT",
+            "tab.sha": "SHA-256 Hasher",
+            "tab.rsa": "RSA Encrypt/Decrypt",
+            "tab.json": "JSON Diff",
+            "tab.meeting": "Meeting Summary",
+
+            "common.result": "Result",
+            "common.result.ph": "Result will appear here.",
+
+            "in.desc": "Paste one value per line and it will generate <strong>IN (...)</strong> for you.",
+            "in.input.label": "Input (one per line / comma & spaces are also treated as delimiters)",
+            "in.input.ph": "Example)\n4041420011181A\n4041494107956A\n4041493011337A",
+            "in.note": "※ Whitespace & duplicates are removed automatically. No limits.",
+            "in.wrap.label": "Wrap values",
+            "in.wrap.single": "'Single quotes'",
+            "in.wrap.double": "\"Double quotes\"",
+            "in.wrap.none": "No wrapping",
+            "in.sep.label": "Separator",
+            "in.sep.comma": "Comma + space (, )",
+            "in.sep.commaNoSpace": "Comma only (,)",
+            "in.sep.newline": "New line",
+            "in.tpl.label": "Template",
+            "in.tpl.only": "Parentheses only: ( ... )",
+            "in.tpl.withIn": "IN ( ... )",
+            "in.tpl.none": "Values only",
+            "in.prefix.label": "Prefix",
+            "in.prefix.ph": "e.g) AND COL_NM IN ",
+            "in.suffix.label": "Suffix",
+            "in.suffix.ph": "e.g) /* comment */",
+            "in.max.label": "Max per line (wrap)",
+            "in.max.note": "0 = no forced wrapping",
+            "in.opt.dedupe": "Remove duplicates",
+            "in.opt.sort": "Sort ascending",
+            "in.opt.ignoreEmpty": "Ignore empty",
+            "in.btn.generate": "Generate",
+            "in.btn.copy": "Copy",
+
+            "cmp.desc": "Paste two lists and instantly see common and different values.",
+            "cmp.a.label": "List A",
+            "cmp.a.ph": "Example)\napple\ntomato\nbanana",
+            "cmp.a.note": "※ One per line, or separated by commas/spaces.",
+            "cmp.b.label": "List B",
+            "cmp.b.ph": "Example)\nbanana\norange\nmelon",
+            "cmp.b.note": "※ Whitespace/empty lines are ignored.",
+            "cmp.delim.label": "Delimiter",
+            "cmp.delim.auto": "Auto (newline + comma + space)",
+            "cmp.delim.newline": "Newline",
+            "cmp.delim.comma": "Comma",
+            "cmp.delim.space": "Space",
+            "cmp.delim.note": "Auto uses newline/comma/space as delimiters.",
+            "cmp.opt.title": "Options",
+            "cmp.opt.dedupe": "Remove duplicates",
+            "cmp.opt.sort": "Sort ascending",
+            "cmp.opt.trim": "Trim whitespace",
+            "cmp.opt.case": "Case sensitive",
+            "cmp.btn.compare": "Compare",
+            "cmp.btn.swap": "Swap A ↔ B",
+            "cmp.out.common": "Common (A ∩ B)",
+            "cmp.out.onlyA": "Only in A (A - B)",
+            "cmp.out.onlyB": "Only in B (B - A)",
+            "cmp.out.all": "All unique (A ∪ B)",
+
+            "ins.desc": "Paste copied Excel cells and generate SQL INSERT statements.",
+            "ins.table.label": "Table name",
+            "ins.table.ph": "e.g) TB_USER, TB_ORDER ...",
+            "ins.mode.label": "INSERT mode",
+            "ins.mode.multi": "Single INSERT with multiple VALUES (default)",
+            "ins.mode.single": "One INSERT per row",
+            "ins.rowdelim.label": "Row delimiter",
+            "ins.rowdelim.newline": "Newline (default for Excel copy)",
+            "ins.cols.label": "Columns",
+            "ins.cols.ph": "Example)\nid\nname\nage",
+            "ins.cols.note": "Columns can be newline or comma separated.",
+            "ins.data.label": "Excel data",
+            "ins.data.ph": "Paste from Excel (rows/cols)\nExample)\n1[TAB]John[TAB]30\n2[TAB]Jane[TAB]25",
+            "ins.data.note": "Rows are separated by newline, columns by TAB (Excel default) or comma.",
+            "ins.opt.cols": "Include column names",
+            "ins.opt.num": "Use numbers without quotes",
+            "ins.opt.null": "Empty → NULL",
+            "ins.opt.trim": "Trim cells",
+            "ins.opt.semicolon": "Append semicolon (;)",
+            "ins.btn.generate": "Generate INSERT",
+            "ins.btn.copy": "Copy",
+            "ins.out.label": "Generated SQL",
+            "ins.out.ph": "Generated INSERT will appear here.",
+
+            "sha.desc": "Generate SHA-256 hashes (one-way). For multi-line input, outputs <strong>hash per line</strong>.",
+            "sha.input.label": "Input text",
+            "sha.input.ph": "Type text to hash.\nExample)\npassword123\nuser@example.com\nany string...",
+            "sha.note": "· Input is processed <strong>only in your browser</strong> (never sent to a server).<br/>· SHA-256 is a <strong>one-way hash</strong> (not reversible).",
+            "sha.btn.hash": "Generate SHA-256",
+            "sha.btn.copy": "Copy hashes",
+            "sha.btn.clear": "Clear",
+            "sha.out.label": "Hash output (HEX)",
+
+            "rsa.desc": "Encrypt with public key / Decrypt with private key (browser-only)",
+            "rsa.keysize.label": "Key size",
+            "rsa.keysize.2048": "2048 (recommended)",
+            "rsa.keysize.3072": "3072",
+            "rsa.keysize.4096": "4096",
+            "rsa.keysize.note": "Larger keys are safer but slower to generate/compute.",
+            "rsa.hash.label": "OAEP hash",
+            "rsa.hash.note": "Hash algorithm used by RSA-OAEP padding.",
+            "rsa.btn.gen": "Generate keys",
+            "rsa.btn.copyPub": "Copy public key",
+            "rsa.btn.copyPriv": "Copy private key",
+            "rsa.btn.clearKey": "Clear keys",
+            "rsa.pub.label": "Public key (PEM)",
+            "rsa.pub.ph": "Generated public key will appear here.",
+            "rsa.priv.label": "Private key (PEM)",
+            "rsa.priv.ph": "Generated private key will appear here.",
+            "rsa.priv.note": "※ Private key is sensitive. Avoid sharing/exposing it.",
+            "rsa.plain.label": "Plaintext (to encrypt)",
+            "rsa.plain.ph": "Type plaintext to encrypt.",
+            "rsa.plain.note": "※ RSA is not suitable for encrypting long text directly (size limit). Use hybrid encryption (AES + RSA) for large payloads.",
+            "rsa.cipher.label": "Ciphertext (Base64)",
+            "rsa.cipher.ph": "Ciphertext (Base64) will appear here.",
+            "rsa.btn.encrypt": "Encrypt (public key)",
+            "rsa.btn.decrypt": "Decrypt (private key)",
+            "rsa.btn.copyCipher": "Copy ciphertext",
+            "rsa.btn.clearMsg": "Clear message",
+            "rsa.out.label": "Decrypted plaintext",
+
+            "json.desc": "Paste two JSON strings and compare differences (browser-only).",
+            "json.a.label": "JSON A",
+            "json.a.ph": "e.g) {\"a\":1,\"b\":{\"c\":2}}",
+            "json.a.note": "※ Paste the raw JSON string",
+            "json.b.label": "JSON B",
+            "json.b.ph": "e.g) {\"a\":1,\"b\":{\"c\":3}}",
+            "json.b.note": "※ Paste the raw JSON string",
+            "json.opt.sortKeys": "Sort keys (stable compare)",
+            "json.opt.ignoreArray": "Ignore array order (set compare)",
+            "json.opt.trimString": "Trim strings",
+            "json.btn.compare": "Compare JSON",
+            "json.btn.format": "Format A/B (sort + indent)",
+            "json.btn.swap": "Swap A ↔ B",
+            "json.btn.copyDiff": "Copy diff",
+            "json.out.summary": "Summary",
+            "json.out.diff": "Diff (by path)",
+            "json.out.diffph": "Differences will appear here.",
+            "json.out.format": "Format: [path] A → B",
+
+            /* ✅ Meeting Summary (EN) */
+            "meet.desc": "Paste meeting notes and get AI-generated summary, key points, and action items.",
+            "meet.input.label": "Meeting text",
+            "meet.input.ph": "Paste meeting notes here.\nExample) Today we discussed a new project...",
+            "meet.input.note": "※ Very long input may be limited by the server.",
+            "meet.btn.summarize": "Generate summary",
+            "meet.btn.copyAll": "Copy all results",
+            "meet.btn.clear": "Clear",
+            "meet.out.summary": "Summary",
+            "meet.out.keyPoints": "Key Points",
+            "meet.out.actionItems": "Action Items",
+            "meet.btn.copySummary": "Copy summary",
+            "meet.btn.copyKeyPoints": "Copy key points",
+            "meet.btn.copyActionItems": "Copy action items",
+            "meet.note": "· API: <strong>/api/v1/summarize</strong><br/>· If you hit network/CORS issues, check the dev console (F12).",
+
+            "footer": "© 2025 Made by Sanghyun Im",
+
+            // Alerts / runtime texts
+            "alert.noCopy": "Nothing to copy.",
+            "alert.copied": "Copied.",
+            "alert.copiedExec": "Copied. (execCommand)",
+            "alert.needTable": "Please enter a table name.",
+            "alert.needExcel": "Please paste Excel data.",
+            "alert.cryptoUnsupported": "WebCrypto is not supported in this browser. Use 최신 Chrome/Edge/Safari.",
+            "alert.needShaText": "Please enter text to hash (SHA-256).",
+            "alert.noHashToCopy": "No hashes to copy.",
+            "alert.formatDone": "Formatted!",
+            "alert.formatFail": "Format failed: ",
+            "alert.compareFail": "Compare failed: ",
+            "alert.noDiffToCopy": "No diff to copy.",
+            "alert.rsaKeyCleared": "Keys cleared.",
+            "alert.rsaNeedPlain": "Please enter plaintext to encrypt.",
+            "alert.rsaNeedPub": "No public key. Generate keys or paste a public key PEM first.",
+            "alert.rsaTooLong": "Text is too long. (current {cur} bytes, max ~ {max} bytes)\nFor large payloads, use hybrid encryption (AES + RSA).",
+            "alert.rsaNeedCipher": "Please enter ciphertext (Base64) to decrypt.",
+            "alert.rsaNeedPriv": "No private key. Generate keys or paste a private key PEM first.",
+            "alert.rsaKeyGenFail": "Key generation failed: ",
+            "alert.rsaEncryptFail": "Encryption failed: ",
+            "alert.rsaDecryptFail": "Decryption failed: ",
+            "alert.rsaCopyPubEmpty": "No public key to copy.",
+            "alert.rsaCopyPrivEmpty": "No private key to copy.",
+            "alert.rsaCopyCipherEmpty": "No ciphertext to copy.",
+
+            /* ✅ Meeting alerts (EN) */
+            "alert.meet.needText": "Please paste meeting text first.",
+            "alert.meet.loading": "Generating summary...",
+            "alert.meet.fail": "Failed: ",
+            "alert.meet.badResponse": "Unexpected response format.",
+            "alert.meet.copiedAll": "All results copied."
+        }
+    };
+
+    let currentLang = "ko";
+
+    function t(key, vars = {}) {
+        const dict = I18N[currentLang] || I18N.ko;
+        let val = dict[key];
+        if (val === undefined) val = (I18N.ko[key] !== undefined ? I18N.ko[key] : key);
+
+        // basic template vars: {x}
+        if (typeof val === "string") {
+            Object.keys(vars).forEach(k => {
+                val = val.replaceAll(`{${k}}`, String(vars[k]));
+            });
+        }
+        return val;
+    }
+
+    function applyI18n() {
+        document.documentElement.lang = currentLang;
+
+        // text nodes
+        document.querySelectorAll("[data-i18n]").forEach(el => {
+            const key = el.getAttribute("data-i18n");
+            const val = t(key);
+            // allow HTML when string contains <strong> or <br/> in dictionary
+            if (typeof val === "string" && (val.includes("<") && val.includes(">"))) {
+                el.innerHTML = val;
+            } else {
+                el.textContent = val;
+            }
+        });
+
+        // placeholders
+        document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+            const key = el.getAttribute("data-i18n-placeholder");
+            el.setAttribute("placeholder", t(key));
+        });
+    }
+
+    function setLang(lang) {
+        currentLang = (lang === "en" ? "en" : "ko");
+        localStorage.setItem("lang", currentLang);
+
+        document.querySelectorAll(".lang-btn").forEach(b => b.classList.remove("active"));
+        const activeBtn = document.querySelector(`.lang-btn[data-lang="${currentLang}"]`);
+        if (activeBtn) activeBtn.classList.add("active");
+
+        applyI18n();
+    }
+
+    // init language
+    (function initLang() {
+        const saved = localStorage.getItem("lang");
+        setLang(saved === "en" ? "en" : "ko");
+    })();
+
+    document.querySelectorAll(".lang-btn").forEach(btn => {
+        btn.addEventListener("click", () => setLang(btn.getAttribute("data-lang")));
+    });
+
+    // 탭 전환
+    document.querySelectorAll(".tab-button").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const target = btn.getAttribute("data-tab");
+
+            document.querySelectorAll(".tab-button").forEach(b => b.classList.remove("active"));
+            document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+
+            btn.classList.add("active");
+            document.getElementById(target).classList.add("active");
+        });
+    });
+
+    // --- IN 절 생성기 로직 ---
+    function parseInputIn(raw) {
+        const tokens = raw
+            .split(/[\n,\s]+/g)
+            .map(v => v.trim())
+            .filter(v => v.length > 0);
+        return tokens;
+    }
+
+    function formatValues(values, options) {
+        let arr = [...values];
+
+        if (options.ignoreEmpty) {
+            arr = arr.filter(v => v && v.trim().length > 0);
+        }
+
+        if (options.dedupe) {
+            arr = Array.from(new Set(arr));
+        }
+
+        if (options.sortAsc) {
+            arr.sort();
+        }
+
+        if (options.wrapType !== "none") {
+            const quote = options.wrapType === "single" ? "'" : '"';
+            arr = arr.map(v => quote + v.replace(new RegExp(quote, "g"), quote + quote) + quote);
+        }
+
+        let joined = "";
+        if (options.maxPerLine && options.maxPerLine > 0) {
+            const chunks = [];
+            for (let i = 0; i < arr.length; i += options.maxPerLine) {
+                chunks.push(arr.slice(i, i + options.maxPerLine));
+            }
+            const sep = options.separator === "newline"
+                ? ",\n  "
+                : (options.separator === "comma_no_space" ? "," : ", ");
+            joined = chunks
+                .map(c => c.join(sep))
+                .join(",\n  ");
+        } else {
+            if (options.separator === "newline") {
+                joined = arr.join(",\n");
+            } else if (options.separator === "comma_no_space") {
+                joined = arr.join(",");
+            } else {
+                joined = arr.join(", ");
+            }
+        }
+
+        if (options.template === "in_only") {
+            joined = "(" + joined + ")";
+        } else if (options.template === "with_in") {
+            joined = "IN (" + joined + ")";
+        }
+
+        joined = (options.prefix || "") + joined + (options.suffix || "");
+
+        return {
+            text: joined,
+            count: arr.length
+        };
+    }
+
+    document.getElementById("generateBtn").addEventListener("click", () => {
+        const raw = document.getElementById("inputValues").value || "";
+        const values = parseInputIn(raw);
+
+        const options = {
+            wrapType: document.getElementById("wrapType").value,
+            separator: document.getElementById("separator").value,
+            template: document.getElementById("template").value,
+            prefix: document.getElementById("prefix").value,
+            suffix: document.getElementById("suffix").value,
+            maxPerLine: parseInt(document.getElementById("maxPerLine").value || "0", 10),
+            dedupe: document.getElementById("dedupe").checked,
+            sortAsc: document.getElementById("sortAsc").checked,
+            ignoreEmpty: document.getElementById("ignoreEmpty").checked
+        };
+
+        const result = formatValues(values, options);
+        document.getElementById("outputValues").value = result.text;
+        document.getElementById("statsText").textContent =
+            (currentLang === "en")
+                ? `Raw: ${values.length} / Final: ${result.count}`
+                : `원본: ${values.length}개 / 최종: ${result.count}개`;
+    });
+
+    document.getElementById("copyBtn").addEventListener("click", async () => {
+        const out = document.getElementById("outputValues").value;
+        if (!out) {
+            alert(t("alert.noCopy"));
+            return;
+        }
+        try {
+            await navigator.clipboard.writeText(out);
+            alert(t("alert.copied"));
+        } catch (e) {
+            document.getElementById("outputValues").select();
+            document.execCommand("copy");
+            alert(t("alert.copiedExec"));
+        }
+    });
+
+    // --- 값 비교 도구 로직 ---
+    function splitByDelimiter(raw, mode) {
+        if (!raw) return [];
+        let pattern;
+        switch (mode) {
+            case "newline":
+                pattern = /[\n]+/g;
+                break;
+            case "comma":
+                pattern = /[,]+/g;
+                break;
+            case "space":
+                pattern = /[\s]+/g;
+                break;
+            case "auto":
+            default:
+                pattern = /[\n,\s]+/g;
+                break;
+        }
+        return raw.split(pattern);
+    }
+
+    function parseInputCompare(raw, options) {
+        let arr = splitByDelimiter(raw, options.delimiter);
+
+        if (options.trimSpace) {
+            arr = arr.map(v => v.trim());
+        }
+        arr = arr.filter(v => v.length > 0);
+
+        if (!options.caseSensitive) {
+            arr = arr.map(v => v.toLowerCase());
+        }
+        return arr;
+    }
+
+    function unique(arr) {
+        return Array.from(new Set(arr));
+    }
+
+    function compareArrays(aArr, bArr, options) {
+        let a = options.dedupe ? unique(aArr) : [...aArr];
+        let b = options.dedupe ? unique(bArr) : [...bArr];
+
+        const setA = new Set(a);
+        const setB = new Set(b);
+
+        const common = [];
+        const onlyA = [];
+        const onlyB = [];
+
+        for (const v of a) {
+            if (setB.has(v)) {
+                common.push(v);
+            } else {
+                onlyA.push(v);
+            }
+        }
+
+        for (const v of b) {
+            if (!setA.has(v)) {
+                onlyB.push(v);
+            }
+        }
+
+        const all = unique([...a, ...b]);
+
+        const maybeSort = (arr) => {
+            if (options.sortAsc) {
+                return [...arr].sort();
+            }
+            return arr;
+        };
+
+        return {
+            common: maybeSort(common),
+            onlyA: maybeSort(onlyA),
+            onlyB: maybeSort(onlyB),
+            all: maybeSort(all),
+            counts: {
+                aCount: aArr.length,
+                bCount: bArr.length,
+                aUnique: a.length,
+                bUnique: b.length,
+                common: common.length,
+                onlyA: onlyA.length,
+                onlyB: onlyB.length,
+                all: all.length
+            }
+        };
+    }
+
+    document.getElementById("compareBtn").addEventListener("click", () => {
+        const rawA = document.getElementById("inputA").value || "";
+        const rawB = document.getElementById("inputB").value || "";
+
+        const options = {
+            delimiter: document.getElementById("delimiter").value,
+            dedupe: document.getElementById("dedupeCompare").checked,
+            sortAsc: document.getElementById("sortAscCompare").checked,
+            trimSpace: document.getElementById("trimSpaceCompare").checked,
+            caseSensitive: document.getElementById("caseSensitiveCompare").checked
+        };
+
+        const parsedA = parseInputCompare(rawA, options);
+        const parsedB = parseInputCompare(rawB, options);
+
+        const result = compareArrays(parsedA, parsedB, options);
+        const joiner = "\n";
+
+        document.getElementById("commonValues").value = result.common.join(joiner);
+        document.getElementById("onlyAValues").value = result.onlyA.join(joiner);
+        document.getElementById("onlyBValues").value = result.onlyB.join(joiner);
+        document.getElementById("allValues").value = result.all.join(joiner);
+
+        if (currentLang === "en") {
+            document.getElementById("commonStats").textContent = `Common: ${result.counts.common}`;
+            document.getElementById("onlyAStats").textContent = `Only in A: ${result.counts.onlyA} (A raw ${result.counts.aCount} / unique ${result.counts.aUnique})`;
+            document.getElementById("onlyBStats").textContent = `Only in B: ${result.counts.onlyB} (B raw ${result.counts.bCount} / unique ${result.counts.bUnique})`;
+            document.getElementById("allStats").textContent = `All unique: ${result.counts.all}`;
+        } else {
+            document.getElementById("commonStats").textContent = `공통 값: ${result.counts.common}개`;
+            document.getElementById("onlyAStats").textContent = `A에만 있는 값: ${result.counts.onlyA}개 (A 원본 ${result.counts.aCount}개 / 유니크 ${result.counts.aUnique}개)`;
+            document.getElementById("onlyBStats").textContent = `B에만 있는 값: ${result.counts.onlyB}개 (B 원본 ${result.counts.bCount}개 / 유니크 ${result.counts.bUnique}개)`;
+            document.getElementById("allStats").textContent = `전체 유니크 값: ${result.counts.all}개`;
+        }
+    });
+
+    document.getElementById("swapBtn").addEventListener("click", () => {
+        const a = document.getElementById("inputA").value;
+        const b = document.getElementById("inputB").value;
+        document.getElementById("inputA").value = b;
+        document.getElementById("inputB").value = a;
+    });
+
+    // --- Excel → SQL INSERT 생성기 로직 ---
+    function parseColumns(raw) {
+        if (!raw) return [];
+        let cols = raw.includes("\n") ? raw.split(/[\n]+/g) : raw.split(/[,]+/g);
+        return cols
+            .map(c => c.trim())
+            .filter(c => c.length > 0);
+    }
+
+    function parseExcelData(raw) {
+        if (!raw) return [];
+        const lines = raw.split(/\n+/g).map(l => l.trim()).filter(l => l.length > 0);
+        return lines.map(line => {
+            if (line.includes("\t")) return line.split("\t");
+            if (line.includes(",")) return line.split(",");
+            return [line];
+        });
+    }
+
+    function isNumericValue(str) {
+        if (str === null || str === undefined) return false;
+        const s = String(str).trim();
+        if (s === "") return false;
+        return /^-?\d+(\.\d+)?$/.test(s);
+    }
+
+    function escapeSingleQuote(str) {
+        return String(str).replace(/'/g, "''");
+    }
+
+    document.getElementById("generateInsertBtn").addEventListener("click", () => {
+        const tableName = (document.getElementById("tableName").value || "").trim();
+        const insertMode = document.getElementById("insertMode").value;
+        const columnsRaw = document.getElementById("columns").value || "";
+        const excelRaw = document.getElementById("excelData").value || "";
+
+        const includeColumns = document.getElementById("includeColumns").checked;
+        const detectNumber = document.getElementById("detectNumber").checked;
+        const emptyToNull = document.getElementById("emptyToNull").checked;
+        const trimCell = document.getElementById("trimCell").checked;
+        const semicolonEnd = document.getElementById("semicolonEnd").checked;
+
+        if (!tableName) {
+            alert(t("alert.needTable"));
+            return;
+        }
+        if (!excelRaw.trim()) {
+            alert(t("alert.needExcel"));
+            return;
+        }
+
+        const cols = parseColumns(columnsRaw);
+        const rows = parseExcelData(excelRaw);
+
+        if (cols.length === 0) {
+            const maxLen = rows.reduce((m, r) => Math.max(m, r.length), 0);
+            for (let i = 1; i <= maxLen; i++) cols.push("col" + i);
+        }
+
+        const normalizedRows = rows.map(r => {
+            const copy = [...r];
+            while (copy.length < cols.length) copy.push("");
+            if (copy.length > cols.length) copy.length = cols.length;
+            return copy;
+        });
+
+        const valueStrings = normalizedRows.map(row => {
+            const cells = row.map(cell => {
+                let v = cell;
+                if (trimCell && typeof v === "string") v = v.trim();
+
+                if (emptyToNull && (v === "" || v === null || v === undefined)) return "NULL";
+                if (detectNumber && isNumericValue(v)) return String(v).trim();
+
+                return "'" + escapeSingleQuote(v) + "'";
+            });
+
+            return "(" + cells.join(", ") + ")";
+        });
+
+        let sql = "";
+        const colPart = includeColumns ? " (" + cols.join(", ") + ")" : "";
+
+        if (insertMode === "multi") {
+            sql = "INSERT INTO " + tableName + colPart + "\nVALUES\n  " + valueStrings.join(",\n  ");
+            if (semicolonEnd) sql += ";";
+        } else {
+            sql = valueStrings
+                .map(v => "INSERT INTO " + tableName + colPart + " VALUES " + v + (semicolonEnd ? ";" : ""))
+                .join("\n");
+        }
+
+        document.getElementById("insertResult").value = sql;
+        document.getElementById("insertStats").textContent =
+            (currentLang === "en")
+                ? `Rows: ${normalizedRows.length} / Columns: ${cols.length}`
+                : `생성된 행 수: ${normalizedRows.length}행 / 컬럼 수: ${cols.length}개`;
+    });
+
+    document.getElementById("copyInsertBtn").addEventListener("click", async () => {
+        const out = document.getElementById("insertResult").value;
+        if (!out) {
+            alert(t("alert.noCopy"));
+            return;
+        }
+        try {
+            await navigator.clipboard.writeText(out);
+            alert(t("alert.copied"));
+        } catch (e) {
+            document.getElementById("insertResult").select();
+            document.execCommand("copy");
+            alert(t("alert.copiedExec"));
+        }
+    });
+
+    // --- SHA-256 해시 생성기 로직 ---
+    function isWebCryptoAvailable() {
+        return !!(window.crypto && window.crypto.subtle && window.TextEncoder);
+    }
+
+    async function generateSHA256(text) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(text);
+        const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+        return Array.from(new Uint8Array(hashBuffer))
+            .map(b => b.toString(16).padStart(2, "0"))
+            .join("");
+    }
+
+    const shaInputEl = document.getElementById("shaInputText");
+    const shaOutputEl = document.getElementById("shaHashOutput");
+    const shaInfoEl = document.getElementById("shaHashInfo");
+
+    document.getElementById("shaHashBtn").addEventListener("click", async () => {
+        if (!isWebCryptoAvailable()) {
+            alert(t("alert.cryptoUnsupported"));
+            return;
+        }
+
+        const raw = shaInputEl.value || "";
+        const lines = raw
+            .split(/\n+/g)
+            .map(v => v.trim())
+            .filter(v => v.length > 0);
+
+        if (lines.length === 0) {
+            alert(t("alert.needShaText"));
+            return;
+        }
+
+        shaOutputEl.textContent = (currentLang === "en") ? "Calculating..." : "계산 중...";
+        shaInfoEl.textContent = "";
+
+        const start = performance.now();
+        const results = [];
+
+        for (const line of lines) {
+            const hash = await generateSHA256(line);
+            results.push(hash);
+        }
+
+        const end = performance.now();
+
+        shaOutputEl.textContent = results.join("\n");
+        shaInfoEl.textContent =
+            (currentLang === "en")
+                ? `Converted ${lines.length} items · ${(end - start).toFixed(2)}ms`
+                : `총 ${lines.length}개 변환 · 처리시간: ${(end - start).toFixed(2)}ms`;
+    });
+
+    document.getElementById("shaCopyHashBtn").addEventListener("click", async () => {
+        const hash = shaOutputEl.textContent || "";
+        if (!hash || hash === "계산 중..." || hash === "Calculating...") {
+            alert(t("alert.noHashToCopy"));
+            return;
+        }
+        try {
+            await navigator.clipboard.writeText(hash);
+            alert(t("alert.copied"));
+        } catch {
+            const temp = document.createElement("textarea");
+            temp.value = hash;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand("copy");
+            document.body.removeChild(temp);
+            alert(t("alert.copiedExec"));
+        }
+    });
+
+    document.getElementById("shaClearBtn").addEventListener("click", () => {
+        shaInputEl.value = "";
+        shaOutputEl.textContent = "";
+        shaInfoEl.textContent = "";
+        shaInputEl.focus();
+    });
+
+    // --- JSON diff ---
+    function safeJsonParse(raw) {
+        const s = (raw || "").trim();
+        if (!s) throw new Error(currentLang === "en" ? "JSON is empty." : "JSON이 비어있습니다.");
+        return JSON.parse(s);
+    }
+
+    function normalizeJson(value, opts) {
+        if (opts.trimString && typeof value === "string") {
+            return value.trim();
+        }
+
+        if (Array.isArray(value)) {
+            const arr = value.map(v => normalizeJson(v, opts));
+            if (opts.ignoreArrayOrder) {
+                return arr
+                    .map(v => ({ v, k: JSON.stringify(v) }))
+                    .sort((a, b) => (a.k > b.k ? 1 : a.k < b.k ? -1 : 0))
+                    .map(x => x.v);
+            }
+            return arr;
+        }
+
+        if (value && typeof value === "object") {
+            const keys = Object.keys(value);
+            if (opts.sortKeys) keys.sort();
+            const out = {};
+            for (const k of keys) {
+                out[k] = normalizeJson(value[k], opts);
+            }
+            return out;
+        }
+
+        return value;
+    }
+
+    function isEqual(a, b) {
+        return JSON.stringify(a) === JSON.stringify(b);
+    }
+
+    function diffJson(a, b, path = "$", diffs = []) {
+        const typeA = Array.isArray(a) ? "array" : (a === null ? "null" : typeof a);
+        const typeB = Array.isArray(b) ? "array" : (b === null ? "null" : typeof b);
+
+        if (typeA !== typeB) {
+            diffs.push({ path, a, b, reason: "type" });
+            return diffs;
+        }
+
+        if (typeA !== "object" && typeA !== "array") {
+            if (a !== b) diffs.push({ path, a, b, reason: "value" });
+            return diffs;
+        }
+
+        if (a === null || b === null) {
+            if (a !== b) diffs.push({ path, a, b, reason: "null" });
+            return diffs;
+        }
+
+        if (typeA === "array") {
+            const lenA = a.length;
+            const lenB = b.length;
+            const max = Math.max(lenA, lenB);
+            for (let i = 0; i < max; i++) {
+                const p = `${path}[${i}]`;
+                if (i >= lenA) diffs.push({ path: p, a: undefined, b: b[i], reason: "added" });
+                else if (i >= lenB) diffs.push({ path: p, a: a[i], b: undefined, reason: "removed" });
+                else diffJson(a[i], b[i], p, diffs);
+            }
+            return diffs;
+        }
+
+        const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+        const sortedKeys = Array.from(keys).sort();
+        for (const k of sortedKeys) {
+            const p = `${path}.${k}`;
+            if (!(k in a)) diffs.push({ path: p, a: undefined, b: b[k], reason: "added" });
+            else if (!(k in b)) diffs.push({ path: p, a: a[k], b: undefined, reason: "removed" });
+            else diffJson(a[k], b[k], p, diffs);
+        }
+        return diffs;
+    }
+
+    function pretty(v) {
+        if (v === undefined) return (currentLang === "en") ? "(missing)" : "(없음)";
+        if (typeof v === "string") return `"${v}"`;
+        return JSON.stringify(v);
+    }
+
+    const jsonAEl = document.getElementById("jsonA");
+    const jsonBEl = document.getElementById("jsonB");
+    const jsonSummaryEl = document.getElementById("jsonSummary");
+    const jsonStatsEl = document.getElementById("jsonStats");
+    const jsonDiffOutEl = document.getElementById("jsonDiffOut");
+
+    document.getElementById("jsonSwapBtn").addEventListener("click", () => {
+        const a = jsonAEl.value;
+        const b = jsonBEl.value;
+        jsonAEl.value = b;
+        jsonBEl.value = a;
+    });
+
+    document.getElementById("jsonFormatBtn").addEventListener("click", () => {
+        try {
+            const opts = {
+                sortKeys: document.getElementById("jsonSortKeys").checked,
+                ignoreArrayOrder: document.getElementById("jsonIgnoreArrayOrder").checked,
+                trimString: document.getElementById("jsonTrimString").checked
+            };
+            const a = normalizeJson(safeJsonParse(jsonAEl.value), opts);
+            const b = normalizeJson(safeJsonParse(jsonBEl.value), opts);
+            jsonAEl.value = JSON.stringify(a, null, 2);
+            jsonBEl.value = JSON.stringify(b, null, 2);
+            alert(t("alert.formatDone"));
+        } catch (e) {
+            alert(t("alert.formatFail") + (e.message || e));
+        }
+    });
+
+    document.getElementById("jsonCompareBtn").addEventListener("click", () => {
+        try {
+            const opts = {
+                sortKeys: document.getElementById("jsonSortKeys").checked,
+                ignoreArrayOrder: document.getElementById("jsonIgnoreArrayOrder").checked,
+                trimString: document.getElementById("jsonTrimString").checked
+            };
+
+            const aRaw = safeJsonParse(jsonAEl.value);
+            const bRaw = safeJsonParse(jsonBEl.value);
+
+            const a = normalizeJson(aRaw, opts);
+            const b = normalizeJson(bRaw, opts);
+
+            const same = isEqual(a, b);
+            const diffs = same ? [] : diffJson(a, b);
+
+            jsonSummaryEl.textContent = same
+                ? (currentLang === "en" ? "✅ Same (normalized)" : "✅ 동일합니다 (Normalized 기준)")
+                : (currentLang === "en" ? "❌ Different (normalized)" : "❌ 다릅니다 (Normalized 기준)");
+            jsonStatsEl.textContent =
+                (currentLang === "en")
+                    ? `Diffs: ${diffs.length} · opts: sortKeys=${opts.sortKeys?"ON":"OFF"}, ignoreArrayOrder=${opts.ignoreArrayOrder?"ON":"OFF"}, trimString=${opts.trimString?"ON":"OFF"}`
+                    : `차이 ${diffs.length}개 · 옵션: 키정렬=${opts.sortKeys ? "ON" : "OFF"}, 배열순서무시=${opts.ignoreArrayOrder ? "ON" : "OFF"}, 문자열trim=${opts.trimString ? "ON" : "OFF"}`;
+
+            if (same) {
+                jsonDiffOutEl.value = "";
+                return;
+            }
+
+            jsonDiffOutEl.value = diffs
+                .map(d => `[${d.path}] ${pretty(d.a)} → ${pretty(d.b)} (${d.reason})`)
+                .join("\n");
+        } catch (e) {
+            jsonSummaryEl.textContent = (currentLang === "en") ? "⚠️ Failed" : "⚠️ 비교 실패";
+            jsonStatsEl.textContent = e.message || String(e);
+            jsonDiffOutEl.value = "";
+            alert(t("alert.compareFail") + (e.message || e));
+        }
+    });
+
+    document.getElementById("jsonCopyDiffBtn").addEventListener("click", async () => {
+        const out = jsonDiffOutEl.value || "";
+        if (!out) {
+            alert(t("alert.noDiffToCopy"));
+            return;
+        }
+        try {
+            await navigator.clipboard.writeText(out);
+            alert(t("alert.copied"));
+        } catch (e) {
+            jsonDiffOutEl.select();
+            document.execCommand("copy");
+            alert(t("alert.copiedExec"));
+        }
+    });
+
+    // --- RSA ---
+    function ensureWebCrypto() {
+        if (!(window.crypto && window.crypto.subtle && window.TextEncoder && window.TextDecoder)) {
+            throw new Error(t("alert.cryptoUnsupported"));
+        }
+    }
+
+    function arrayBufferToBase64(buf) {
+        const bytes = new Uint8Array(buf);
+        let binary = "";
+        for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+        return btoa(binary);
+    }
+
+    function base64ToArrayBuffer(b64) {
+        const binary = atob(b64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        return bytes.buffer;
+    }
+
+    function toPem(base64, label) {
+        const lines = base64.match(/.{1,64}/g) || [];
+        return `-----BEGIN ${label}-----\n${lines.join("\n")}\n-----END ${label}-----`;
+    }
+
+    function pemToBase64(pem) {
+        return pem
+            .replace(/-----BEGIN [^-]+-----/g, "")
+            .replace(/-----END [^-]+-----/g, "")
+            .replace(/\s+/g, "")
+            .trim();
+    }
+
+    async function exportPublicKeyPem(publicKey) {
+        const spki = await crypto.subtle.exportKey("spki", publicKey);
+        return toPem(arrayBufferToBase64(spki), "PUBLIC KEY");
+    }
+
+    async function exportPrivateKeyPem(privateKey) {
+        const pkcs8 = await crypto.subtle.exportKey("pkcs8", privateKey);
+        return toPem(arrayBufferToBase64(pkcs8), "PRIVATE KEY");
+    }
+
+    async function importPublicKeyPem(pem, hashAlg) {
+        const b64 = pemToBase64(pem);
+        const buf = base64ToArrayBuffer(b64);
+        return crypto.subtle.importKey(
+            "spki",
+            buf,
+            { name: "RSA-OAEP", hash: hashAlg },
+            true,
+            ["encrypt"]
+        );
+    }
+
+    async function importPrivateKeyPem(pem, hashAlg) {
+        const b64 = pemToBase64(pem);
+        const buf = base64ToArrayBuffer(b64);
+        return crypto.subtle.importKey(
+            "pkcs8",
+            buf,
+            { name: "RSA-OAEP", hash: hashAlg },
+            true,
+            ["decrypt"]
+        );
+    }
+
+    function getRsaOptions() {
+        return {
+            modulusLength: parseInt(document.getElementById("rsaKeySize").value, 10),
+            hashAlg: document.getElementById("rsaHashAlg").value
+        };
+    }
+
+    const rsaPublicKeyPemEl = document.getElementById("rsaPublicKeyPem");
+    const rsaPrivateKeyPemEl = document.getElementById("rsaPrivateKeyPem");
+    const rsaPlainTextEl = document.getElementById("rsaPlainText");
+    const rsaCipherTextEl = document.getElementById("rsaCipherText");
+    const rsaDecryptedOutEl = document.getElementById("rsaDecryptedOut");
+    const rsaInfoEl = document.getElementById("rsaInfo");
+
+    let rsaKeyPair = null;
+
+    document.getElementById("rsaGenKeyBtn").addEventListener("click", async () => {
+        try {
+            ensureWebCrypto();
+            rsaInfoEl.textContent = "";
+            rsaDecryptedOutEl.textContent = "";
+
+            const { modulusLength, hashAlg } = getRsaOptions();
+
+            rsaInfoEl.textContent = (currentLang === "en") ? "Generating keys..." : "키 생성 중...";
+            const start = performance.now();
+
+            rsaKeyPair = await crypto.subtle.generateKey(
+                {
+                    name: "RSA-OAEP",
+                    modulusLength,
+                    publicExponent: new Uint8Array([1, 0, 1]),
+                    hash: hashAlg
+                },
+                true,
+                ["encrypt", "decrypt"]
+            );
+
+            const pubPem = await exportPublicKeyPem(rsaKeyPair.publicKey);
+            const privPem = await exportPrivateKeyPem(rsaKeyPair.privateKey);
+
+            rsaPublicKeyPemEl.value = pubPem;
+            rsaPrivateKeyPemEl.value = privPem;
+
+            const end = performance.now();
+            rsaInfoEl.textContent =
+                (currentLang === "en")
+                    ? `Done · ${modulusLength}bit · ${hashAlg} · ${(end - start).toFixed(2)}ms`
+                    : `RSA 키 생성 완료 · ${modulusLength}bit · ${hashAlg} · ${(end - start).toFixed(2)}ms`;
+        } catch (e) {
+            alert(t("alert.rsaKeyGenFail") + (e.message || e));
+            rsaInfoEl.textContent = e.message || String(e);
+        }
+    });
+
+    document.getElementById("rsaEncryptBtn").addEventListener("click", async () => {
+        try {
+            ensureWebCrypto();
+            const { hashAlg } = getRsaOptions();
+
+            const plain = (rsaPlainTextEl.value || "");
+            if (!plain.trim()) {
+                alert(t("alert.rsaNeedPlain"));
+                return;
+            }
+
+            let publicKey = null;
+            if ((rsaPublicKeyPemEl.value || "").trim()) {
+                publicKey = await importPublicKeyPem(rsaPublicKeyPemEl.value, hashAlg);
+            } else if (rsaKeyPair?.publicKey) {
+                publicKey = rsaKeyPair.publicKey;
+            } else {
+                alert(t("alert.rsaNeedPub"));
+                return;
+            }
+
+            const encoder = new TextEncoder();
+            const data = encoder.encode(plain);
+
+            const k = (parseInt(document.getElementById("rsaKeySize").value, 10) / 8);
+            const hLen = hashAlg === "SHA-256" ? 32 : (hashAlg === "SHA-384" ? 48 : 64);
+            const maxLen = k - 2 * hLen - 2;
+            if (data.length > maxLen) {
+                alert(t("alert.rsaTooLong", { cur: data.length, max: maxLen }));
+                return;
+            }
+
+            const cipherBuf = await crypto.subtle.encrypt({ name: "RSA-OAEP" }, publicKey, data);
+            const cipherB64 = arrayBufferToBase64(cipherBuf);
+
+            rsaCipherTextEl.value = cipherB64;
+            rsaInfoEl.textContent =
+                (currentLang === "en")
+                    ? `Encrypted · input ${data.length} bytes`
+                    : `암호화 완료 · 입력 ${data.length}bytes`;
+        } catch (e) {
+            alert(t("alert.rsaEncryptFail") + (e.message || e));
+            rsaInfoEl.textContent = e.message || String(e);
+        }
+    });
+
+    document.getElementById("rsaDecryptBtn").addEventListener("click", async () => {
+        try {
+            ensureWebCrypto();
+            const { hashAlg } = getRsaOptions();
+
+            const cipherB64 = (rsaCipherTextEl.value || "").trim();
+            if (!cipherB64) {
+                alert(t("alert.rsaNeedCipher"));
+                return;
+            }
+
+            let privateKey = null;
+            if ((rsaPrivateKeyPemEl.value || "").trim()) {
+                privateKey = await importPrivateKeyPem(rsaPrivateKeyPemEl.value, hashAlg);
+            } else if (rsaKeyPair?.privateKey) {
+                privateKey = rsaKeyPair.privateKey;
+            } else {
+                alert(t("alert.rsaNeedPriv"));
+                return;
+            }
+
+            const cipherBuf = base64ToArrayBuffer(cipherB64);
+            const plainBuf = await crypto.subtle.decrypt({ name: "RSA-OAEP" }, privateKey, cipherBuf);
+
+            const decoder = new TextDecoder();
+            const plain = decoder.decode(plainBuf);
+
+            rsaDecryptedOutEl.textContent = plain;
+            rsaInfoEl.textContent =
+                (currentLang === "en")
+                    ? `Decrypted · output ${plainBuf.byteLength} bytes`
+                    : `복호화 완료 · 출력 ${plainBuf.byteLength}bytes`;
+        } catch (e) {
+            alert(t("alert.rsaDecryptFail") + (e.message || e));
+            rsaInfoEl.textContent = e.message || String(e);
+            rsaDecryptedOutEl.textContent = "";
+        }
+    });
+
+    async function copyTextFromEl(el, emptyMsgKey) {
+        const txt = (el.value !== undefined ? el.value : el.textContent) || "";
+        if (!txt.trim()) {
+            alert(t(emptyMsgKey));
+            return;
+        }
+        try {
+            await navigator.clipboard.writeText(txt);
+            alert(t("alert.copied"));
+        } catch {
+            if (el.select) {
+                el.select();
+                document.execCommand("copy");
+                alert(t("alert.copiedExec"));
+            } else {
+                const temp = document.createElement("textarea");
+                temp.value = txt;
+                document.body.appendChild(temp);
+                temp.select();
+                document.execCommand("copy");
+                document.body.removeChild(temp);
+                alert(t("alert.copiedExec"));
+            }
+        }
+    }
+
+    document.getElementById("rsaCopyPubBtn").addEventListener("click", () =>
+        copyTextFromEl(rsaPublicKeyPemEl, "alert.rsaCopyPubEmpty")
+    );
+    document.getElementById("rsaCopyPrivBtn").addEventListener("click", () =>
+        copyTextFromEl(rsaPrivateKeyPemEl, "alert.rsaCopyPrivEmpty")
+    );
+    document.getElementById("rsaCopyCipherBtn").addEventListener("click", () =>
+        copyTextFromEl(rsaCipherTextEl, "alert.rsaCopyCipherEmpty")
+    );
+
+    document.getElementById("rsaClearKeyBtn").addEventListener("click", () => {
+        rsaKeyPair = null;
+        rsaPublicKeyPemEl.value = "";
+        rsaPrivateKeyPemEl.value = "";
+        rsaInfoEl.textContent = "";
+        alert(t("alert.rsaKeyCleared"));
+    });
+
+    document.getElementById("rsaClearMsgBtn").addEventListener("click", () => {
+        rsaPlainTextEl.value = "";
+        rsaCipherTextEl.value = "";
+        rsaDecryptedOutEl.textContent = "";
+        rsaInfoEl.textContent = "";
+    });
+
+    // ✅ Meeting Summary API
+    const MEETING_API_URL = "http://134.185.112.112:9292/api/v1/summarize";
+
+    const meetingTextEl = document.getElementById("meetingText");
+    const meetingSummarizeBtn = document.getElementById("meetingSummarizeBtn");
+    const meetingClearBtn = document.getElementById("meetingClearBtn");
+    const meetingCopyAllBtn = document.getElementById("meetingCopyAllBtn");
+
+    const meetingStatsEl = document.getElementById("meetingStats");
+    const meetingTimeBadgeEl = document.getElementById("meetingTimeBadge");
+
+    const meetingSummaryOutEl = document.getElementById("meetingSummaryOut");
+    const meetingKeyPointsOutEl = document.getElementById("meetingKeyPointsOut");
+    const meetingActionItemsOutEl = document.getElementById("meetingActionItemsOut");
+
+    const meetingKeyPointsEmptyEl = document.getElementById("meetingKeyPointsEmpty");
+    const meetingActionItemsEmptyEl = document.getElementById("meetingActionItemsEmpty");
+
+    const meetingCopySummaryBtn = document.getElementById("meetingCopySummaryBtn");
+    const meetingCopyKeyPointsBtn = document.getElementById("meetingCopyKeyPointsBtn");
+    const meetingCopyActionItemsBtn = document.getElementById("meetingCopyActionItemsBtn");
+
+    function setMeetingLoading(isLoading) {
+        meetingSummarizeBtn.disabled = isLoading;
+        meetingSummarizeBtn.style.opacity = isLoading ? "0.7" : "1";
+        meetingTextEl.disabled = isLoading;
+        meetingStatsEl.textContent = isLoading ? t("alert.meet.loading") : "";
+    }
+
+    function clearMeetingOutputs() {
+        meetingSummaryOutEl.textContent = "";
+        meetingKeyPointsOutEl.innerHTML = "";
+        meetingActionItemsOutEl.innerHTML = "";
+        meetingKeyPointsEmptyEl.style.display = "none";
+        meetingActionItemsEmptyEl.style.display = "none";
+        meetingTimeBadgeEl.style.display = "none";
+        meetingTimeBadgeEl.textContent = "";
+        meetingStatsEl.textContent = "";
+    }
+
+    function renderList(ulEl, emptyEl, items) {
+        ulEl.innerHTML = "";
+        if (!Array.isArray(items) || items.length === 0) {
+            emptyEl.textContent = (currentLang === "en") ? "No items." : "항목이 없습니다.";
+            emptyEl.style.display = "block";
+            return;
+        }
+        emptyEl.style.display = "none";
+        items.forEach(txt => {
+            const li = document.createElement("li");
+            li.textContent = String(txt);
+            ulEl.appendChild(li);
+        });
+    }
+
+    function buildCopyAllText(resp) {
+        const s = [];
+        const time = resp?.processing_time_ms;
+        if (typeof time === "number") s.push(`processing_time_ms: ${time}`);
+        s.push("");
+        s.push(`[Summary]\n${resp?.summary || ""}`.trim());
+        s.push("");
+        s.push("[Key Points]");
+        (resp?.key_points || []).forEach((v, i) => s.push(`${i+1}. ${v}`));
+        s.push("");
+        s.push("[Action Items]");
+        (resp?.action_items || []).forEach((v, i) => s.push(`${i+1}. ${v}`));
+        return s.join("\n");
+    }
+
+    let lastMeetingResp = null;
+
+    meetingSummarizeBtn.addEventListener("click", async () => {
+        const text = (meetingTextEl.value || "").trim();
+        if (!text) {
+            alert(t("alert.meet.needText"));
+            return;
+        }
+
+        clearMeetingOutputs();
+        setMeetingLoading(true);
+
+        try {
+            const start = performance.now();
+            const res = await fetch(MEETING_API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text })
+            });
+
+            const end = performance.now();
+
+            if (!res.ok) {
+                const bodyText = await res.text().catch(() => "");
+                throw new Error(`HTTP ${res.status} ${res.statusText}${bodyText ? " · " + bodyText : ""}`);
+            }
+
+            const data = await res.json();
+
+            if (!data || typeof data.summary !== "string") {
+                console.warn("Unexpected response:", data);
+                throw new Error(t("alert.meet.badResponse"));
+            }
+
+            lastMeetingResp = data;
+
+            // render
+            meetingSummaryOutEl.textContent = data.summary || "";
+            renderList(meetingKeyPointsOutEl, meetingKeyPointsEmptyEl, data.key_points);
+            renderList(meetingActionItemsOutEl, meetingActionItemsEmptyEl, data.action_items);
+
+            // stats
+            const apiTime = (typeof data.processing_time_ms === "number") ? data.processing_time_ms : null;
+            if (apiTime !== null) {
+                meetingTimeBadgeEl.style.display = "inline-block";
+                meetingTimeBadgeEl.textContent =
+                    (currentLang === "en")
+                        ? `API ${apiTime}ms`
+                        : `API ${apiTime}ms`;
+            }
+
+            meetingStatsEl.textContent =
+                (currentLang === "en")
+                    ? `Done · client ${(end - start).toFixed(0)}ms`
+                    : `완료 · 클라이언트 ${(end - start).toFixed(0)}ms`;
+
+        } catch (e) {
+            console.error(e);
+            alert(t("alert.meet.fail") + (e.message || e));
+            meetingStatsEl.textContent = (e && e.message) ? e.message : String(e);
+        } finally {
+            setMeetingLoading(false);
+        }
+    });
+
+    meetingClearBtn.addEventListener("click", () => {
+        meetingTextEl.value = "";
+        lastMeetingResp = null;
+        clearMeetingOutputs();
+        meetingTextEl.focus();
+    });
+
+    meetingCopySummaryBtn.addEventListener("click", async () => {
+        const txt = (meetingSummaryOutEl.textContent || "").trim();
+        if (!txt) { alert(t("alert.noCopy")); return; }
+        try {
+            await navigator.clipboard.writeText(txt);
+            alert(t("alert.copied"));
+        } catch {
+            const temp = document.createElement("textarea");
+            temp.value = txt;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand("copy");
+            document.body.removeChild(temp);
+            alert(t("alert.copiedExec"));
+        }
+    });
+
+    meetingCopyKeyPointsBtn.addEventListener("click", async () => {
+        if (!lastMeetingResp?.key_points?.length) { alert(t("alert.noCopy")); return; }
+        const txt = lastMeetingResp.key_points.map((v, i) => `${i+1}. ${v}`).join("\n");
+        try {
+            await navigator.clipboard.writeText(txt);
+            alert(t("alert.copied"));
+        } catch {
+            const temp = document.createElement("textarea");
+            temp.value = txt;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand("copy");
+            document.body.removeChild(temp);
+            alert(t("alert.copiedExec"));
+        }
+    });
+
+    meetingCopyActionItemsBtn.addEventListener("click", async () => {
+        if (!lastMeetingResp?.action_items?.length) { alert(t("alert.noCopy")); return; }
+        const txt = lastMeetingResp.action_items.map((v, i) => `${i+1}. ${v}`).join("\n");
+        try {
+            await navigator.clipboard.writeText(txt);
+            alert(t("alert.copied"));
+        } catch {
+            const temp = document.createElement("textarea");
+            temp.value = txt;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand("copy");
+            document.body.removeChild(temp);
+            alert(t("alert.copiedExec"));
+        }
+    });
+
+    meetingCopyAllBtn.addEventListener("click", async () => {
+        if (!lastMeetingResp) { alert(t("alert.noCopy")); return; }
+        const txt = buildCopyAllText(lastMeetingResp);
+        try {
+            await navigator.clipboard.writeText(txt);
+            alert(t("alert.meet.copiedAll"));
+        } catch {
+            const temp = document.createElement("textarea");
+            temp.value = txt;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand("copy");
+            document.body.removeChild(temp);
+            alert(t("alert.copiedExec"));
+        }
+    });
+
+    console.log("SQL Utility Tools — Made by Sanghyun Im (임상현)");
+</script>
+</body>
+</html>
