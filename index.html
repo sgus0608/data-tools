@@ -285,6 +285,8 @@
         <button class="tab-button" data-tab="shaTab" data-i18n="tab.sha">SHA-256 해시 생성기</button>
         <button class="tab-button" data-tab="rsaTab" data-i18n="tab.rsa">RSA 암호화</button>
         <button class="tab-button" data-tab="jsonTab" data-i18n="tab.json">JSON 비교</button>
+        <button class="tab-button" data-tab="jwtTab" data-i18n="tab.jwt">JWT 디코더/인코더</button>
+
     </div>
 
     <!-- IN 절 생성기 탭 -->
@@ -698,6 +700,116 @@ user@example.com
             <div class="small-text" data-i18n="json.out.format">형식: [경로] A값 → B값</div>
         </div>
     </section>
+    <section id="jwtTab" class="tab-content">
+        <div class="subtitle" style="margin-top: 4px;" data-i18n="jwt.desc">
+            JWT를 디코딩하고(헤더/페이로드), HS256 시크릿으로 서명 검증 및 JWT 생성(인코딩)을 지원합니다.
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <label for="jwtInput" data-i18n="jwt.input.label">JWT 토큰</label>
+                <textarea id="jwtInput" data-i18n-placeholder="jwt.input.ph" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."></textarea>
+
+                <div class="btn-row">
+                    <button class="btn-primary" id="jwtDecodeBtn" data-i18n="jwt.btn.decode">Decode</button>
+                    <button class="btn-secondary" id="jwtClearBtn" data-i18n="jwt.btn.clear">초기화</button>
+                </div>
+
+                <div class="small-text" id="jwtStatus"></div>
+            </div>
+
+            <div class="col">
+                <label for="jwtAlg" data-i18n="jwt.alg.label">Algorithm</label>
+                <select id="jwtAlg">
+                    <option value="none">none</option>
+                    <option value="HS256">HS256</option>
+                </select>
+
+                <label for="jwtSecret" style="margin-top:10px;" data-i18n="jwt.secret.label">HS256 Secret (검증/서명용)</label>
+                <input id="jwtSecret" type="text" data-i18n-placeholder="jwt.secret.ph" placeholder="예) my-secret-key" />
+
+                <div class="small-text" data-i18n="jwt.secret.note">
+                    ※ Secret은 로컬 브라우저에서만 사용됩니다(네트워크 전송 없음).
+                </div>
+
+                <div class="ms-card" style="margin-top: 12px;">
+                    <div class="ms-card-title">
+                        <span data-i18n="jwt.verify.title">Signature Verify</span>
+                        <span class="badge" id="jwtVerifyBadge" style="display:none;"></span>
+                    </div>
+                    <div id="jwtVerifyOut" class="hash-output"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <div class="ms-card">
+                    <div class="ms-card-title">
+                        <span data-i18n="jwt.out.header">Header</span>
+                        <span class="badge" id="jwtHeaderBadge" style="display:none;"></span>
+                    </div>
+                    <pre id="jwtHeaderOut" class="hash-output meeting-wrap"></pre>
+                    <div class="btn-row">
+                        <button class="btn-secondary" id="jwtCopyHeaderBtn" data-i18n="jwt.btn.copyHeader">헤더 복사</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="ms-card">
+                    <div class="ms-card-title">
+                        <span data-i18n="jwt.out.payload">Payload</span>
+                        <span class="badge" id="jwtPayloadBadge" style="display:none;"></span>
+                    </div>
+                    <pre id="jwtPayloadOut" class="hash-output meeting-wrap"></pre>
+                    <div class="btn-row">
+                        <button class="btn-secondary" id="jwtCopyPayloadBtn" data-i18n="jwt.btn.copyPayload">페이로드 복사</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <div class="ms-card">
+                    <div class="ms-card-title">
+                        <span data-i18n="jwt.out.claims">Time Claims</span>
+                    </div>
+                    <div id="jwtClaimsOut" class="hash-output"></div>
+                </div>
+            </div>
+        </div>
+
+        <hr style="margin: 18px 0; border: none; border-top: 1px solid #e5e7eb;" />
+
+        <div class="subtitle" data-i18n="jwt.encode.desc">
+            아래에서 Header/Payload를 입력해 JWT를 생성합니다(alg=none 또는 HS256).
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <label for="jwtHeaderIn" data-i18n="jwt.headerin.label">Header JSON</label>
+                <textarea id="jwtHeaderIn" placeholder='{"alg":"HS256","typ":"JWT"}'></textarea>
+            </div>
+            <div class="col">
+                <label for="jwtPayloadIn" data-i18n="jwt.payloadin.label">Payload JSON</label>
+                <textarea id="jwtPayloadIn" placeholder='{"sub":"123","name":"Kim","iat":1730000000}'></textarea>
+            </div>
+        </div>
+
+        <div class="btn-row">
+            <button class="btn-primary" id="jwtEncodeBtn" data-i18n="jwt.btn.encode">Encode</button>
+            <button class="btn-secondary" id="jwtCopyTokenBtn" data-i18n="jwt.btn.copyToken">토큰 복사</button>
+        </div>
+
+        <div class="ms-card">
+            <div class="ms-card-title">
+                <span data-i18n="jwt.out.token">Generated JWT</span>
+            </div>
+            <div id="jwtTokenOut" class="hash-output meeting-wrap"></div>
+        </div>
+    </section>
 
     <footer>
         <span data-i18n="footer">© 2025 Made by 임상현 (Sanghyun Im)</span>
@@ -883,10 +995,54 @@ user@example.com
             "alert.rsaDecryptFail": "복호화 실패: ",
             "alert.rsaCopyPubEmpty": "복사할 공개키가 없습니다.",
             "alert.rsaCopyPrivEmpty": "복사할 개인키가 없습니다.",
-            "alert.rsaCopyCipherEmpty": "복사할 암호문이 없습니다."
+            "alert.rsaCopyCipherEmpty": "복사할 암호문이 없습니다.",
+            "tab.jwt": "JWT 디코더/인코더",
+            "jwt.desc": "JWT를 디코딩(헤더/페이로드)하고, HS256 시크릿으로 서명 검증 및 JWT 생성(인코딩)을 지원합니다.",
+            "jwt.input.label": "JWT 토큰",
+            "jwt.input.ph": "여기에 JWT를 붙여넣으세요 (header.payload.signature)",
+            "jwt.btn.decode": "Decode",
+            "jwt.btn.clear": "초기화",
+            "jwt.alg.label": "Algorithm",
+            "jwt.secret.label": "HS256 Secret (검증/서명용)",
+            "jwt.secret.ph": "예) my-secret-key",
+            "jwt.secret.note": "※ Secret은 로컬 브라우저에서만 사용됩니다(네트워크 전송 없음).",
+            "jwt.verify.title": "서명 검증",
+            "jwt.out.header": "Header",
+            "jwt.out.payload": "Payload",
+            "jwt.out.claims": "시간 클레임(exp/nbf/iat)",
+            "jwt.btn.copyHeader": "헤더 복사",
+            "jwt.btn.copyPayload": "페이로드 복사",
+            "jwt.encode.desc": "아래에서 Header/Payload를 입력해 JWT를 생성합니다(alg=none 또는 HS256).",
+            "jwt.headerin.label": "Header JSON",
+            "jwt.payloadin.label": "Payload JSON",
+            "jwt.btn.encode": "Encode",
+            "jwt.btn.copyToken": "토큰 복사",
+            "jwt.out.token": "생성된 JWT"
         },
 
         en: {
+            "tab.jwt": "JWT Decoder/Encoder",
+            "jwt.desc": "Decode JWT (header/payload), verify signature with HS256 secret, and generate JWT (encode).",
+            "jwt.input.label": "JWT Token",
+            "jwt.input.ph": "Paste JWT here (header.payload.signature)",
+            "jwt.btn.decode": "Decode",
+            "jwt.btn.clear": "Clear",
+            "jwt.alg.label": "Algorithm",
+            "jwt.secret.label": "HS256 Secret (verify/sign)",
+            "jwt.secret.ph": "e.g) my-secret-key",
+            "jwt.secret.note": "※ Secret is used only in your browser (not sent over network).",
+            "jwt.verify.title": "Signature Verify",
+            "jwt.out.header": "Header",
+            "jwt.out.payload": "Payload",
+            "jwt.out.claims": "Time Claims (exp/nbf/iat)",
+            "jwt.btn.copyHeader": "Copy header",
+            "jwt.btn.copyPayload": "Copy payload",
+            "jwt.encode.desc": "Enter Header/Payload to generate JWT (alg=none or HS256).",
+            "jwt.headerin.label": "Header JSON",
+            "jwt.payloadin.label": "Payload JSON",
+            "jwt.btn.encode": "Encode",
+            "jwt.btn.copyToken": "Copy token",
+            "jwt.out.token": "Generated JWT",
             "app.title": "DATA Utility Tools",
             "app.subtitle": "A practical toolbox for people who work with data.",
             "app.badge": "Made by Sanghyun Im (Ads/Sponsor: Instagram @1imsangh)",
@@ -2007,6 +2163,309 @@ user@example.com
         rsaDecryptedOutEl.textContent = "";
         rsaInfoEl.textContent = "";
     });
+    // =========================
+    // JWT Decoder / Encoder
+    // =========================
+    const jwtInputEl = document.getElementById("jwtInput");
+    const jwtDecodeBtn = document.getElementById("jwtDecodeBtn");
+    const jwtClearBtn = document.getElementById("jwtClearBtn");
+
+    const jwtAlgEl = document.getElementById("jwtAlg");
+    const jwtSecretEl = document.getElementById("jwtSecret");
+
+    const jwtHeaderOutEl = document.getElementById("jwtHeaderOut");
+    const jwtPayloadOutEl = document.getElementById("jwtPayloadOut");
+    const jwtClaimsOutEl = document.getElementById("jwtClaimsOut");
+    const jwtStatusEl = document.getElementById("jwtStatus");
+
+    const jwtVerifyOutEl = document.getElementById("jwtVerifyOut");
+    const jwtVerifyBadgeEl = document.getElementById("jwtVerifyBadge");
+    const jwtHeaderBadgeEl = document.getElementById("jwtHeaderBadge");
+    const jwtPayloadBadgeEl = document.getElementById("jwtPayloadBadge");
+
+    const jwtCopyHeaderBtn = document.getElementById("jwtCopyHeaderBtn");
+    const jwtCopyPayloadBtn = document.getElementById("jwtCopyPayloadBtn");
+
+    const jwtHeaderInEl = document.getElementById("jwtHeaderIn");
+    const jwtPayloadInEl = document.getElementById("jwtPayloadIn");
+    const jwtEncodeBtn = document.getElementById("jwtEncodeBtn");
+    const jwtTokenOutEl = document.getElementById("jwtTokenOut");
+    const jwtCopyTokenBtn = document.getElementById("jwtCopyTokenBtn");
+
+    let lastDecoded = null;
+    let lastGeneratedToken = "";
+
+    function base64UrlDecodeToString(input) {
+        // pad + replace
+        const b64 = (input || "").replace(/-/g, "+").replace(/_/g, "/");
+        const pad = b64.length % 4 === 0 ? "" : "=".repeat(4 - (b64.length % 4));
+        try {
+            const bin = atob(b64 + pad);
+            // UTF-8 decode
+            const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+            return new TextDecoder().decode(bytes);
+        } catch (e) {
+            throw new Error("Invalid base64url");
+        }
+    }
+
+    function base64UrlEncodeFromString(str) {
+        const bytes = new TextEncoder().encode(str);
+        let bin = "";
+        bytes.forEach(b => (bin += String.fromCharCode(b)));
+        const b64 = btoa(bin);
+        return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+    }
+
+    function prettyJson(obj) {
+        return JSON.stringify(obj, null, 2);
+    }
+
+    function safeJsonParse(text) {
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            throw new Error("Invalid JSON");
+        }
+    }
+
+    function setBadge(el, text) {
+        if (!el) return;
+        el.style.display = "inline-block";
+        el.textContent = text;
+    }
+
+    function hideBadge(el) {
+        if (!el) return;
+        el.style.display = "none";
+        el.textContent = "";
+    }
+
+    function clearJwtUI() {
+        lastDecoded = null;
+        lastGeneratedToken = "";
+        jwtInputEl.value = "";
+        jwtHeaderOutEl.textContent = "";
+        jwtPayloadOutEl.textContent = "";
+        jwtClaimsOutEl.textContent = "";
+        jwtVerifyOutEl.textContent = "";
+        jwtTokenOutEl.textContent = "";
+        jwtStatusEl.textContent = "";
+
+        hideBadge(jwtVerifyBadgeEl);
+        hideBadge(jwtHeaderBadgeEl);
+        hideBadge(jwtPayloadBadgeEl);
+    }
+
+    function unixToKstString(sec) {
+        if (typeof sec !== "number") return "";
+        const d = new Date(sec * 1000);
+        // 사용자는 KST(Asia/Seoul)라 로컬이 KST일 확률 높지만, 명확하게 표시
+        return d.toLocaleString("ko-KR", { timeZone: "Asia/Seoul" }) + " (KST)";
+    }
+
+    function renderTimeClaims(payload) {
+        const nowSec = Math.floor(Date.now() / 1000);
+        const lines = [];
+
+        const exp = payload?.exp;
+        const nbf = payload?.nbf;
+        const iat = payload?.iat;
+
+        if (typeof iat === "number") lines.push(`iat: ${iat} → ${unixToKstString(iat)}`);
+        if (typeof nbf === "number") lines.push(`nbf: ${nbf} → ${unixToKstString(nbf)}`);
+        if (typeof exp === "number") lines.push(`exp: ${exp} → ${unixToKstString(exp)}`);
+
+        if (typeof exp === "number") {
+            const diff = exp - nowSec;
+            if (diff >= 0) lines.push(`status: ✅ not expired (in ${diff}s)`);
+            else lines.push(`status: ❌ expired (${Math.abs(diff)}s ago)`);
+        }
+        if (typeof nbf === "number") {
+            const diff = nbf - nowSec;
+            if (diff <= 0) lines.push(`nbf: ✅ active (since ${Math.abs(diff)}s ago)`);
+            else lines.push(`nbf: ⏳ not active yet (in ${diff}s)`);
+        }
+
+        return lines.length ? lines.join("\n") : (currentLang === "en" ? "No time claims found." : "시간 관련 클레임(exp/nbf/iat)이 없습니다.");
+    }
+
+    async function hmacSha256Base64Url(secret, message) {
+        const key = await crypto.subtle.importKey(
+            "raw",
+            new TextEncoder().encode(secret),
+            { name: "HMAC", hash: "SHA-256" },
+            false,
+            ["sign", "verify"]
+        );
+        const sigBuf = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(message));
+        const bytes = new Uint8Array(sigBuf);
+        let bin = "";
+        bytes.forEach(b => (bin += String.fromCharCode(b)));
+        const b64 = btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+        return b64;
+    }
+
+    async function verifyHs256(token, secret) {
+        const parts = token.split(".");
+        if (parts.length !== 3) throw new Error("JWT must have 3 parts");
+        const [h, p, s] = parts;
+        const msg = `${h}.${p}`;
+        const expected = await hmacSha256Base64Url(secret, msg);
+        return expected === s;
+    }
+
+    jwtDecodeBtn?.addEventListener("click", async () => {
+        jwtStatusEl.textContent = "";
+        jwtVerifyOutEl.textContent = "";
+        hideBadge(jwtVerifyBadgeEl);
+
+        const token = (jwtInputEl.value || "").trim();
+        if (!token) {
+            alert(currentLang === "en" ? "Please paste a JWT token." : "JWT 토큰을 붙여넣어주세요.");
+            return;
+        }
+
+        const parts = token.split(".");
+        if (parts.length !== 3) {
+            alert(currentLang === "en" ? "Invalid JWT format (need 3 parts)." : "JWT 형식이 올바르지 않습니다(3파트 필요).");
+            return;
+        }
+
+        try {
+            const [h, p] = parts;
+
+            const headerStr = base64UrlDecodeToString(h);
+            const payloadStr = base64UrlDecodeToString(p);
+
+            const header = safeJsonParse(headerStr);
+            const payload = safeJsonParse(payloadStr);
+
+            lastDecoded = { header, payload, token };
+
+            jwtHeaderOutEl.textContent = prettyJson(header);
+            jwtPayloadOutEl.textContent = prettyJson(payload);
+
+            setBadge(jwtHeaderBadgeEl, `alg: ${header?.alg || "?"}`);
+            setBadge(jwtPayloadBadgeEl, `keys: ${Object.keys(payload || {}).length}`);
+
+            jwtClaimsOutEl.textContent = renderTimeClaims(payload);
+
+            // signature verify (HS256 only)
+            const selectedAlg = jwtAlgEl.value || "none";
+            if (selectedAlg === "HS256") {
+                const secret = (jwtSecretEl.value || "").trim();
+                if (!secret) {
+                    jwtVerifyOutEl.textContent = currentLang === "en"
+                        ? "HS256 selected. Enter secret to verify signature."
+                        : "HS256가 선택되었습니다. 시크릿을 입력하면 서명을 검증합니다.";
+                    setBadge(jwtVerifyBadgeEl, "need secret");
+                } else {
+                    const ok = await verifyHs256(token, secret);
+                    if (ok) {
+                        jwtVerifyOutEl.textContent = currentLang === "en" ? "✅ Signature valid (HS256)" : "✅ 서명 유효 (HS256)";
+                        setBadge(jwtVerifyBadgeEl, "valid");
+                    } else {
+                        jwtVerifyOutEl.textContent = currentLang === "en" ? "❌ Signature invalid (HS256)" : "❌ 서명 불일치 (HS256)";
+                        setBadge(jwtVerifyBadgeEl, "invalid");
+                    }
+                }
+            } else {
+                jwtVerifyOutEl.textContent = currentLang === "en"
+                    ? "Signature verification is available for HS256 in client mode."
+                    : "클라이언트 모드에서는 HS256 서명 검증을 지원합니다.";
+                setBadge(jwtVerifyBadgeEl, "info");
+            }
+
+            jwtStatusEl.textContent = currentLang === "en" ? "Decoded." : "디코딩 완료.";
+        } catch (e) {
+            console.error(e);
+            alert((currentLang === "en" ? "Decode failed: " : "디코딩 실패: ") + (e.message || e));
+        }
+    });
+
+    jwtClearBtn?.addEventListener("click", () => {
+        clearJwtUI();
+        jwtInputEl.focus();
+    });
+
+    async function copyText(txt) {
+        const text = (txt || "").trim();
+        if (!text) {
+            alert(t("alert.noCopy") || (currentLang === "en" ? "Nothing to copy." : "복사할 내용이 없습니다."));
+            return;
+        }
+        try {
+            await navigator.clipboard.writeText(text);
+            alert(t("alert.copied") || (currentLang === "en" ? "Copied." : "복사되었습니다."));
+        } catch {
+            const temp = document.createElement("textarea");
+            temp.value = text;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand("copy");
+            document.body.removeChild(temp);
+            alert(t("alert.copiedExec") || (currentLang === "en" ? "Copied." : "복사되었습니다."));
+        }
+    }
+
+    jwtCopyHeaderBtn?.addEventListener("click", () => copyText(jwtHeaderOutEl.textContent));
+    jwtCopyPayloadBtn?.addEventListener("click", () => copyText(jwtPayloadOutEl.textContent));
+
+    jwtEncodeBtn?.addEventListener("click", async () => {
+        jwtStatusEl.textContent = "";
+
+        const alg = jwtAlgEl.value || "none";
+        let header = null;
+        let payload = null;
+
+        try {
+            header = safeJsonParse((jwtHeaderInEl.value || "").trim() || "{}");
+            payload = safeJsonParse((jwtPayloadInEl.value || "").trim() || "{}");
+        } catch (e) {
+            alert((currentLang === "en" ? "Invalid JSON: " : "JSON 오류: ") + e.message);
+            return;
+        }
+
+        // alg 강제 반영(유저가 header에 다른 alg 넣어도 select가 우선)
+        header.alg = alg;
+        header.typ = header.typ || "JWT";
+
+        const headerB64 = base64UrlEncodeFromString(JSON.stringify(header));
+        const payloadB64 = base64UrlEncodeFromString(JSON.stringify(payload));
+        const message = `${headerB64}.${payloadB64}`;
+
+        try {
+            let sig = "";
+            if (alg === "none") {
+                sig = "";
+            } else if (alg === "HS256") {
+                const secret = (jwtSecretEl.value || "").trim();
+                if (!secret) {
+                    alert(currentLang === "en" ? "Please enter HS256 secret to sign." : "HS256 서명을 위해 Secret을 입력해주세요.");
+                    return;
+                }
+                sig = await hmacSha256Base64Url(secret, message);
+            } else {
+                alert(currentLang === "en" ? "Unsupported alg in client mode." : "클라이언트 모드에서 지원하지 않는 알고리즘입니다.");
+                return;
+            }
+
+            const token = `${message}.${sig}`;
+            lastGeneratedToken = token;
+            jwtTokenOutEl.textContent = token;
+
+            // 생성 후 바로 디코딩 입력창에 넣어주면 jwt.io 느낌 남
+            jwtInputEl.value = token;
+
+            jwtStatusEl.textContent = currentLang === "en" ? "Encoded." : "인코딩 완료.";
+        } catch (e) {
+            console.error(e);
+            alert((currentLang === "en" ? "Encode failed: " : "인코딩 실패: ") + (e.message || e));
+        }
+    });
+
+    jwtCopyTokenBtn?.addEventListener("click", () => copyText(jwtTokenOutEl.textContent));
 
     console.log("SQL Utility Tools — Made by Sanghyun Im (임상현)");
 </script>
