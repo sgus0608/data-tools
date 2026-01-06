@@ -1,0 +1,623 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>이미지 합치기</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", sans-serif;
+            background: #0b1220;
+            color: #e8eefc;
+        }
+
+        .wrap {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        h1 {
+            margin: 0 0 10px;
+            font-size: 22px;
+        }
+
+        .sub {
+            color: #b7c5ff;
+            opacity: .9;
+            margin-bottom: 18px;
+            font-size: 13px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            border-radius: 14px;
+            padding: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .25);
+        }
+
+        .row {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .left {
+            flex: 1 1 420px;
+        }
+
+        .right {
+            flex: 1 1 420px;
+        }
+
+        label {
+            font-size: 12px;
+            color: #cfe0ff;
+            opacity: .9;
+            display: block;
+            margin-bottom: 6px;
+        }
+
+        input[type="file"] {
+            width: 100%;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        select,
+        input[type="number"],
+        input[type="text"] {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            background: rgba(0, 0, 0, 0.2);
+            color: #e8eefc;
+            outline: none;
+        }
+
+        .btns {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        button {
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: rgba(255, 255, 255, 0.10);
+            color: #e8eefc;
+            cursor: pointer;
+        }
+
+        button.primary {
+            background: linear-gradient(135deg, rgba(125, 211, 252, 0.35), rgba(167, 139, 250, 0.30));
+            border-color: rgba(255, 255, 255, 0.22);
+        }
+
+        button:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+        }
+
+        .hint {
+            font-size: 12px;
+            color: #b7c5ff;
+            opacity: .9;
+            margin-top: 8px;
+            line-height: 1.45;
+        }
+
+        .thumbs {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .thumb {
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            overflow: hidden;
+            background: rgba(0, 0, 0, 0.25);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .thumb img {
+            width: 100%;
+            height: 92px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .thumb .meta {
+            padding: 8px;
+            display: flex;
+            gap: 6px;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .thumb .name {
+            font-size: 11px;
+            color: #dbe6ff;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 70px;
+        }
+
+        .thumb .actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .iconbtn {
+            padding: 6px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+        }
+
+        .preview {
+            width: 100%;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+        }
+
+        .previewHeader {
+            padding: 10px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.10);
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .previewHeader b {
+            font-size: 13px;
+        }
+
+        canvas {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .footer {
+            margin-top: 16px;
+            font-size: 12px;
+            color: #b7c5ff;
+            opacity: .85;
+        }
+
+        .mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <h1>이미지 합치기 (로컬/서버 없이)</h1>
+        <div class="sub">여러 이미지를 올리고 순서를 바꾼 뒤, 가로/세로/그리드로 합쳐서 다운로드하세요.</div>
+
+        <div class="row">
+            <div class="left card">
+                <label>이미지 선택 (여러 장 가능)</label>
+                <input id="fileInput" type="file" accept="image/*" multiple />
+
+                <div class="controls">
+                    <div>
+                        <label>합치기 방향</label>
+                        <select id="layout">
+                            <option value="vertical">세로로 이어붙이기</option>
+                            <option value="horizontal">가로로 이어붙이기</option>
+                            <option value="grid">그리드(격자)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label>정렬(리사이즈 기준)</label>
+                        <select id="fit">
+                            <option value="none">원본 크기 유지</option>
+                            <option value="maxWidth" selected>폭 기준 맞추기(세로 합치기 추천)</option>
+                            <option value="maxHeight">높이 기준 맞추기(가로 합치기 추천)</option>
+                            <option value="contain">칸에 맞추기(그리드)</option>
+                            <option value="cover">칸을 꽉 채우기(그리드)</option>
+                        </select>
+                    </div>
+
+                    <div id="gridColsWrap" style="display:none;">
+                        <label>그리드 열 개수</label>
+                        <input id="gridCols" type="number" min="1" max="10" value="2" />
+                    </div>
+
+                    <div>
+                        <label>이미지 간 간격(px)</label>
+                        <input id="gap" type="number" min="0" max="200" value="12" />
+                    </div>
+
+                    <div>
+                        <label>배경색</label>
+                        <input id="bg" type="text" value="#0b1220" />
+                    </div>
+
+                    <div>
+                        <label>다운로드 포맷</label>
+                        <select id="format">
+                            <option value="image/png">PNG</option>
+                            <option value="image/jpeg">JPG</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label>JPG 품질(0~1)</label>
+                        <input id="quality" type="number" min="0" max="1" step="0.05" value="0.92" />
+                    </div>
+
+                    <div>
+                        <label>파일명</label>
+                        <input id="filename" type="text" value="merged" />
+                    </div>
+                </div>
+
+                <div class="btns">
+                    <button id="mergeBtn" class="primary" disabled>합치기</button>
+                    <button id="downloadBtn" disabled>다운로드</button>
+                    <button id="clearBtn" disabled>초기화</button>
+                </div>
+
+                <div class="hint">
+                    - 썸네일에서 <span class="mono">↑ ↓</span> 로 순서 변경 / <span class="mono">X</span> 로 제거<br />
+                    - 그리드는 이미지가 많을 때 편해요 (열 개수 조절)
+                </div>
+
+                <div id="thumbs" class="thumbs"></div>
+            </div>
+
+            <div class="right card preview">
+                <div class="previewHeader">
+                    <b>미리보기</b>
+                    <span id="status" class="mono" style="font-size:12px; opacity:.9;"></span>
+                </div>
+                <canvas id="canvas"></canvas>
+            </div>
+        </div>
+
+        <div class="footer">
+            Tip) 배포하려면 이 파일을 그대로 GitHub Pages / Netlify에 올리면 “사이트”가 됩니다.
+        </div>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById("fileInput");
+        const thumbsEl = document.getElementById("thumbs");
+        const mergeBtn = document.getElementById("mergeBtn");
+        const downloadBtn = document.getElementById("downloadBtn");
+        const clearBtn = document.getElementById("clearBtn");
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+        const statusEl = document.getElementById("status");
+
+        const layoutEl = document.getElementById("layout");
+        const fitEl = document.getElementById("fit");
+        const gridColsWrap = document.getElementById("gridColsWrap");
+        const gridColsEl = document.getElementById("gridCols");
+        const gapEl = document.getElementById("gap");
+        const bgEl = document.getElementById("bg");
+        const formatEl = document.getElementById("format");
+        const qualityEl = document.getElementById("quality");
+        const filenameEl = document.getElementById("filename");
+
+        /** items: { id, file, url, img, w, h, name } */
+        let items = [];
+        let lastMergedBlob = null;
+
+        const uid = () => Math.random().toString(16).slice(2) + Date.now().toString(16);
+
+        layoutEl.addEventListener("change", () => {
+            gridColsWrap.style.display = layoutEl.value === "grid" ? "block" : "none";
+        });
+
+        fileInput.addEventListener("change", async (e) => {
+            const files = Array.from(e.target.files || []);
+            if (!files.length) return;
+
+            // add
+            for (const f of files) {
+                if (!f.type.startsWith("image/")) continue;
+                const url = URL.createObjectURL(f);
+                const img = await loadImage(url);
+                items.push({
+                    id: uid(),
+                    file: f,
+                    url,
+                    img,
+                    w: img.naturalWidth,
+                    h: img.naturalHeight,
+                    name: f.name,
+                });
+            }
+
+            renderThumbs();
+            setButtons();
+            statusEl.textContent = `${items.length} files`;
+            fileInput.value = "";
+        });
+
+        function setButtons() {
+            const has = items.length > 0;
+            mergeBtn.disabled = !has;
+            clearBtn.disabled = !has;
+            // download: only after merge
+            downloadBtn.disabled = !lastMergedBlob;
+        }
+
+        function renderThumbs() {
+            thumbsEl.innerHTML = "";
+            items.forEach((it, idx) => {
+                const div = document.createElement("div");
+                div.className = "thumb";
+                div.innerHTML = `
+          <img src="${it.url}" alt="">
+          <div class="meta">
+            <span class="name" title="${escapeHtml(it.name)}">${escapeHtml(it.name)}</span>
+            <div class="actions">
+              <button class="iconbtn" data-act="up" title="위로">↑</button>
+              <button class="iconbtn" data-act="down" title="아래로">↓</button>
+              <button class="iconbtn" data-act="del" title="삭제">X</button>
+            </div>
+          </div>
+        `;
+                div.querySelectorAll("button").forEach(btn => {
+                    btn.addEventListener("click", () => {
+                        const act = btn.dataset.act;
+                        if (act === "up" && idx > 0) swap(idx, idx - 1);
+                        if (act === "down" && idx < items.length - 1) swap(idx, idx + 1);
+                        if (act === "del") removeAt(idx);
+                    });
+                });
+                thumbsEl.appendChild(div);
+            });
+        }
+
+        function swap(a, b) {
+            [items[a], items[b]] = [items[b], items[a]];
+            lastMergedBlob = null;
+            renderThumbs();
+            setButtons();
+            statusEl.textContent = `reordered (${items.length})`;
+        }
+
+        function removeAt(i) {
+            const it = items[i];
+            if (it?.url) URL.revokeObjectURL(it.url);
+            items.splice(i, 1);
+            lastMergedBlob = null;
+            renderThumbs();
+            setButtons();
+            statusEl.textContent = `${items.length} files`;
+            if (!items.length) clearCanvas();
+        }
+
+        function clearAll() {
+            items.forEach(it => it?.url && URL.revokeObjectURL(it.url));
+            items = [];
+            lastMergedBlob = null;
+            renderThumbs();
+            setButtons();
+            statusEl.textContent = "";
+            clearCanvas();
+        }
+
+        function clearCanvas() {
+            canvas.width = 1; canvas.height = 1;
+            ctx.clearRect(0, 0, 1, 1);
+        }
+
+        clearBtn.addEventListener("click", clearAll);
+
+        mergeBtn.addEventListener("click", async () => {
+            if (!items.length) return;
+            statusEl.textContent = "merging...";
+
+            const layout = layoutEl.value;
+            const fit = fitEl.value;
+            const gap = clampInt(gapEl.value, 0, 200, 12);
+            const bg = (bgEl.value || "#000").trim();
+
+            // compute sizes
+            const imgs = items.map(it => it.img);
+
+            if (layout === "vertical") {
+                const targetW = (fit === "maxWidth") ? Math.max(...items.map(i => i.w)) : null;
+
+                const dims = items.map(i => {
+                    if (!targetW) return { w: i.w, h: i.h };
+                    const scale = targetW / i.w;
+                    return { w: Math.round(i.w * scale), h: Math.round(i.h * scale) };
+                });
+
+                const outW = Math.max(...dims.map(d => d.w));
+                const outH = dims.reduce((sum, d) => sum + d.h, 0) + gap * (dims.length - 1);
+
+                setCanvas(outW, outH, bg);
+
+                let y = 0;
+                for (let k = 0; k < imgs.length; k++) {
+                    const d = dims[k];
+                    // center align
+                    const x = Math.floor((outW - d.w) / 2);
+                    ctx.drawImage(imgs[k], 0, 0, items[k].w, items[k].h, x, y, d.w, d.h);
+                    y += d.h + gap;
+                }
+            }
+
+            if (layout === "horizontal") {
+                const targetH = (fit === "maxHeight") ? Math.max(...items.map(i => i.h)) : null;
+
+                const dims = items.map(i => {
+                    if (!targetH) return { w: i.w, h: i.h };
+                    const scale = targetH / i.h;
+                    return { w: Math.round(i.w * scale), h: Math.round(i.h * scale) };
+                });
+
+                const outH = Math.max(...dims.map(d => d.h));
+                const outW = dims.reduce((sum, d) => sum + d.w, 0) + gap * (dims.length - 1);
+
+                setCanvas(outW, outH, bg);
+
+                let x = 0;
+                for (let k = 0; k < imgs.length; k++) {
+                    const d = dims[k];
+                    const y = Math.floor((outH - d.h) / 2);
+                    ctx.drawImage(imgs[k], 0, 0, items[k].w, items[k].h, x, y, d.w, d.h);
+                    x += d.w + gap;
+                }
+            }
+
+            if (layout === "grid") {
+                const cols = clampInt(gridColsEl.value, 1, 10, 2);
+                const rows = Math.ceil(items.length / cols);
+
+                // cell size
+                const cellW = Math.max(...items.map(i => i.w));
+                const cellH = Math.max(...items.map(i => i.h));
+
+                const outW = cols * cellW + gap * (cols - 1);
+                const outH = rows * cellH + gap * (rows - 1);
+
+                setCanvas(outW, outH, bg);
+
+                for (let idx = 0; idx < imgs.length; idx++) {
+                    const r = Math.floor(idx / cols);
+                    const c = idx % cols;
+                    const x0 = c * (cellW + gap);
+                    const y0 = r * (cellH + gap);
+
+                    const srcW = items[idx].w, srcH = items[idx].h;
+
+                    if (fit === "none") {
+                        const x = x0 + Math.floor((cellW - srcW) / 2);
+                        const y = y0 + Math.floor((cellH - srcH) / 2);
+                        ctx.drawImage(imgs[idx], x, y);
+                    } else if (fit === "contain") {
+                        const scale = Math.min(cellW / srcW, cellH / srcH);
+                        const w = Math.round(srcW * scale);
+                        const h = Math.round(srcH * scale);
+                        const x = x0 + Math.floor((cellW - w) / 2);
+                        const y = y0 + Math.floor((cellH - h) / 2);
+                        ctx.drawImage(imgs[idx], 0, 0, srcW, srcH, x, y, w, h);
+                    } else if (fit === "cover") {
+                        const scale = Math.max(cellW / srcW, cellH / srcH);
+                        const w = Math.round(srcW * scale);
+                        const h = Math.round(srcH * scale);
+                        const x = x0 + Math.floor((cellW - w) / 2);
+                        const y = y0 + Math.floor((cellH - h) / 2);
+                        ctx.drawImage(imgs[idx], 0, 0, srcW, srcH, x, y, w, h);
+                    } else {
+                        // default to contain for grid
+                        const scale = Math.min(cellW / srcW, cellH / srcH);
+                        const w = Math.round(srcW * scale);
+                        const h = Math.round(srcH * scale);
+                        const x = x0 + Math.floor((cellW - w) / 2);
+                        const y = y0 + Math.floor((cellH - h) / 2);
+                        ctx.drawImage(imgs[idx], 0, 0, srcW, srcH, x, y, w, h);
+                    }
+                }
+            }
+
+            // build blob for download
+            const mime = formatEl.value;
+            const q = clampFloat(qualityEl.value, 0, 1, 0.92);
+
+            lastMergedBlob = await canvasToBlob(canvas, mime, q);
+            statusEl.textContent = `done: ${canvas.width}x${canvas.height}`;
+            setButtons();
+        });
+
+        downloadBtn.addEventListener("click", async () => {
+            if (!lastMergedBlob) return;
+
+            const mime = formatEl.value;
+            const ext = mime === "image/png" ? "png" : "jpg";
+            const name = (filenameEl.value || "merged").trim().replace(/[\\/:*?"<>|]+/g, "_");
+            const url = URL.createObjectURL(lastMergedBlob);
+
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${name}.${ext}`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+
+            setTimeout(() => URL.revokeObjectURL(url), 2000);
+        });
+
+        // enable download only after merge
+        formatEl.addEventListener("change", () => setButtons());
+
+        // ===== helpers =====
+        function setCanvas(w, h, bg) {
+            canvas.width = Math.max(1, w);
+            canvas.height = Math.max(1, h);
+            ctx.save();
+            ctx.fillStyle = bg;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.restore();
+        }
+
+        function loadImage(url) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = reject;
+                img.src = url;
+            });
+        }
+
+        function canvasToBlob(cv, mime, quality) {
+            return new Promise((resolve) => {
+                cv.toBlob((b) => resolve(b), mime, quality);
+            });
+        }
+
+        function clampInt(v, min, max, def) {
+            const n = Number.parseInt(v, 10);
+            if (Number.isNaN(n)) return def;
+            return Math.min(max, Math.max(min, n));
+        }
+        function clampFloat(v, min, max, def) {
+            const n = Number.parseFloat(v);
+            if (Number.isNaN(n)) return def;
+            return Math.min(max, Math.max(min, n));
+        }
+        function escapeHtml(s) {
+            return (s || "").replace(/[&<>"']/g, (c) => ({
+                "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+            }[c]));
+        }
+
+        // init
+        clearCanvas();
+    </script>
+</body>
+
+</html>
