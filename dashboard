@@ -1,0 +1,1154 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>12기 사내기자단 콘텐츠팀 실적 리포트</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-hover: rgba(255, 255, 255, 0.06);
+            --accent-gold: #fbbf24;
+            --accent-gold-dim: rgba(251, 191, 36, 0.15);
+            --accent-emerald: #34d399;
+            --accent-emerald-dim: rgba(52, 211, 153, 0.15);
+            --accent-blue: #60a5fa;
+            --accent-blue-dim: rgba(96, 165, 250, 0.15);
+            --accent-purple: #a78bfa;
+            --accent-orange: #fb923c;
+            --accent-rose: #fb7185;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --shadow-glow: 0 0 60px rgba(251, 191, 36, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', 'Outfit', sans-serif;
+            background: var(--bg-primary);
+            min-height: 100vh;
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        /* 배경 효과 */
+        .bg-effects {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .bg-gradient-1 {
+            position: absolute;
+            top: -20%;
+            right: -10%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(251, 191, 36, 0.08) 0%, transparent 70%);
+            animation: float 20s ease-in-out infinite;
+        }
+
+        .bg-gradient-2 {
+            position: absolute;
+            bottom: -20%;
+            left: -10%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(52, 211, 153, 0.06) 0%, transparent 70%);
+            animation: float 25s ease-in-out infinite reverse;
+        }
+
+        .bg-gradient-3 {
+            position: absolute;
+            top: 40%;
+            left: 30%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(96, 165, 250, 0.05) 0%, transparent 70%);
+            animation: float 30s ease-in-out infinite;
+        }
+
+        .bg-grid {
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(ellipse at center, black 20%, transparent 70%);
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -30px) scale(1.05); }
+            66% { transform: translate(-20px, 20px) scale(0.95); }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1500px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+
+        /* 헤더 */
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 36px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-gold) 0%, #fde68a 50%, var(--accent-gold) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+            margin-bottom: 12px;
+            text-shadow: 0 0 40px rgba(251, 191, 36, 0.3);
+        }
+
+        .period {
+            color: var(--text-muted);
+            font-size: 14px;
+            font-weight: 400;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .period span {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* 대시보드 그리드 */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 300px 1fr 260px;
+            grid-template-rows: auto auto;
+            gap: 20px;
+        }
+
+        /* 글래스 카드 */
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 24px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: fadeInUp 0.6s ease-out backwards;
+        }
+
+        .card:hover {
+            background: var(--glass-hover);
+            border-color: rgba(255, 255, 255, 0.12);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-glow);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card:nth-child(1) { animation-delay: 0.1s; }
+        .card:nth-child(2) { animation-delay: 0.2s; }
+        .card:nth-child(3) { animation-delay: 0.3s; }
+        .card:nth-child(4) { animation-delay: 0.4s; }
+
+        .card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title .icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .card-title .icon.gold { background: var(--accent-gold-dim); }
+        .card-title .icon.emerald { background: var(--accent-emerald-dim); }
+        .card-title .icon.blue { background: var(--accent-blue-dim); }
+
+        .card-title .unit {
+            margin-left: auto;
+            font-size: 11px;
+            font-weight: 400;
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        /* 좌측 컬럼 */
+        .left-column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* 막대 차트 스타일 */
+        .bar-chart .bar-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+
+        .bar-chart .bar-label {
+            width: 55px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .bar-chart .bar-container {
+            flex: 1;
+            height: 28px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            margin: 0 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bar-chart .bar {
+            height: 100%;
+            border-radius: 8px;
+            position: relative;
+            transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .bar-chart .bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50%;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.15), transparent);
+            border-radius: 8px 8px 0 0;
+        }
+
+        .bar-chart.green .bar {
+            background: linear-gradient(90deg, #059669, #34d399);
+            box-shadow: 0 0 20px rgba(52, 211, 153, 0.3);
+        }
+
+        .bar-chart.blue .bar {
+            background: linear-gradient(90deg, #2563eb, #60a5fa);
+            box-shadow: 0 0 20px rgba(96, 165, 250, 0.3);
+        }
+
+        .bar-chart .bar-value {
+            min-width: 60px;
+            text-align: right;
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 13px;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        /* 중앙 차트 */
+        .monthly-chart {
+            grid-row: 1;
+            grid-column: 2;
+        }
+
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+
+        /* 우측 컬럼 */
+        .right-column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* KPI 카드 */
+        .kpi-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 24px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            animation: fadeInUp 0.6s ease-out backwards;
+        }
+
+        .kpi-card:nth-child(1) { animation-delay: 0.2s; }
+        .kpi-card:nth-child(2) { animation-delay: 0.3s; }
+
+        .kpi-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .kpi-card.gold::before {
+            background: linear-gradient(90deg, var(--accent-gold), var(--accent-orange));
+        }
+
+        .kpi-card.emerald::before {
+            background: linear-gradient(90deg, var(--accent-emerald), #6ee7b7);
+        }
+
+        .kpi-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .kpi-value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -1px;
+        }
+
+        .kpi-value.gold {
+            background: linear-gradient(135deg, var(--accent-gold), var(--accent-orange));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .kpi-value.emerald {
+            background: linear-gradient(135deg, var(--accent-emerald), #6ee7b7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .kpi-suffix {
+            font-size: 16px;
+            font-weight: 500;
+            opacity: 0.8;
+        }
+
+        /* 필터 섹션 */
+        .filter-section {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 20px;
+            animation: fadeInUp 0.6s ease-out backwards;
+            animation-delay: 0.4s;
+        }
+
+        .filter-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--accent-gold);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .filter-group label {
+            font-size: 11px;
+            color: var(--text-muted);
+            display: block;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .filter-list {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 8px;
+            max-height: 160px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+
+        .filter-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .filter-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .filter-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+
+        .filter-list div {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            color: var(--text-secondary);
+        }
+
+        .filter-list div:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
+        }
+
+        .filter-list div.selected {
+            background: linear-gradient(135deg, rgba(96, 165, 250, 0.2), rgba(167, 139, 250, 0.2));
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .age-filter {
+            margin-top: 12px;
+        }
+
+        /* 하단 행 */
+        .bottom-row {
+            grid-column: 1 / 3;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        /* 플랫폼별 조회수 */
+        .platform-chart {
+            height: 220px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .platform-legend {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 16px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .legend-dot.win {
+            background: linear-gradient(135deg, #60a5fa, #a78bfa);
+            box-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
+        }
+
+        .legend-dot.lose {
+            background: linear-gradient(135deg, #fb923c, #fb7185);
+            box-shadow: 0 0 10px rgba(251, 146, 60, 0.5);
+        }
+
+        .platform-bars {
+            flex: 1;
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            padding: 10px 20px 20px;
+        }
+
+        .platform-bar-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .platform-bar-wrapper {
+            display: flex;
+            gap: 6px;
+            align-items: flex-end;
+            height: 120px;
+        }
+
+        .platform-bar {
+            width: 36px;
+            border-radius: 8px 8px 0 0;
+            position: relative;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .platform-bar:hover {
+            transform: scaleY(1.05);
+            transform-origin: bottom;
+        }
+
+        .platform-bar.win {
+            background: linear-gradient(180deg, #60a5fa, #3b82f6);
+            box-shadow: 0 0 20px rgba(96, 165, 250, 0.3);
+        }
+
+        .platform-bar.lose {
+            background: linear-gradient(180deg, #fb923c, #ea580c);
+            box-shadow: 0 0 20px rgba(251, 146, 60, 0.3);
+        }
+
+        .platform-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 40%;
+            background: linear-gradient(to bottom, rgba(255, 255, 255, 0.2), transparent);
+            border-radius: 8px 8px 0 0;
+        }
+
+        .platform-bar-value {
+            position: absolute;
+            top: -28px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: nowrap;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .platform-name {
+            margin-top: 12px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* 파이/도넛 차트 컨테이너 */
+        .pie-container, .donut-container {
+            height: 200px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .donut-center-text {
+            position: absolute;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .donut-center-text .label {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .donut-center-text .value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-gold), var(--accent-orange));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* 반응형 */
+        @media (max-width: 1200px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .monthly-chart {
+                grid-column: 1;
+            }
+
+            .bottom-row {
+                grid-column: 1;
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 16px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .filter-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-effects">
+        <div class="bg-gradient-1"></div>
+        <div class="bg-gradient-2"></div>
+        <div class="bg-gradient-3"></div>
+        <div class="bg-grid"></div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>12기 사내기자단 콘텐츠팀 실적 리포트</h1>
+            <p class="period">PERIOD <span>'25.03.01 ~ '26.02.28</span></p>
+        </header>
+
+        <div class="dashboard">
+            <!-- 좌측 컬럼 -->
+            <div class="left-column">
+                <!-- 선호요일 순위 -->
+                <div class="card">
+                    <div class="card-title">
+                        <span class="icon gold">☀️</span>
+                        선호요일 순위
+                        <span class="unit">단위: 건</span>
+                    </div>
+                    <div class="bar-chart green">
+                        <div class="bar-item">
+                            <span class="bar-label">토</span>
+                            <div class="bar-container">
+                                <div class="bar" data-width="100"></div>
+                            </div>
+                            <span class="bar-value">25,305</span>
+                        </div>
+                        <div class="bar-item">
+                            <span class="bar-label">일</span>
+                            <div class="bar-container">
+                                <div class="bar" data-width="78"></div>
+                            </div>
+                            <span class="bar-value">19,794</span>
+                        </div>
+                        <div class="bar-item">
+                            <span class="bar-label">금</span>
+                            <div class="bar-container">
+                                <div class="bar" data-width="44"></div>
+                            </div>
+                            <span class="bar-value">11,247</span>
+                        </div>
+                        <div class="bar-item">
+                            <span class="bar-label">목</span>
+                            <div class="bar-container">
+                                <div class="bar" data-width="34"></div>
+                            </div>
+                            <span class="bar-value">8,597</span>
+                        </div>
+                        <div class="bar-item">
+                            <span class="bar-label">월</span>
+                            <div class="bar-container">
+                                <div class="bar" data-width="32"></div>
+                            </div>
+                            <span class="bar-value">8,137</span>
+                        </div>
+                        <div class="bar-item">
+                            <span class="bar-label">수</span>
+                            <div class="bar-container">
+                                <div class="bar" data-width="30"></div>
+                            </div>
+                            <span class="bar-value">7,517</span>
+                        </div>
+                        <div class="bar-item">
+                            <span class="bar-label">화</span>
+                            <div class="bar-container">
+                                <div class="bar" data-width="24"></div>
+                            </div>
+                            <span class="bar-value">6,147</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 연령대별 조회순위 -->
+                <div class="card">
+                    <div class="card-title">
+                        <span class="icon blue">👥</span>
+                        연령대별 조회순위
+                        <span class="unit">단위: 건</span>
+                    </div>
+                    <div class="bar-chart blue">
+                        <div class="bar-item">
+                            <span class="bar-label">40대</span>
+                            <div class="bar-container">
+                                <div class="bar" data-width="100"></div>
+                            </div>
+                            <span class="bar-value">13,227</span>
+                        </div>
+                        <div class="bar-item">
+                            <span class="bar-label">30대</span>
+                            <div class="bar-container">
+                                <div class="bar" data-width="77"></div>
+                            </div>
+                            <span class="bar-value">10,176</span>
+                        </div>
+                        <div class="bar-item">
+                            <span class="bar-label">20대</span>
+                            <div class="bar-container">
+                                <div class="bar" data-width="29"></div>
+                            </div>
+                            <span class="bar-value">3,834</span>
+                        </div>
+                        <div class="bar-item">
+                            <span class="bar-label">50대+</span>
+                            <div class="bar-container">
+                                <div class="bar" data-width="23"></div>
+                            </div>
+                            <span class="bar-value">3,035</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 중앙 - 월별 제작 현황 -->
+            <div class="card monthly-chart">
+                <div class="card-title">
+                    <span class="icon emerald">📊</span>
+                    월별 제작 현황
+                    <span class="unit">단위: 건</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+            </div>
+
+            <!-- 우측 컬럼 -->
+            <div class="right-column">
+                <div class="kpi-card gold">
+                    <div class="kpi-label">총 조회수</div>
+                    <div class="kpi-value gold">89,618<span class="kpi-suffix"> 건</span></div>
+                </div>
+                <div class="kpi-card emerald">
+                    <div class="kpi-label">계획콘텐츠 제작률</div>
+                    <div class="kpi-value emerald">100<span class="kpi-suffix">%</span></div>
+                </div>
+
+                <!-- 필터 섹션 -->
+                <div class="filter-section">
+                    <div class="filter-title">⚙️ 조건필터</div>
+                    <div class="filter-grid">
+                        <div class="filter-group">
+                            <label>이용월</label>
+                            <div class="filter-list" id="monthFilter">
+                                <div>1월</div>
+                                <div>2월</div>
+                                <div>3월</div>
+                                <div>4월</div>
+                                <div>5월</div>
+                                <div>6월</div>
+                                <div>7월</div>
+                                <div>8월</div>
+                                <div>9월</div>
+                            </div>
+                        </div>
+                        <div class="filter-group">
+                            <label>플랫폼</label>
+                            <div class="filter-list" id="platformFilter">
+                                <div class="selected">블로그</div>
+                                <div class="selected">유토피아</div>
+                                <div class="selected">인스타그램</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="age-filter">
+                        <div class="filter-group">
+                            <label>연령대</label>
+                            <div class="filter-list" id="ageFilter">
+                                <div class="selected">20대</div>
+                                <div class="selected">30대</div>
+                                <div class="selected">40대</div>
+                                <div class="selected">50대이상</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 하단 행 -->
+            <div class="bottom-row">
+                <!-- 플랫폼별 조회수 -->
+                <div class="card">
+                    <div class="card-title">
+                        <span class="icon blue">📱</span>
+                        플랫폼 별 조회수
+                    </div>
+                    <div class="platform-chart">
+                        <div class="platform-legend">
+                            <div class="legend-item">
+                                <div class="legend-dot win"></div>
+                                <span>당첨</span>
+                            </div>
+                            <div class="legend-item">
+                                <div class="legend-dot lose"></div>
+                                <span>미당첨</span>
+                            </div>
+                        </div>
+                        <div class="platform-bars">
+                            <div class="platform-bar-group">
+                                <div class="platform-bar-wrapper">
+                                    <div class="platform-bar win" style="height: 27px">
+                                        <span class="platform-bar-value">2,129</span>
+                                    </div>
+                                </div>
+                                <span class="platform-name">유토피아</span>
+                            </div>
+                            <div class="platform-bar-group">
+                                <div class="platform-bar-wrapper">
+                                    <div class="platform-bar lose" style="height: 50px">
+                                        <span class="platform-bar-value">3,910</span>
+                                    </div>
+                                </div>
+                                <span class="platform-name">인스타그램</span>
+                            </div>
+                            <div class="platform-bar-group">
+                                <div class="platform-bar-wrapper">
+                                    <div class="platform-bar win" style="height: 100px">
+                                        <span class="platform-bar-value">7,825</span>
+                                    </div>
+                                </div>
+                                <span class="platform-name">블로그</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 시즌별 신청률 -->
+                <div class="card">
+                    <div class="card-title">
+                        <span class="icon gold">🗓️</span>
+                        시즌별 신청률
+                    </div>
+                    <div class="pie-container">
+                        <canvas id="seasonChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- 유입경로 -->
+                <div class="card">
+                    <div class="card-title">
+                        <span class="icon emerald">🔄</span>
+                        유입경로
+                        <span class="unit">단위: 건</span>
+                    </div>
+                    <div class="donut-container">
+                        <canvas id="sourceChart"></canvas>
+                        <div class="donut-center-text">
+                            <div class="label">외부경로 유입률</div>
+                            <div class="value">0.3%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 막대 차트 애니메이션
+        document.addEventListener('DOMContentLoaded', function() {
+            const bars = document.querySelectorAll('.bar-chart .bar');
+            
+            setTimeout(() => {
+                bars.forEach((bar, index) => {
+                    setTimeout(() => {
+                        bar.style.width = bar.dataset.width + '%';
+                    }, index * 100);
+                });
+            }, 500);
+        });
+
+        // Chart.js 기본 설정
+        Chart.defaults.font.family = "'Outfit', 'Noto Sans KR', sans-serif";
+        Chart.defaults.color = '#94a3b8';
+
+        // 월별 제작 현황 차트
+        const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+        const monthlyData = [5239, 6765, 1125, 1425, 5020, 14075, 16783, 25565, 10747];
+        
+        const monthlyGradient = monthlyCtx.createLinearGradient(0, 300, 0, 0);
+        monthlyGradient.addColorStop(0, 'rgba(251, 191, 36, 0.1)');
+        monthlyGradient.addColorStop(1, 'rgba(251, 191, 36, 0.8)');
+
+        new Chart(monthlyCtx, {
+            type: 'bar',
+            data: {
+                labels: ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월'],
+                datasets: [{
+                    data: monthlyData,
+                    backgroundColor: monthlyGradient,
+                    borderRadius: 8,
+                    borderSkipped: false,
+                    barThickness: 40,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 15, 30, 0.95)',
+                        titleColor: '#fbbf24',
+                        bodyColor: '#fff',
+                        padding: 16,
+                        cornerRadius: 12,
+                        displayColors: false,
+                        titleFont: { size: 12, weight: '500' },
+                        bodyFont: { size: 14, weight: '600' },
+                        callbacks: {
+                            label: ctx => ctx.raw.toLocaleString() + '건'
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 12, weight: '500' } }
+                    },
+                    y: {
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: {
+                            font: { size: 11 },
+                            callback: v => v.toLocaleString()
+                        }
+                    }
+                },
+                animation: { duration: 1200, easing: 'easeOutQuart' }
+            },
+            plugins: [{
+                afterDatasetsDraw: function(chart) {
+                    const ctx = chart.ctx;
+                    const meta = chart.getDatasetMeta(0);
+                    
+                    // 라인 그리기
+                    ctx.save();
+                    ctx.strokeStyle = '#fbbf24';
+                    ctx.lineWidth = 3;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    ctx.shadowColor = 'rgba(251, 191, 36, 0.5)';
+                    ctx.shadowBlur = 10;
+                    ctx.beginPath();
+                    
+                    meta.data.forEach((bar, i) => {
+                        if (i === 0) ctx.moveTo(bar.x, bar.y);
+                        else ctx.lineTo(bar.x, bar.y);
+                    });
+                    ctx.stroke();
+                    
+                    // 포인트
+                    ctx.shadowBlur = 0;
+                    meta.data.forEach((bar, i) => {
+                        ctx.beginPath();
+                        ctx.arc(bar.x, bar.y, 6, 0, Math.PI * 2);
+                        ctx.fillStyle = '#0a0a0f';
+                        ctx.fill();
+                        ctx.strokeStyle = '#fbbf24';
+                        ctx.lineWidth = 3;
+                        ctx.stroke();
+                        
+                        // 값 레이블
+                        ctx.fillStyle = '#f8fafc';
+                        ctx.font = '600 11px Outfit';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(monthlyData[i].toLocaleString(), bar.x, bar.y - 18);
+                    });
+                    ctx.restore();
+                }
+            }]
+        });
+
+        // 시즌별 신청률 차트
+        const seasonCtx = document.getElementById('seasonChart').getContext('2d');
+        new Chart(seasonCtx, {
+            type: 'pie',
+            data: {
+                labels: ['골드시즌', '하이시즌', '미들시즌', '로우시즌'],
+                datasets: [{
+                    data: [37, 23, 21, 19],
+                    backgroundColor: ['#60a5fa', '#fbbf24', '#fb923c', '#6b7280'],
+                    borderWidth: 0,
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 15, 30, 0.95)',
+                        padding: 12,
+                        cornerRadius: 10,
+                        callbacks: {
+                            label: ctx => ctx.label + ': ' + ctx.raw + '%'
+                        }
+                    }
+                },
+                animation: { animateRotate: true, duration: 1200 }
+            },
+            plugins: [{
+                afterDraw: function(chart) {
+                    const ctx = chart.ctx;
+                    const meta = chart.getDatasetMeta(0);
+                    const labels = ['골드시즌', '하이시즌', '미들시즌', '로우시즌'];
+                    const values = ['37%', '23%', '21%', '19%'];
+                    
+                    meta.data.forEach((arc, i) => {
+                        const angle = (arc.startAngle + arc.endAngle) / 2;
+                        const x = arc.x + Math.cos(angle) * (arc.outerRadius * 0.65);
+                        const y = arc.y + Math.sin(angle) * (arc.outerRadius * 0.65);
+                        
+                        ctx.save();
+                        ctx.fillStyle = '#fff';
+                        ctx.font = '600 11px "Noto Sans KR"';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(labels[i], x, y - 7);
+                        ctx.font = '700 13px Outfit';
+                        ctx.fillText(values[i], x, y + 9);
+                        ctx.restore();
+                    });
+                }
+            }]
+        });
+
+        // 유입경로 차트
+        const sourceCtx = document.getElementById('sourceChart').getContext('2d');
+        new Chart(sourceCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['유토피아', '외부경로'],
+                datasets: [{
+                    data: [103148, 315],
+                    backgroundColor: ['#fbbf24', '#374151'],
+                    borderWidth: 0,
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '65%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 15, 30, 0.95)',
+                        padding: 12,
+                        cornerRadius: 10,
+                        callbacks: {
+                            label: ctx => ctx.label + ': ' + ctx.raw.toLocaleString() + '건'
+                        }
+                    }
+                },
+                animation: { animateRotate: true, duration: 1200 }
+            },
+            plugins: [{
+                afterDraw: function(chart) {
+                    const ctx = chart.ctx;
+                    const meta = chart.getDatasetMeta(0);
+                    
+                    // 유토피아 레이블
+                    const arc0 = meta.data[0];
+                    const angle0 = (arc0.startAngle + arc0.endAngle) / 2;
+                    const x0 = arc0.x + Math.cos(angle0) * (arc0.outerRadius * 0.82);
+                    const y0 = arc0.y + Math.sin(angle0) * (arc0.outerRadius * 0.82);
+                    
+                    ctx.save();
+                    ctx.fillStyle = '#0a0a0f';
+                    ctx.font = '600 10px "Noto Sans KR"';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('유토피아', x0, y0 - 6);
+                    ctx.font = '700 11px Outfit';
+                    ctx.fillText('103,148', x0, y0 + 8);
+                    
+                    // 외부경로 레이블
+                    const arc1 = meta.data[1];
+                    const angle1 = (arc1.startAngle + arc1.endAngle) / 2;
+                    const x1 = arc1.x + Math.cos(angle1) * (arc1.outerRadius + 30);
+                    const y1 = arc1.y + Math.sin(angle1) * (arc1.outerRadius + 30);
+                    
+                    ctx.fillStyle = '#94a3b8';
+                    ctx.font = '500 10px "Noto Sans KR"';
+                    ctx.fillText('외부경로', x1, y1 - 6);
+                    ctx.font = '600 11px Outfit';
+                    ctx.fillText('315', x1, y1 + 8);
+                    ctx.restore();
+                }
+            }]
+        });
+
+        // 필터 인터랙션
+        document.querySelectorAll('.filter-list div').forEach(item => {
+            item.addEventListener('click', function() {
+                this.classList.toggle('selected');
+            });
+        });
+    </script>
+</body>
+</html>
