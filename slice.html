@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>문자열 자르기 도구</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", sans-serif; margin: 0; background:#f6f7fb; }
+    .wrap { max-width: 980px; margin: 40px auto; padding: 0 16px; }
+    .card { background:#fff; border-radius: 16px; box-shadow: 0 6px 18px rgba(0,0,0,.06); padding: 18px; }
+    h1 { font-size: 22px; margin: 0 0 14px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .full { grid-column: 1 / -1; }
+    textarea, input, select { width: 100%; box-sizing: border-box; border: 1px solid #d9dce6; border-radius: 12px; padding: 10px 12px; font-size: 14px; background:#fff; }
+    textarea { min-height: 180px; resize: vertical; }
+    label { display: block; font-size: 12px; color:#4b5563; margin: 0 0 6px; }
+    .row { display:flex; gap: 10px; align-items:center; }
+    .row > div { flex:1; }
+    .btns { display:flex; gap: 10px; }
+    button { border: 0; border-radius: 12px; padding: 10px 12px; font-size: 14px; cursor: pointer; }
+    .primary { background:#2563eb; color:#fff; }
+    .ghost { background:#eef2ff; color:#1f2937; }
+    .muted { font-size: 12px; color:#6b7280; margin-top: 8px; }
+    .pill { display:inline-block; padding: 4px 10px; border-radius: 999px; background:#f3f4f6; font-size: 12px; color:#374151; }
+    @media (max-width: 860px){ .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>문자열 자르기 도구 <span class="pill">브라우저에서 즉시 처리</span></h1>
+
+      <div class="grid">
+        <div class="full">
+          <label>원본문자열</label>
+          <textarea id="input" placeholder="여기에 문자열을 붙여넣으세요"></textarea>
+          <div class="muted" id="stat">길이: 0 (공백 포함) / 0 (공백 제외)</div>
+        </div>
+
+        <div>
+          <label>모드</label>
+          <select id="mode">
+            <option value="index">인덱스로 자르기 (start ~ end)</option>
+            <option value="len">길이로 자르기 (start + length)</option>
+            <option value="split">구분자로 분리</option>
+            <option value="regex">정규식으로 추출</option>
+          </select>
+        </div>
+
+        <div>
+          <label>인덱스 기준</label>
+          <select id="unit">
+            <option value="char">문자 기준(기본)</option>
+            <option value="line">줄 기준</option>
+          </select>
+        </div>
+
+        <div id="panel-index" class="full">
+          <div class="row">
+            <div>
+              <label>start (0부터, 음수 가능)</label>
+              <input id="start" type="number" value="0" />
+            </div>
+            <div>
+              <label>end (미입력 시 끝까지, 음수 가능)</label>
+              <input id="end" type="number" placeholder="예) 10" />
+            </div>
+          </div>
+          <div class="muted">JS slice 규칙: end는 포함 안 함. 음수는 뒤에서부터.</div>
+        </div>
+
+        <div id="panel-len" class="full" style="display:none">
+          <div class="row">
+            <div>
+              <label>start (0부터, 음수 가능)</label>
+              <input id="start2" type="number" value="0" />
+            </div>
+            <div>
+              <label>length (0 이상)</label>
+              <input id="length" type="number" value="10" min="0" />
+            </div>
+          </div>
+        </div>
+
+        <div id="panel-split" class="full" style="display:none">
+          <div class="row">
+            <div>
+              <label>구분자</label>
+              <input id="delimiter" placeholder="예) , 또는 \\n" value="," />
+            </div>
+            <div>
+              <label>가져올 조각</label>
+              <input id="piece" type="number" value="0" />
+            </div>
+          </div>
+          <div class="row" style="margin-top:10px">
+            <div>
+              <label>앞/뒤 공백 제거</label>
+              <select id="trim">
+                <option value="true">trim 적용</option>
+                <option value="false">trim 안 함</option>
+              </select>
+            </div>
+            <div>
+              <label>빈 조각 제거</label>
+              <select id="dropEmpty">
+                <option value="false">유지</option>
+                <option value="true">제거</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div id="panel-regex" class="full" style="display:none">
+          <div class="row">
+            <div>
+              <label>정규식 (슬래시 없이)</label>
+              <input id="pattern" placeholder="예) \\d{4}-\\d{2}-\\d{2}" value="\\d+" />
+            </div>
+            <div>
+              <label>플래그</label>
+              <input id="flags" placeholder="예) g i m" value="g" />
+            </div>
+          </div>
+          <div class="muted">g가 있으면 매칭 전부를 줄바꿈으로 출력. g가 없으면 첫 매칭만.</div>
+        </div>
+
+        <div class="full">
+          <label>결과</label>
+          <textarea id="output" readonly placeholder="결과가 여기에 나옵니다"></textarea>
+          <div class="btns" style="margin-top:10px">
+            <button class="primary" id="run">자르기</button>
+            <button class="ghost" id="copy">복사</button>
+            <button class="ghost" id="clear">초기화</button>
+          </div>
+          <div class="muted" id="outStat">결과 길이: 0</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+
+    const input = $("input");
+    const output = $("output");
+    const mode = $("mode");
+    const unit = $("unit");
+
+    function decodeDelimiter(v){
+      // 사용자가 \n, \t 같은 걸 입력했을 때 실제 문자로 변환
+      return v
+        .replaceAll("\\n", "\n")
+        .replaceAll("\\t", "\t")
+        .replaceAll("\\r", "\r");
+    }
+
+    function statUpdate(){
+      const text = input.value ?? "";
+      const noSpace = text.replace(/\s/g, "");
+      $("stat").textContent = `길이: ${text.length} (공백 포함) / ${noSpace.length} (공백 제외)`;
+    }
+
+    function setPanels(){
+      const m = mode.value;
+      $("panel-index").style.display = (m === "index") ? "" : "none";
+      $("panel-len").style.display   = (m === "len") ? "" : "none";
+      $("panel-split").style.display = (m === "split") ? "" : "none";
+      $("panel-regex").style.display = (m === "regex") ? "" : "none";
+    }
+
+    function sliceByChar(text, start, end){
+      if (end === null || Number.isNaN(end)) return text.slice(start);
+      return text.slice(start, end);
+    }
+
+    function sliceByLine(text, start, end){
+      const lines = text.split(/\r\n|\n|\r/);
+      const sliced = sliceByChar(lines, start, end); // 배열에도 slice 적용됨
+      return sliced.join("\n");
+    }
+
+    function run(){
+      const text = input.value ?? "";
+      const m = mode.value;
+      const u = unit.value;
+
+      let result = "";
+
+      try {
+        if (m === "index") {
+          const s = Number($("start").value || 0);
+          const eRaw = $("end").value;
+          const e = (eRaw === "" ? null : Number(eRaw));
+          result = (u === "line") ? sliceByLine(text, s, e) : sliceByChar(text, s, e);
+
+        } else if (m === "len") {
+          const s = Number($("start2").value || 0);
+          const len = Math.max(0, Number($("length").value || 0));
+          const e = s + len;
+          result = (u === "line") ? sliceByLine(text, s, e) : sliceByChar(text, s, e);
+
+        } else if (m === "split") {
+          const delim = decodeDelimiter($("delimiter").value ?? ",");
+          const idx = Number($("piece").value || 0);
+          const doTrim = $("trim").value === "true";
+          const dropEmpty = $("dropEmpty").value === "true";
+
+          let parts = text.split(delim);
+          if (doTrim) parts = parts.map(p => p.trim());
+          if (dropEmpty) parts = parts.filter(p => p !== "");
+
+          result = parts[idx] ?? "";
+
+        } else if (m === "regex") {
+          const p = $("pattern").value ?? "";
+          const f = $("flags").value ?? "";
+          const re = new RegExp(p, f);
+
+          if (re.global) {
+            const matches = [...text.matchAll(re)].map(m => m[0]);
+            result = matches.join("\n");
+          } else {
+            const m1 = text.match(re);
+            result = m1 ? m1[0] : "";
+          }
+        }
+
+      } catch (err) {
+        result = "오류: " + (err?.message || String(err));
+      }
+
+      output.value = result;
+      $("outStat").textContent = `결과 길이: ${result.length}`;
+      statUpdate();
+    }
+
+    $("run").addEventListener("click", run);
+    $("copy").addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(output.value ?? "");
+        alert("복사 완료!");
+      } catch(e){
+        alert("복사 실패: 브라우저 권한을 확인해 주세요.");
+      }
+    });
+    $("clear").addEventListener("click", () => {
+      input.value = "";
+      output.value = "";
+      statUpdate();
+      $("outStat").textContent = "결과 길이: 0";
+    });
+
+    input.addEventListener("input", statUpdate);
+    mode.addEventListener("change", () => { setPanels(); run(); });
+    unit.addEventListener("change", run);
+
+    setPanels();
+    statUpdate();
+  </script>
+</body>
+</html>
