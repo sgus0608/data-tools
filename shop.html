@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ETNERS SHOP 상품 등록 툴</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<!-- SheetJS (xlsx read/write) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root {
+  --bg:       #0D1117;
+  --surface:  #161B22;
+  --surface2: #1C2128;
+  --border:   #30363D;
+  --blue:     #1F6FEB;
+  --blue-dim: #1A5CC8;
+  --green:    #2EA043;
+  --green-dim:#26883a;
+  --orange:   #E3B341;
+  --red:      #DA3633;
+  --text:     #E6EDF3;
+  --text-dim: #8B949E;
+  --text-mute:#484F58;
+  --accent:   #58A6FF;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Noto Sans KR', sans-serif;
+  min-height: 100vh;
+}
+
+/* ── 헤더 ── */
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 32px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(8px);
+}
+.logo-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--blue); box-shadow: 0 0 10px var(--blue); }
+.logo-text { font-size: 15px; font-weight: 700; letter-spacing: .5px; }
+.logo-text span { color: var(--accent); }
+.header-badge {
+  margin-left: auto;
+  background: rgba(31,111,235,.15);
+  border: 1px solid rgba(31,111,235,.3);
+  color: var(--accent);
+  font-size: 11px; font-weight: 700;
+  padding: 3px 10px; border-radius: 20px;
+  letter-spacing: .5px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ── 레이아웃 ── */
+.container { max-width: 960px; margin: 0 auto; padding: 40px 24px 80px; }
+
+/* ── 히어로 ── */
+.hero { text-align: center; margin-bottom: 48px; }
+.hero h1 { font-size: 30px; font-weight: 900; line-height: 1.25; margin-bottom: 10px; }
+.hero h1 em { font-style: normal; color: var(--accent); }
+.hero p { color: var(--text-dim); font-size: 13px; line-height: 1.7; }
+.hero-tags { display: flex; justify-content: center; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.tag {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  font-size: 11px; font-weight: 700;
+  padding: 4px 10px; border-radius: 20px;
+  letter-spacing: .3px;
+}
+
+/* ── 탭 ── */
+.tabs {
+  display: flex; gap: 4px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 4px;
+  margin-bottom: 28px;
+}
+.tab-btn {
+  flex: 1; padding: 10px 16px;
+  border: none; border-radius: 7px;
+  background: transparent;
+  color: var(--text-dim);
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: all .2s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.tab-btn:hover { color: var(--text); background: var(--surface2); }
+.tab-btn.active { background: var(--blue); color: #fff; font-weight: 700; }
+
+/* ── 패널 ── */
+.panel { display: none; }
+.panel.active { display: block; animation: fadeIn .25s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* ── 카드 ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 24px;
+  margin-bottom: 16px;
+}
+.card-title {
+  font-size: 12px; font-weight: 700;
+  color: var(--text-dim); letter-spacing: .8px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  display: flex; align-items: center; gap: 8px;
+}
+.card-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* ── 업로드 그리드 ── */
+.upload-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.upload-item { display: flex; flex-direction: column; gap: 6px; }
+.upload-label {
+  font-size: 11px; font-weight: 700;
+  color: var(--text-dim);
+  display: flex; align-items: center; gap: 6px;
+}
+.num-badge {
+  background: var(--blue); color: #fff;
+  width: 18px; height: 18px; border-radius: 50%;
+  font-size: 10px; display: flex; align-items: center; justify-content: center;
+  font-weight: 700; flex-shrink: 0;
+}
+.req { color: var(--red); margin-left: 2px; }
+
+.file-drop {
+  border: 1.5px dashed var(--border);
+  border-radius: 8px; padding: 16px 12px;
+  text-align: center; cursor: pointer;
+  transition: all .2s; position: relative;
+  background: var(--bg);
+}
+.file-drop:hover, .file-drop.over {
+  border-color: var(--blue);
+  background: rgba(31,111,235,.05);
+}
+.file-drop.done { border-color: var(--green); border-style: solid; }
+.file-drop input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.drop-icon { font-size: 20px; margin-bottom: 4px; }
+.drop-text { font-size: 11px; color: var(--text-dim); }
+.drop-hint { font-size: 10px; color: var(--text-mute); margin-top: 2px; }
+.file-name {
+  font-size: 11px; color: var(--green);
+  font-family: 'JetBrains Mono', monospace;
+  margin-top: 4px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  display: none;
+}
+
+/* ── 설정 ── */
+.settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label { font-size: 11px; font-weight: 700; color: var(--text-dim); }
+.field input, .field select {
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 6px; color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; padding: 8px 10px;
+  outline: none; transition: border-color .2s;
+}
+.field input:focus, .field select:focus { border-color: var(--blue); }
+.field select option { background: var(--surface2); }
+
+.check-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px;
+  background: var(--bg); border: 1px solid var(--border);
+  border-radius: 6px; cursor: pointer;
+  transition: border-color .2s;
+}
+.check-row:hover { border-color: var(--blue); }
+.check-row input { accent-color: var(--blue); width: 14px; height: 14px; cursor: pointer; }
+.check-row span { font-size: 12px; color: var(--text-dim); }
+
+/* ── 테이블 ── */
+.rule-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.rule-table th {
+  text-align: left; padding: 8px 10px;
+  background: var(--surface2); color: var(--text-dim);
+  font-weight: 700; border-bottom: 1px solid var(--border);
+  font-size: 11px; letter-spacing: .3px;
+}
+.rule-table td {
+  padding: 7px 10px; border-bottom: 1px solid var(--border);
+  color: var(--text-dim);
+}
+.rule-table td:first-child { color: var(--text); }
+.rule-table td:last-child { font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+.rule-table tr:last-child td { border-bottom: none; }
+
+/* ── 버튼 ── */
+.btn-submit {
+  width: 100%; background: var(--blue); color: #fff;
+  border: none; border-radius: 8px; padding: 14px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 15px; font-weight: 700;
+  cursor: pointer; transition: all .2s;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  margin-top: 20px;
+}
+.btn-submit:hover { background: var(--blue-dim); transform: translateY(-1px); }
+.btn-submit:active { transform: none; }
+.btn-submit:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+/* ── 로딩 ── */
+.spinner {
+  width: 18px; height: 18px;
+  border: 2px solid rgba(255,255,255,.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  display: none;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── 알림 ── */
+.alert {
+  padding: 12px 16px; border-radius: 8px;
+  margin-bottom: 16px; font-size: 13px;
+  display: none; align-items: flex-start; gap: 10px;
+  white-space: pre-wrap; line-height: 1.6;
+}
+.alert.show { display: flex; }
+.alert-success { background: rgba(46,160,67,.12); border: 1px solid rgba(46,160,67,.3); color: #3FB950; }
+.alert-error   { background: rgba(218,54,51,.12);  border: 1px solid rgba(218,54,51,.3);  color: #F85149; }
+.alert-warn    { background: rgba(227,179,65,.1);  border: 1px solid rgba(227,179,65,.25); color: #E3B341; }
+.alert-icon { font-size: 16px; flex-shrink: 0; }
+
+/* ── 결과 ── */
+.result-card {
+  background: rgba(46,160,67,.08);
+  border: 1px solid rgba(46,160,67,.3);
+  border-radius: 10px; padding: 24px;
+  text-align: center; display: none;
+  margin-top: 20px;
+}
+.result-card.show { display: block; animation: fadeIn .3s ease; }
+.result-icon { font-size: 40px; margin-bottom: 12px; }
+.result-title { font-size: 18px; font-weight: 900; margin-bottom: 6px; color: var(--green); }
+.result-sub   { font-size: 12px; color: var(--text-dim); margin-bottom: 20px; line-height: 1.6; }
+.btn-download {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: var(--green); color: #fff;
+  border: none; border-radius: 8px;
+  padding: 12px 28px;
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px; font-weight: 700;
+  cursor: pointer; transition: all .2s;
+  text-decoration: none;
+}
+.btn-download:hover { background: var(--green-dim); transform: translateY(-1px); }
+
+/* ── 하단 가이드 ── */
+.help-steps { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-top: 40px; }
+.help-step {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; padding: 16px; text-align: center;
+}
+.help-step .sn {
+  width: 28px; height: 28px; background: var(--blue);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; color: #fff; margin: 0 auto 8px;
+}
+.help-step .st { font-size: 12px; font-weight: 700; margin-bottom: 4px; }
+.help-step .sd { font-size: 11px; color: var(--text-dim); line-height: 1.5; }
+
+/* ── 반응형 ── */
+@media (max-width: 640px) {
+  .upload-grid, .settings-grid { grid-template-columns: 1fr; }
+  .help-steps { grid-template-columns: 1fr 1fr; }
+  .hero h1 { font-size: 24px; }
+  header { padding: 0 16px; }
+  .container { padding: 28px 16px 60px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-dot"></div>
+  <div class="logo-text">ETNERS <span>SHOP</span> Tool</div>
+  <div class="header-badge">v1.0</div>
+</header>
+
+<div class="container">
+
+  <div class="hero">
+    <h1>상품 등록 <em>자동화</em> 툴</h1>
+    <p>파일 업로드만 하면 SHOP 업로드용 Excel이 자동으로 생성됩니다.<br>서버 없이 브라우저에서 바로 처리되며, 파일은 외부로 전송되지 않습니다.</p>
+    <div class="hero-tags">
+      <span class="tag">🔒 로컬 처리</span>
+      <span class="tag">📊 신규등록</span>
+      <span class="tag">✏️ 정보변경</span>
+      <span class="tag">🔍 중복체크</span>
+      <span class="tag">🗂 카테고리 자동매핑</span>
+    </div>
+  </div>
+
+  <!-- 전역 알림 -->
+  <div id="global-alert" class="alert"></div>
+
+  <!-- 탭 -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('insert',this)">➕ 신규상품 등록</button>
+    <button class="tab-btn"        onclick="switchTab('update',this)">✏️ 상품정보 변경</button>
+  </div>
+
+  <!-- ═══ 신규상품 등록 ═══ -->
+  <div id="panel-insert" class="panel active">
+
+    <div class="card">
+      <div class="card-title">📁 파일 업로드</div>
+      <div class="upload-grid" id="drop-grid-insert">
+        <!-- JS로 렌더 -->
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚙️ 등록 설정</div>
+      <div class="settings-grid">
+        <div class="field">
+          <label>이미지 월 폴더 (YYYYMM)</label>
+          <input type="text" id="img-month" maxlength="6" placeholder="예: 202604">
+        </div>
+        <div class="field">
+          <label>이미지 확장자 기본값</label>
+          <select id="img-ext">
+            <option value="jpg">jpg</option>
+            <option value="png">png</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>판매자 ID</label>
+          <input type="text" id="seller-id" value="samsung">
+        </div>
+        <div class="field">
+          <label>배송비</label>
+          <input type="number" id="delivery-fee" value="990">
+        </div>
+      </div>
+      <br>
+      <label class="check-row">
+        <input type="checkbox" id="check-dup" checked>
+        <span>운영데이터와 상품코드 중복 여부 자동 확인 (중복 시 제외 + 경고)</span>
+      </label>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📋 자동 적용 고정값</div>
+      <table class="rule-table">
+        <tr><th>항목</th><th>자동 적용값</th></tr>
+        <tr><td>자동등록여부 / 재고</td><td>Y / 무제한</td></tr>
+        <tr><td>일시품절여부 / 진열설정</td><td>N / Y</td></tr>
+        <tr><td>부가가치세 / 수수료설정 / 수수료율</td><td>과세 / 기본 / 1</td></tr>
+        <tr><td>적립금정책 / 지급적립금</td><td>기본정책 / 0</td></tr>
+        <tr><td>제조사</td><td>삼성전자(주)</td></tr>
+        <tr><td>원산지</td><td>세부 스펙 이미지 참조</td></tr>
+        <tr><td>상품정보고시</td><td>제조사:삼성전자(주)</td></tr>
+        <tr><td>옵션구분</td><td>일반</td></tr>
+      </table>
+    </div>
+
+    <div id="alert-insert" class="alert"></div>
+    <button class="btn-submit" id="btn-insert" onclick="runInsert()">
+      <div class="spinner" id="spin-insert"></div>
+      <span id="btn-insert-label">⚡ goods_insert_info.xlsx 생성하기</span>
+    </button>
+    <div class="result-card" id="result-insert">
+      <div class="result-icon">✅</div>
+      <div class="result-title" id="result-insert-title"></div>
+      <div class="result-sub"  id="result-insert-sub"></div>
+      <button class="btn-download" id="dl-insert">⬇️ Excel 다운로드</button>
+    </div>
+  </div>
+
+  <!-- ═══ 상품정보 변경 ═══ -->
+  <div id="panel-update" class="panel">
+
+    <div class="card">
+      <div class="card-title">📁 파일 업로드</div>
+      <div class="upload-grid" id="drop-grid-update"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">ℹ️ 변경 처리 안내</div>
+      <div style="font-size:12px;color:var(--text-dim);line-height:1.8;">
+        변경요청 파일의 헤더를 자동 인식합니다.<br>
+        <span style="color:var(--accent);font-family:'JetBrains Mono',monospace">SET모델(…)</span> →
+        <span style="color:var(--accent);font-family:'JetBrains Mono',monospace">상품코드</span> &nbsp;|&nbsp;
+        <span style="color:var(--accent);font-family:'JetBrains Mono',monospace">상품등록명</span> →
+        <span style="color:var(--accent);font-family:'JetBrains Mono',monospace">상품명</span><br>
+        운영데이터에서 기존 정보를 불러와 변경 항목(상품명·가격)만 덮어씁니다.
+      </div>
+    </div>
+
+    <div id="alert-update" class="alert"></div>
+    <button class="btn-submit" id="btn-update" onclick="runUpdate()">
+      <div class="spinner" id="spin-update"></div>
+      <span id="btn-update-label">✏️ goods_update_info.xlsx 생성하기</span>
+    </button>
+    <div class="result-card" id="result-update">
+      <div class="result-icon">✅</div>
+      <div class="result-title" id="result-update-title"></div>
+      <div class="result-sub"  id="result-update-sub"></div>
+      <button class="btn-download" id="dl-update">⬇️ Excel 다운로드</button>
+    </div>
+  </div>
+
+  <!-- 하단 가이드 -->
+  <div class="help-steps">
+    <div class="help-step"><div class="sn">1</div><div class="st">파일 준비</div><div class="sd">운영데이터 3개 + 요청 파일 준비</div></div>
+    <div class="help-step"><div class="sn">2</div><div class="st">업로드</div><div class="sd">드래그하거나 클릭해서 파일 선택</div></div>
+    <div class="help-step"><div class="sn">3</div><div class="st">생성</div><div class="sd">버튼 클릭 한 번으로 자동 처리</div></div>
+    <div class="help-step"><div class="sn">4</div><div class="st">다운로드</div><div class="sd">Excel 다운 후 SHOP에 바로 업로드</div></div>
+  </div>
+
+</div><!-- /container -->
+
+<script>
+// ═══════════════════════════════════════════════════
+// 상수
+// ═══════════════════════════════════════════════════
+const HEADERS = [
+  '일련번호','고유번호','판매자ID','상품코드','카테고리명','카테고리코드',
+  '상품명','간략설명','브랜드코드','자동등록여부',
+  '큰이미지','중간이미지','작은이미지','다른이미지',
+  '재고','일시품절여부','진열설정',
+  '시중가','부가가치세','수수료설정','판매가','공급가','수수료율','적립금 정책','지급적립금',
+  '제조사','원산지','상품정보고시','상품설명','모바일상품설명',
+  '첨부파일','관련추천상품','배송비 구분','배송비','배송비무료금액','배송정챌설명',
+  '옵션구분','옵션','옵션재고'
+];
+
+// 업로드 항목 정의
+const INSERT_FILES = [
+  { key:'op_pc',     label:'운영데이터 — PC/IT기기',    hint:'GoodsDownLoad_PC.xlsx' },
+  { key:'op_tv',     label:'운영데이터 — TV/AV',         hint:'GoodsDownLoad_TV.xlsx' },
+  { key:'op_living', label:'운영데이터 — 주방/리빙가전', hint:'GoodsDownLoad_Living.xlsx' },
+  { key:'new_req',   label:'신규요청 파일',              hint:'이번달_신규상품_요청.xlsx' },
+  { key:'category',  label:'카테고리 매핑 파일',         hint:'SHOP_상품_매칭_카테고리.xlsx' },
+];
+const UPDATE_FILES = [
+  { key:'up_pc',     label:'운영데이터 — PC/IT기기',    hint:'GoodsDownLoad_PC.xlsx' },
+  { key:'up_tv',     label:'운영데이터 — TV/AV',         hint:'GoodsDownLoad_TV.xlsx' },
+  { key:'up_living', label:'운영데이터 — 주방/리빙가전', hint:'GoodsDownLoad_Living.xlsx' },
+  { key:'up_req',    label:'변경요청 파일',              hint:'상품정보_변경요청.xlsx' },
+];
+
+// 파일 저장소
+const FILES = {};
+
+// ═══════════════════════════════════════════════════
+// 초기화: 날짜 기본값
+// ═══════════════════════════════════════════════════
+const now = new Date();
+document.getElementById('img-month').value =
+  String(now.getFullYear()) + String(now.getMonth()+1).padStart(2,'0');
+
+// ═══════════════════════════════════════════════════
+// 드롭존 렌더링
+// ═══════════════════════════════════════════════════
+function renderDropZones(containerId, items) {
+  const grid = document.getElementById(containerId);
+  grid.innerHTML = items.map((f, i) => `
+    <div class="upload-item">
+      <div class="upload-label">
+        <span class="num-badge">${i+1}</span>
+        ${f.label}<span class="req">*</span>
+      </div>
+      <div class="file-drop" id="zone-${f.key}" ondragover="onDragOver(event,this)" ondragleave="onDragLeave(this)" ondrop="onDrop(event,'${f.key}',this)">
+        <input type="file" accept=".xlsx,.xls" onchange="onFileChange(this,'${f.key}')">
+        <div class="drop-icon">📊</div>
+        <div class="drop-text">클릭하거나 파일을 여기에 끌어다 놓으세요</div>
+        <div class="drop-hint">${f.hint}</div>
+        <div class="file-name" id="fname-${f.key}"></div>
+      </div>
+    </div>
+  `).join('');
+}
+renderDropZones('drop-grid-insert', INSERT_FILES);
+renderDropZones('drop-grid-update', UPDATE_FILES);
+
+// ═══════════════════════════════════════════════════
+// 파일 이벤트
+// ═══════════════════════════════════════════════════
+function onFileChange(input, key) {
+  if (input.files[0]) setFile(key, input.files[0]);
+}
+function onDragOver(e, el) { e.preventDefault(); el.classList.add('over'); }
+function onDragLeave(el)   { el.classList.remove('over'); }
+function onDrop(e, key, el) {
+  e.preventDefault(); el.classList.remove('over');
+  if (e.dataTransfer.files[0]) setFile(key, e.dataTransfer.files[0]);
+}
+function setFile(key, file) {
+  FILES[key] = file;
+  const zone  = document.getElementById('zone-' + key);
+  const fname = document.getElementById('fname-' + key);
+  zone.classList.add('done');
+  fname.textContent = '✓ ' + file.name;
+  fname.style.display = 'block';
+}
+
+// ═══════════════════════════════════════════════════
+// 탭 전환
+// ═══════════════════════════════════════════════════
+function switchTab(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════
+// 알림 헬퍼
+// ═══════════════════════════════════════════════════
+function showAlert(id, type, msg) {
+  const el = document.getElementById(id);
+  el.className = 'alert alert-' + type + ' show';
+  el.innerHTML = '<span class="alert-icon">' +
+    (type==='success'?'✅':type==='error'?'❌':'⚠️') +
+    '</span><div>' + msg.replace(/\n/g,'<br>') + '</div>';
+}
+function hideAlert(id) {
+  const el = document.getElementById(id);
+  el.className = 'alert';
+}
+
+// ═══════════════════════════════════════════════════
+// xlsx 읽기 → 2D 배열
+// ═══════════════════════════════════════════════════
+function readFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(e.target.result, { type:'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const data = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+        resolve(data.filter(r => r.some(c => String(c).trim() !== '')));
+      } catch(err) { reject(err); }
+    };
+    reader.onerror = reject;
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// 헤더 행 찾기 → 컬럼 인덱스 맵
+// ═══════════════════════════════════════════════════
+function findHeaderRow(rows, keywords=['상품코드','SET모델','일련번호']) {
+  for (let i = 0; i < Math.min(rows.length, 10); i++) {
+    if (keywords.some(k => rows[i].some(c => String(c).includes(k)))) return i;
+  }
+  return 0;
+}
+function buildMap(row) {
+  const map = {};
+  row.forEach((h, i) => { const t = String(h).trim(); if (t) map[t] = i; });
+  return map;
+}
+
+// ═══════════════════════════════════════════════════
+// 운영데이터 3개 합치기 → { codes: Set, rows: Map<code, row>, header }
+// ═══════════════════════════════════════════════════
+async function loadOperateData(keys) {
+  const codes = new Set();
+  const rows  = new Map();
+  let   header = null;
+
+  for (const key of keys) {
+    if (!FILES[key]) continue;
+    const data = await readFile(FILES[key]);
+    const hi   = findHeaderRow(data);
+    if (!header) header = data[hi];
+    const map  = buildMap(data[hi]);
+    const ci   = map['상품코드'] ?? null;
+    if (ci === null) continue;
+    for (let i = hi+1; i < data.length; i++) {
+      const code = String(data[i][ci]??'').trim();
+      if (code) { codes.add(code); rows.set(code, data[i]); }
+    }
+  }
+  return { codes, rows, header };
+}
+
+// ═══════════════════════════════════════════════════
+// 카테고리 매핑 로드
+// ═══════════════════════════════════════════════════
+async function loadCatMap(file) {
+  const data = await readFile(file);
+  const map  = {};
+  for (let i = 1; i < data.length; i++) {
+    const k = String(data[i][0]??'').trim();
+    const v = String(data[i][2]??'').trim();
+    if (k && v) map[k] = v;
+  }
+  return map;
+}
+
+// ═══════════════════════════════════════════════════
+// HTML 상품설명 생성
+// ═══════════════════════════════════════════════════
+function makeHtml(code, month, ext) {
+  return `<center><img src='/data/base/editor/20191010/deliveryinform.jpg' alt='배송지연 공지' title='배송지연 공지'></center>`
+       + `<center>\n<img src='/data/base/editor/${month}/${code}_spec.${ext}' title='${code}_spec.${ext}' alt='${code}_spec.${ext}'>\n</center>\n<br>`;
+}
+
+// ═══════════════════════════════════════════════════
+// Excel 다운로드
+// ═══════════════════════════════════════════════════
+function downloadXlsx(data, filename) {
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  // 헤더 스타일 (SheetJS 커뮤니티는 스타일 미지원 → 데이터만)
+  XLSX.utils.book_append_sheet(wb, ws, 'Sheet1');
+  XLSX.writeFile(wb, filename);
+}
+
+// ═══════════════════════════════════════════════════
+// 로딩 토글
+// ═══════════════════════════════════════════════════
+function setLoading(mode, on) {
+  const btn   = document.getElementById('btn-' + mode);
+  const spin  = document.getElementById('spin-' + mode);
+  const label = document.getElementById('btn-' + mode + '-label');
+  btn.disabled = on;
+  spin.style.display = on ? 'block' : 'none';
+  label.textContent = on ? '처리 중...' :
+    (mode==='insert' ? '⚡ goods_insert_info.xlsx 생성하기' : '✏️ goods_update_info.xlsx 생성하기');
+}
+
+// ═══════════════════════════════════════════════════
+// ▶ 신규상품 등록
+// ═══════════════════════════════════════════════════
+async function runInsert() {
+  hideAlert('alert-insert');
+  document.getElementById('result-insert').classList.remove('show');
+
+  // 필수 파일 체크
+  for (const f of INSERT_FILES) {
+    if (!FILES[f.key]) { showAlert('alert-insert','error', `파일을 선택해주세요: ${f.label}`); return; }
+  }
+  const month   = document.getElementById('img-month').value.trim();
+  if (!/^\d{6}$/.test(month)) { showAlert('alert-insert','error','이미지 월 폴더를 6자리(YYYYMM)로 입력해주세요.'); return; }
+
+  setLoading('insert', true);
+
+  try {
+    const ext      = document.getElementById('img-ext').value;
+    const seller   = document.getElementById('seller-id').value || 'samsung';
+    const deli     = Number(document.getElementById('delivery-fee').value) || 990;
+    const checkDup = document.getElementById('check-dup').checked;
+
+    // 운영데이터
+    const op = await loadOperateData(['op_pc','op_tv','op_living']);
+
+    // 카테고리 맵
+    const catMap = await loadCatMap(FILES['category']);
+
+    // 신규요청 읽기
+    const reqData = await readFile(FILES['new_req']);
+    const reqHi   = findHeaderRow(reqData);
+    const reqHead = reqData[reqHi].map(h => {
+      h = String(h).trim();
+      if (h.includes('SET모델') || h === '구성품') return '상품코드';
+      if (h.includes('상품등록명') || h === '상품명 *') return '상품명';
+      return h;
+    });
+    const rm = buildMap(reqHead);
+
+    const codeIdx = rm['상품코드'] ?? 0;
+    const nameIdx = rm['상품명']   ?? 6;
+    const msrIdx  = rm['시중가']   ?? null;
+    const sellIdx = rm['판매가']   ?? null;
+    const suppIdx = rm['공급가']   ?? null;
+
+    // 카테고리 컬럼 탐색
+    const cat1 = Object.keys(rm).find(k=>k.includes('1단계'));
+    const cat2 = Object.keys(rm).find(k=>k.includes('2단계'));
+    const cat3 = Object.keys(rm).find(k=>k.includes('3단계'));
+
+    const results  = [HEADERS];
+    const warnings = [];
+    let   rowNum   = 1;
+
+    for (let i = reqHi+1; i < reqData.length; i++) {
+      const row  = reqData[i];
+      const code = String(row[codeIdx]??'').trim();
+      if (!code) continue;
+
+      if (checkDup && op.codes.has(code)) {
+        warnings.push(`⚠ 중복 상품코드 (운영데이터 존재, 제외됨): ${code}`);
+        continue;
+      }
+
+      // 카테고리
+      let catCode = '';
+      for (const ci of [cat3,cat2,cat1].filter(Boolean)) {
+        const v = String(row[rm[ci]]??'').trim();
+        if (v && catMap[v]) { catCode = catMap[v]; break; }
+      }
+
+      const msr  = msrIdx  !== null ? Number(String(row[msrIdx] ??'').replace(/[,\s]/g,''))||0 : 0;
+      const sell = sellIdx !== null ? Number(String(row[sellIdx]??'').replace(/[,\s]/g,''))||0 : 0;
+      const supp = suppIdx !== null ? Number(String(row[suppIdx]??'').replace(/[,\s]/g,''))||0 : 0;
+      const name = String(row[nameIdx]??code).trim();
+      const html = makeHtml(code, month, ext);
+
+      results.push([
+        rowNum,'',seller,code,'',catCode,
+        name,code,'','Y',
+        `${code}_img1.${ext}`,'','',`${code}_img2.${ext}`,
+        '무제한','N','Y',
+        msr,'과세','기본',sell,supp,1,'기본정책',0,
+        '삼성전자(주)','세부 스펙 이미지 참조','제조사:삼성전자(주)',html,html,
+        '','',deli,'','','',
+        '일반','',''
+      ]);
+      rowNum++;
+    }
+
+    if (results.length <= 1) {
+      showAlert('alert-insert','error','등록할 신규 상품이 없습니다.' + (warnings.length ? '\n'+warnings.join('\n') : ''));
+      setLoading('insert', false); return;
+    }
+
+    const filename = `${pad(now)}goods_insert_info.xlsx`;
+    const blob = xlsxBlob(results);
+
+    // 결과 표시
+    let sub = `총 ${rowNum-1}개 상품이 포함되었습니다.`;
+    if (warnings.length) sub += '\n' + warnings.join('\n');
+
+    document.getElementById('result-insert-title').textContent = `${rowNum-1}건 신규상품 Excel 생성 완료!`;
+    document.getElementById('result-insert-sub').textContent   = sub;
+    document.getElementById('dl-insert').onclick = () => downloadXlsx(results, filename);
+    document.getElementById('result-insert').classList.add('show');
+    document.getElementById('result-insert').scrollIntoView({ behavior:'smooth' });
+
+    if (warnings.length) showAlert('alert-insert','warn', warnings.join('\n'));
+
+  } catch(err) {
+    showAlert('alert-insert','error', '오류가 발생했습니다:\n' + err.message);
+    console.error(err);
+  }
+  setLoading('insert', false);
+}
+
+// ═══════════════════════════════════════════════════
+// ▶ 상품정보 변경
+// ═══════════════════════════════════════════════════
+async function runUpdate() {
+  hideAlert('alert-update');
+  document.getElementById('result-update').classList.remove('show');
+
+  for (const f of UPDATE_FILES) {
+    if (!FILES[f.key]) { showAlert('alert-update','error', `파일을 선택해주세요: ${f.label}`); return; }
+  }
+
+  setLoading('update', true);
+
+  try {
+    const op = await loadOperateData(['up_pc','up_tv','up_living']);
+
+    // 헤더 컬럼 인덱스
+    const opMap  = buildMap(op.header || []);
+    const opNi   = opMap['상품명 *'] ?? opMap['상품명'] ?? 6;
+    const opSell = opMap['판매가']   ?? 20;
+    const opMsr  = opMap['시중가']   ?? 17;
+    const opSupp = opMap['공급가']   ?? 21;
+
+    // 변경요청 읽기
+    const chgData = await readFile(FILES['up_req']);
+    const chgHi   = findHeaderRow(chgData);
+    const chgHead = chgData[chgHi].map(h => {
+      h = String(h).trim();
+      if (h.includes('SET모델') || h === '구성품') return '상품코드';
+      if (h.includes('상품등록명') || h === '상품명 *') return '상품명 *';
+      return h;
+    });
+    const cm = buildMap(chgHead);
+
+    const codeIdx = cm['상품코드'] ?? 0;
+    const nameIdx = cm['상품명 *'] ?? null;
+    const sellIdx = cm['판매가']   ?? null;
+    const msrIdx  = cm['시중가']   ?? null;
+    const suppIdx = cm['공급가']   ?? null;
+
+    const results  = [op.header || HEADERS];
+    const notFound = [];
+    let   rowNum   = 1;
+
+    for (let i = chgHi+1; i < chgData.length; i++) {
+      const row  = chgData[i];
+      const code = String(row[codeIdx]??'').trim();
+      if (!code) continue;
+
+      if (!op.rows.has(code)) { notFound.push(code); continue; }
+
+      const opRow = [...op.rows.get(code)]; // 복사
+
+      const newName = nameIdx !== null ? String(row[nameIdx]??'').trim() : '';
+      const newSell = sellIdx !== null ? Number(String(row[sellIdx]??'').replace(/[,\s]/g,''))||0 : 0;
+      const newMsr  = msrIdx  !== null ? Number(String(row[msrIdx] ??'').replace(/[,\s]/g,''))||0 : 0;
+      const newSupp = suppIdx !== null ? Number(String(row[suppIdx]??'').replace(/[,\s]/g,''))||0 : 0;
+
+      if (newName) opRow[opNi]   = newName;
+      if (newSell) opRow[opSell] = newSell;
+      if (newMsr)  opRow[opMsr]  = newMsr;
+      if (newSupp) opRow[opSupp] = newSupp;
+      opRow[0] = rowNum;
+
+      results.push(opRow);
+      rowNum++;
+    }
+
+    if (results.length <= 1) {
+      showAlert('alert-update','error','변경할 상품이 없습니다.' + (notFound.length ? '\n운영데이터에 없는 코드: '+notFound.join(', ') : ''));
+      setLoading('update',false); return;
+    }
+
+    const filename = `${pad(now)}goods_update_info.xlsx`;
+    let sub = `총 ${rowNum-1}개 상품 변경 정보가 포함되었습니다.`;
+    if (notFound.length) sub += `\n⚠ 운영데이터에 없어 제외된 상품코드: ${notFound.join(', ')}`;
+
+    document.getElementById('result-update-title').textContent = `${rowNum-1}건 상품정보 변경 Excel 생성 완료!`;
+    document.getElementById('result-update-sub').textContent   = sub;
+    document.getElementById('dl-update').onclick = () => downloadXlsx(results, filename);
+    document.getElementById('result-update').classList.add('show');
+    document.getElementById('result-update').scrollIntoView({ behavior:'smooth' });
+
+    if (notFound.length) showAlert('alert-update','warn', `운영데이터에 없어 제외된 상품코드:\n${notFound.join(', ')}`);
+
+  } catch(err) {
+    showAlert('alert-update','error','오류가 발생했습니다:\n' + err.message);
+    console.error(err);
+  }
+  setLoading('update', false);
+}
+
+// ═══════════════════════════════════════════════════
+// 헬퍼: 파일명용 타임스탬프
+// ═══════════════════════════════════════════════════
+function pad(d) {
+  const n = new Date();
+  return [
+    n.getFullYear(),
+    String(n.getMonth()+1).padStart(2,'0'),
+    String(n.getDate()).padStart(2,'0'),
+    String(n.getHours()).padStart(2,'0'),
+    String(n.getMinutes()).padStart(2,'0'),
+    String(n.getSeconds()).padStart(2,'0'),
+  ].join('') + '_';
+}
+</script>
+</body>
+</html>
