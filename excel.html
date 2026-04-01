@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>엑셀 문서 복구 요청</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+      background: #f5f7fb;
+      color: #222;
+    }
+    .wrap {
+      max-width: 760px;
+      margin: 40px auto;
+      padding: 24px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+    .header {
+      padding: 28px 28px 20px;
+      background: linear-gradient(135deg, #1f3c88, #4b6cb7);
+      color: #fff;
+    }
+    .header h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+    }
+    .header p {
+      margin: 0;
+      opacity: 0.95;
+      line-height: 1.5;
+    }
+    .body {
+      padding: 28px;
+    }
+    .notice {
+      background: #eef4ff;
+      border: 1px solid #cfe0ff;
+      color: #18407c;
+      padding: 14px 16px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .field {
+      margin-bottom: 16px;
+    }
+    .field.full {
+      grid-column: 1 / -1;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    input[type="text"],
+    input[type="email"],
+    input[type="file"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #d8dce5;
+      border-radius: 10px;
+      font-size: 14px;
+      background: #fff;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    input:focus,
+    select:focus,
+    textarea:focus {
+      border-color: #4b6cb7;
+      box-shadow: 0 0 0 4px rgba(75,108,183,0.12);
+    }
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+    .checkbox-wrap {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin: 20px 0 24px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .checkbox-wrap input {
+      margin-top: 4px;
+    }
+    .btns {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 12px 18px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: #1f3c88;
+      color: #fff;
+    }
+    .btn-primary:hover {
+      background: #17306f;
+    }
+    .btn-secondary {
+      background: #e9edf5;
+      color: #222;
+    }
+    .btn-secondary:hover {
+      background: #dbe2ee;
+    }
+    .result {
+      margin-top: 24px;
+      display: none;
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .result.success {
+      display: block;
+      background: #edf9f0;
+      border: 1px solid #bfe7c7;
+      color: #155724;
+    }
+    .result.error {
+      display: block;
+      background: #fff1f1;
+      border: 1px solid #f1c0c0;
+      color: #842029;
+    }
+    .preview {
+      margin-top: 20px;
+      padding: 18px;
+      background: #fafbfe;
+      border: 1px dashed #cfd7e6;
+      border-radius: 12px;
+      display: none;
+    }
+    .preview h3 {
+      margin: 0 0 12px;
+      font-size: 16px;
+    }
+    .preview-item {
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    .footer-note {
+      margin-top: 18px;
+      color: #666;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 640px) {
+      .wrap {
+        margin: 20px auto;
+        padding: 14px;
+      }
+      .grid {
+        grid-template-columns: 1fr;
+      }
+      .header h1 {
+        font-size: 22px;
+      }
+      .body, .header {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="header">
+        <h1>엑셀 문서 복구 요청</h1>
+        <p>파일 열기 암호를 직접 해제하는 기능은 제공하지 않으며, 정당한 권한이 있는 사용자의 복구 요청 접수용 페이지입니다.</p>
+      </div>
+
+      <div class="body">
+        <div class="notice">
+          본 페이지는 문서 소유권 확인 및 관리자 승인 절차를 위한 요청서입니다.<br />
+          민감한 문서의 경우 실제 운영 시 업로드 파일 저장, 관리자 승인, 로그 기록 기능을 서버와 연동해서 사용하세요.
+        </div>
+
+        <form id="recoveryForm">
+          <div class="grid">
+            <div class="field">
+              <label for="requesterName">요청자 이름</label>
+              <input type="text" id="requesterName" placeholder="홍길동" />
+            </div>
+
+            <div class="field">
+              <label for="department">부서명</label>
+              <input type="text" id="department" placeholder="개발팀" />
+            </div>
+
+            <div class="field">
+              <label for="email">이메일</label>
+              <input type="email" id="email" placeholder="example@company.com" />
+            </div>
+
+            <div class="field">
+              <label for="phone">연락처</label>
+              <input type="text" id="phone" placeholder="010-0000-0000" />
+            </div>
+
+            <div class="field full">
+              <label for="fileInput">엑셀 파일 업로드</label>
+              <input type="file" id="fileInput" accept=".xls,.xlsx,.xlsm" />
+            </div>
+
+            <div class="field">
+              <label for="ownerType">문서 소유 구분</label>
+              <select id="ownerType">
+                <option value="">선택하세요</option>
+                <option value="self">본인 문서</option>
+                <option value="team">팀/부서 공유 문서</option>
+                <option value="company">회사 문서</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="reasonType">요청 사유</label>
+              <select id="reasonType">
+                <option value="">선택하세요</option>
+                <option value="forgot">암호 분실</option>
+                <option value="handover">인수인계</option>
+                <option value="retired">퇴사자 문서 확인</option>
+                <option value="audit">감사/점검 대응</option>
+                <option value="other">기타</option>
+              </select>
+            </div>
+
+            <div class="field full">
+              <label for="reasonDetail">상세 사유</label>
+              <textarea id="reasonDetail" placeholder="문서의 소유 관계와 복구 요청 사유를 구체적으로 작성해주세요."></textarea>
+            </div>
+          </div>
+
+          <div class="checkbox-wrap">
+            <input type="checkbox" id="agree" />
+            <label for="agree" style="margin:0; font-weight:400;">
+              본인은 해당 문서에 대해 정당한 접근 권한이 있으며, 허위 요청 시 책임을 질 수 있음에 동의합니다.
+            </label>
+          </div>
+
+          <div class="btns">
+            <button type="submit" class="btn-primary">복구 요청서 생성</button>
+            <button type="button" class="btn-secondary" id="resetBtn">초기화</button>
+          </div>
+        </form>
+
+        <div id="result" class="result"></div>
+
+        <div id="preview" class="preview">
+          <h3>요청서 미리보기</h3>
+          <div class="preview-item"><strong>요청번호:</strong> <span id="pvRequestNo"></span></div>
+          <div class="preview-item"><strong>요청자:</strong> <span id="pvName"></span></div>
+          <div class="preview-item"><strong>부서:</strong> <span id="pvDept"></span></div>
+          <div class="preview-item"><strong>이메일:</strong> <span id="pvEmail"></span></div>
+          <div class="preview-item"><strong>연락처:</strong> <span id="pvPhone"></span></div>
+          <div class="preview-item"><strong>파일명:</strong> <span id="pvFile"></span></div>
+          <div class="preview-item"><strong>소유 구분:</strong> <span id="pvOwner"></span></div>
+          <div class="preview-item"><strong>요청 사유:</strong> <span id="pvReason"></span></div>
+          <div class="preview-item"><strong>상세 내용:</strong> <span id="pvDetail"></span></div>
+        </div>
+
+        <div class="footer-note">
+          현재 버전은 프론트 단일 페이지 예시입니다. 실제 사용 시에는 서버 API 연동, 관리자 승인 워크플로우, 파일 저장소, 접근 로그, 결재 이력을 추가하는 게 좋습니다.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      var form = document.getElementById("recoveryForm");
+      var resetBtn = document.getElementById("resetBtn");
+      var result = document.getElementById("result");
+      var preview = document.getElementById("preview");
+
+      function getValue(id) {
+        return document.getElementById(id).value.trim();
+      }
+
+      function showResult(type, message) {
+        result.className = "result " + type;
+        result.innerHTML = message;
+      }
+
+      function clearResult() {
+        result.className = "result";
+        result.innerHTML = "";
+      }
+
+      function generateRequestNo() {
+        var now = new Date();
+        var y = now.getFullYear();
+        var m = ("0" + (now.getMonth() + 1)).slice(-2);
+        var d = ("0" + now.getDate()).slice(-2);
+        var h = ("0" + now.getHours()).slice(-2);
+        var mi = ("0" + now.getMinutes()).slice(-2);
+        var s = ("0" + now.getSeconds()).slice(-2);
+        return "REQ-" + y + m + d + "-" + h + mi + s;
+      }
+
+      function fillPreview(data) {
+        document.getElementById("pvRequestNo").textContent = data.requestNo;
+        document.getElementById("pvName").textContent = data.name;
+        document.getElementById("pvDept").textContent = data.department;
+        document.getElementById("pvEmail").textContent = data.email;
+        document.getElementById("pvPhone").textContent = data.phone;
+        document.getElementById("pvFile").textContent = data.fileName;
+        document.getElementById("pvOwner").textContent = data.ownerType;
+        document.getElementById("pvReason").textContent = data.reasonType;
+        document.getElementById("pvDetail").textContent = data.reasonDetail;
+        preview.style.display = "block";
+      }
+
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        clearResult();
+
+        var name = getValue("requesterName");
+        var department = getValue("department");
+        var email = getValue("email");
+        var phone = getValue("phone");
+        var ownerType = getValue("ownerType");
+        var reasonType = getValue("reasonType");
+        var reasonDetail = getValue("reasonDetail");
+        var agree = document.getElementById("agree").checked;
+        var fileInput = document.getElementById("fileInput");
+        var file = fileInput.files[0];
+
+        if (!name || !department || !email || !phone || !ownerType || !reasonType || !reasonDetail) {
+          showResult("error", "필수 항목을 모두 입력해주세요.");
+          return;
+        }
+
+        if (!file) {
+          showResult("error", "엑셀 파일을 업로드해주세요.");
+          return;
+        }
+
+        if (!agree) {
+          showResult("error", "권한 확인 동의가 필요합니다.");
+          return;
+        }
+
+        var allowedExt = /\.(xls|xlsx|xlsm)$/i;
+        if (!allowedExt.test(file.name)) {
+          showResult("error", "엑셀 파일만 업로드할 수 있습니다. (.xls, .xlsx, .xlsm)");
+          return;
+        }
+
+        var requestNo = generateRequestNo();
+
+        var requestData = {
+          requestNo: requestNo,
+          name: name,
+          department: department,
+          email: email,
+          phone: phone,
+          fileName: file.name,
+          ownerType: ownerType,
+          reasonType: reasonType,
+          reasonDetail: reasonDetail,
+          createdAt: new Date().toISOString()
+        };
+
+        // 예시: localStorage 저장
+        var savedList = JSON.parse(localStorage.getItem("excelRecoveryRequests") || "[]");
+        savedList.push(requestData);
+        localStorage.setItem("excelRecoveryRequests", JSON.stringify(savedList));
+
+        fillPreview(requestData);
+
+        showResult(
+          "success",
+          "복구 요청서가 생성되었습니다.<br>요청번호: <strong>" + requestNo + "</strong><br>현재 예제는 브라우저 localStorage에 저장됩니다. 실제 운영 시 서버 전송 API를 연결하세요."
+        );
+      });
+
+      resetBtn.addEventListener("click", function () {
+        form.reset();
+        clearResult();
+        preview.style.display = "none";
+      });
+    })();
+  </script>
+</body>
+</html>
