@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>주간보고 생성기</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0f0f;
+    --surface: #161616;
+    --surface2: #1e1e1e;
+    --border: #2a2a2a;
+    --accent: #e8ff47;
+    --accent2: #47c8ff;
+    --text: #f0f0f0;
+    --muted: #666;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Noto Sans KR', sans-serif;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr;
+  }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .logo {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    font-weight: 500;
+  }
+
+  .logo-dot { color: var(--muted); margin: 0 6px; }
+
+  header p {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+
+  .main {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    height: calc(100vh - 61px);
+  }
+
+  /* LEFT PANEL */
+  .panel-left {
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .panel-header {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .panel-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .date-inputs {
+    display: flex;
+    gap: 8px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .date-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+  }
+
+  .date-group label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+  }
+
+  .date-group input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 7px 10px;
+    border-radius: 4px;
+    outline: none;
+    width: 100%;
+    transition: border-color 0.15s;
+  }
+
+  .date-group input:focus { border-color: var(--accent); }
+
+  .format-hint {
+    padding: 10px 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .format-hint p {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+
+  .format-hint span { color: var(--accent2); }
+
+  textarea {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.8;
+    padding: 20px;
+    resize: none;
+    outline: none;
+  }
+
+  textarea::placeholder { color: var(--muted); }
+
+  .generate-btn {
+    margin: 0 20px 20px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    padding: 12px;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+
+  .generate-btn:hover { opacity: 0.88; }
+  .generate-btn:active { transform: scale(0.99); }
+
+  /* RIGHT PANEL */
+  .panel-right {
+    display: flex;
+    flex-direction: column;
+    background: var(--surface);
+  }
+
+  .panel-right .panel-header {
+    background: var(--surface);
+  }
+
+  .tab-row {
+    display: flex;
+    gap: 0;
+  }
+
+  .tab {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 6px 14px;
+    border-radius: 3px;
+    cursor: pointer;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    transition: all 0.15s;
+    border: 1px solid transparent;
+  }
+
+  .tab.active {
+    background: var(--surface2);
+    color: var(--accent);
+    border-color: var(--border);
+  }
+
+  .copy-btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 14px;
+    border-radius: 3px;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: all 0.15s;
+  }
+
+  .copy-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .copy-btn.copied {
+    border-color: #4ade80;
+    color: #4ade80;
+  }
+
+  .output-area {
+    flex: 1;
+    overflow: auto;
+    position: relative;
+  }
+
+  #preview-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: #fff;
+  }
+
+  #code-pane {
+    display: none;
+    padding: 20px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    line-height: 1.7;
+    color: #c9d1d9;
+    white-space: pre-wrap;
+    word-break: break-all;
+    background: #0d1117;
+    min-height: 100%;
+  }
+
+  .empty-state {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    pointer-events: none;
+  }
+
+  .empty-state .icon {
+    font-size: 32px;
+    opacity: 0.3;
+  }
+
+  .empty-state p {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+
+  /* 반응형 */
+  @media (max-width: 900px) {
+    .main { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+    .panel-left { border-right: none; border-bottom: 1px solid var(--border); }
+  }
+
+  /* 스크롤바 */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">주간보고 생성기<span class="logo-dot">·</span>v1.0</div>
+  <p>텍스트 붙여넣기 → 에디터용 HTML 자동 생성</p>
+</header>
+
+<div class="main">
+
+  <!-- LEFT: INPUT -->
+  <div class="panel-left">
+    <div class="panel-header">
+      <span class="panel-label">입력</span>
+    </div>
+
+    <div class="date-inputs">
+      <div class="date-group">
+        <label>금주 실적 기간</label>
+        <input type="text" id="thisWeek" placeholder="예: 3월 30일 ~ 4월 3일" />
+      </div>
+      <div class="date-group">
+        <label>차주 계획 기간</label>
+        <input type="text" id="nextWeek" placeholder="예: 4월 6일 ~ 4월 10일" />
+      </div>
+    </div>
+
+    <div class="format-hint">
+      <p>형식: <span>카테고리명</span>을 앞에 붙여서 붙여넣기</p>
+      <p>예) <span>총무타임</span>일지 미발송 확인 &nbsp;/&nbsp; <span>ESCC</span>청구금액 수정</p>
+    </div>
+
+    <textarea id="inputText" placeholder="총무타임일지 미발송 메일 전송 스케줄러 확인
+총무타임총무닷컴 헬프데스크, 출입관리 기능 안내
+유토피아4월 조직개편 작업
+유토피아화환 메일 발송 기능 개발
+ESCC청구금액 사업부 테이블 분리
+ESOP식권 사용 시 알림 기능 배포
+기타4/02 야구관리 미팅"></textarea>
+
+    <button class="generate-btn" onclick="generate()">▶ 주간보고 생성</button>
+  </div>
+
+  <!-- RIGHT: OUTPUT -->
+  <div class="panel-right">
+    <div class="panel-header">
+      <div class="tab-row">
+        <div class="tab active" id="tab-preview" onclick="switchTab('preview')">미리보기</div>
+        <div class="tab" id="tab-code" onclick="switchTab('code')">HTML 코드</div>
+      </div>
+      <button class="copy-btn" id="copyBtn" onclick="copyHTML()">복사</button>
+    </div>
+
+    <div class="output-area">
+      <div id="empty-state-wrap" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;pointer-events:none;z-index:1;">
+        <div style="font-size:32px;opacity:0.3;">⬅</div>
+        <p style="font-family:var(--mono);font-size:12px;color:var(--muted);">왼쪽에 텍스트를 붙여넣고 생성 버튼을 누르세요</p>
+      </div>
+      <iframe id="preview-iframe" style="display:none;"></iframe>
+      <pre id="code-pane"></pre>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// 알려진 카테고리 목록 (순서 중요: 긴 것 먼저)
+const CATEGORIES = [
+  '온라인연봉계약',
+  '이트너스샵',
+  '이트너스 홈페이지',
+  '총무오아시스',
+  '총무타임',
+  '유토피아',
+  'ESCC',
+  'ESOP',
+  '기타',
+];
+
+function parseInput(raw) {
+  const lines = raw.split('\n').map(l => l.trim()).filter(Boolean);
+  const groups = {};
+  const order = [];
+
+  for (const line of lines) {
+    let matched = false;
+    for (const cat of CATEGORIES) {
+      if (line.startsWith(cat)) {
+        const item = line.slice(cat.length).trim();
+        if (!item) continue;
+        if (!groups[cat]) { groups[cat] = []; order.push(cat); }
+        groups[cat].push(item);
+        matched = true;
+        break;
+      }
+    }
+    if (!matched && line) {
+      // 카테고리 미인식 → '기타'로
+      const cat = '기타';
+      if (!groups[cat]) { groups[cat] = []; order.push(cat); }
+      groups[cat].push(line);
+    }
+  }
+
+  // 중복 카테고리 제거 (order 유지)
+  const seen = new Set();
+  const uniqueOrder = [];
+  for (const c of order) {
+    if (!seen.has(c)) { seen.add(c); uniqueOrder.push(c); }
+  }
+
+  return { groups, order: uniqueOrder };
+}
+
+function buildCellHTML(groups, order) {
+  let html = '';
+  let num = 1;
+  for (const cat of order) {
+    const items = groups[cat];
+    if (!items || !items.length) continue;
+    if (num > 1) html += `\n    <p style="line-height: 22px; margin: 0; padding: 0;"><span style="font-family: Pretendard; font-size: 12pt;">&nbsp;</span></p>`;
+    html += `\n    <p style="line-height: 22px; margin: 0; padding: 0;"><span style="font-family: Pretendard; font-size: 12pt; font-weight: bold;">${num}. ${cat}</span></p>`;
+    html += `\n    <p style="line-height: 22px; margin: 0; padding: 0;"><span style="font-family: Pretendard; font-size: 12pt;">　☐ 완료</span></p>`;
+    for (const item of items) {
+      html += `\n    <p style="line-height: 22px; margin: 0; padding: 0;"><span style="font-family: Pretendard; font-size: 12pt;">　　 - ${escapeHtml(item)}</span></p>`;
+    }
+    num++;
+  }
+  return html;
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function buildFullHTML(cellHTML, thisWeek, nextWeek) {
+  return `<p style="text-align: center;"><strong><u><span style="font-size: 12pt; font-family: Pretendard;">주간 보고</span></u></strong></p>
+<p style="text-align: center;"><br /></p>
+<table align="center" border="1" cellpadding="1" cellspacing="0" style="width: 727px; border-color: rgb(102, 102, 102);">
+<tbody>
+<tr>
+  <td style="width: 87px; text-align: center; background-color: rgb(211, 211, 211); border-color: rgb(102, 102, 102); border-width: 1px; border-style: solid;">
+    <p style="text-align: center; line-height: 150%;"><span style="font-size: 12pt; font-family: Pretendard;">구분</span></p>
+  </td>
+  <td style="width: 317px; text-align: center; background-color: rgb(211, 211, 211); border-color: rgb(102, 102, 102); border-width: 1px; border-style: solid;">
+    <p style="text-align: center; line-height: 150%;"><span style="font-size: 12pt; font-family: Pretendard;">금주실적 ( ${escapeHtml(thisWeek)} )</span></p>
+  </td>
+  <td style="width: 315px; text-align: center; background-color: rgb(211, 211, 211); border-color: rgb(102, 102, 102); border-width: 1px; border-style: solid;">
+    <p style="text-align: center; line-height: 150%;"><span style="font-size: 12pt; font-family: Pretendard;">차주계획 ( ${escapeHtml(nextWeek)} )</span></p>
+  </td>
+</tr>
+<tr>
+  <td style="width: 87px; text-align: center; background-color: rgb(234, 234, 234); border-color: rgb(102, 102, 102);">
+    <p style="text-align: center; line-height: 150%;"><span style="font-size: 12pt; font-family: Pretendard; font-weight: bold;">주요업무</span></p>
+  </td>
+  <td style="text-align: left; width: 317px; border-color: rgb(102, 102, 102);">${cellHTML}
+  </td>
+  <td style="text-align: left; width: 315px; border-color: rgb(102, 102, 102);">
+    <p style="line-height: 22px; margin: 0; padding: 0;"><span style="font-family: Pretendard; font-size: 12pt;">&nbsp;</span></p>
+  </td>
+</tr>
+<tr>
+  <td style="width: 87px; text-align: center; background-color: rgb(234, 234, 234); border-color: rgb(102, 102, 102);">
+    <p style="text-align: center; line-height: 150%;"><span style="font-size: 12pt; font-family: Pretendard; font-weight: bold;">정보사항</span></p>
+  </td>
+  <td style="text-align: left; width: 317px; border-color: rgb(102, 102, 102);">
+    <p style="line-height: 150%;"><span style="font-size: 12pt; font-family: Pretendard;">&nbsp;</span></p>
+  </td>
+  <td style="text-align: left; width: 315px; border-color: rgb(102, 102, 102);">
+    <p style="line-height: 150%;"><span style="font-size: 12pt; font-family: Pretendard;">&nbsp;</span></p>
+  </td>
+</tr>
+<tr>
+  <td style="width: 87px; text-align: center; background-color: rgb(234, 234, 234); border-color: rgb(102, 102, 102);">
+    <p style="text-align: center; line-height: 150%;"><span style="font-size: 12pt; font-family: Pretendard; font-weight: bold;">개인신상</span></p>
+  </td>
+  <td style="text-align: left; width: 317px; border-color: rgb(102, 102, 102);">
+    <p style="line-height: 150%;"><span style="font-size: 12pt; font-family: Pretendard;">&nbsp;</span></p>
+  </td>
+  <td style="text-align: left; width: 315px; border-color: rgb(102, 102, 102);">
+    <p style="line-height: 150%;"><span style="font-size: 12pt; font-family: Pretendard;">&nbsp;</span></p>
+  </td>
+</tr>
+<tr>
+  <td style="width: 87px; text-align: center; background-color: rgb(234, 234, 234); border-color: rgb(102, 102, 102);">
+    <p style="text-align: center; line-height: 150%;"><span style="font-size: 12pt; font-family: Pretendard; font-weight: bold;">기타사항</span></p>
+  </td>
+  <td style="text-align: left; width: 317px; border-color: rgb(102, 102, 102);">
+    <p style="line-height: 150%;"><span style="font-size: 12pt; font-family: Pretendard;">&nbsp;</span></p>
+  </td>
+  <td style="text-align: left; width: 315px; border-color: rgb(102, 102, 102);">
+    <p style="line-height: 150%;"><span style="font-size: 12pt; font-family: Pretendard;">&nbsp;</span></p>
+  </td>
+</tr>
+</tbody>
+</table>`;
+}
+
+let generatedHTML = '';
+
+function generate() {
+  const raw = document.getElementById('inputText').value.trim();
+  const thisWeek = document.getElementById('thisWeek').value.trim() || '　　　　월　　　일 ~ 　　　월　　　일';
+  const nextWeek = document.getElementById('nextWeek').value.trim() || '　　　　월　　　일 ~ 　　　월　　　일';
+
+  if (!raw) { alert('내용을 입력해주세요.'); return; }
+
+  const { groups, order } = parseInput(raw);
+  const cellHTML = buildCellHTML(groups, order);
+  generatedHTML = buildFullHTML(cellHTML, thisWeek, nextWeek);
+
+  // 빈 상태 숨기기
+  document.getElementById('empty-state-wrap').style.display = 'none';
+
+  // iframe에 격리된 미리보기 렌더링
+  const iframe = document.getElementById('preview-iframe');
+  iframe.style.display = 'block';
+  iframe.srcdoc = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+<style>
+  body { margin: 24px; font-family: Pretendard,'Malgun Gothic',sans-serif; }
+  table { border-collapse: collapse; }
+  td, th { border: 1px solid #666; padding: 8px 10px; vertical-align: top; }
+</style></head><body>${generatedHTML}</body></html>`;
+
+  // 코드
+  document.getElementById('code-pane').textContent = generatedHTML;
+}
+
+function switchTab(tab) {
+  const iframe = document.getElementById('preview-iframe');
+  const code = document.getElementById('code-pane');
+  const tabP = document.getElementById('tab-preview');
+  const tabC = document.getElementById('tab-code');
+
+  if (tab === 'preview') {
+    if (generatedHTML) iframe.style.display = 'block';
+    code.style.display = 'none';
+    tabP.classList.add('active');
+    tabC.classList.remove('active');
+  } else {
+    iframe.style.display = 'none';
+    code.style.display = 'block';
+    tabP.classList.remove('active');
+    tabC.classList.add('active');
+  }
+}
+
+function copyHTML() {
+  if (!generatedHTML) { alert('먼저 생성해주세요.'); return; }
+  navigator.clipboard.writeText(generatedHTML).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '✓ 복사됨';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = '복사';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+// Enter 방지 (textarea에서 자동생성 안 함)
+document.getElementById('inputText').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.metaKey) generate();
+});
+</script>
+
+</body>
+</html>
