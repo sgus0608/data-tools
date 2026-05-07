@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tetris Game</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #111827, #1e293b);
+      color: #f8fafc;
+    }
+
+    .game-wrapper {
+      display: flex;
+      gap: 24px;
+      padding: 24px;
+      border-radius: 24px;
+      background: rgba(15, 23, 42, 0.85);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .board-area {
+      position: relative;
+    }
+
+    canvas {
+      display: block;
+      border-radius: 14px;
+      background: #020617;
+      border: 2px solid rgba(148, 163, 184, 0.25);
+    }
+
+    .side-panel {
+      width: 220px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: 32px;
+      letter-spacing: 1px;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: #94a3b8;
+      font-size: 14px;
+    }
+
+    .card {
+      padding: 16px;
+      border-radius: 16px;
+      background: rgba(30, 41, 59, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 15px;
+    }
+
+    .info-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .value {
+      font-weight: 700;
+      color: #38bdf8;
+    }
+
+    .next-title {
+      margin: 0 0 12px;
+      font-size: 15px;
+      color: #cbd5e1;
+    }
+
+    #nextCanvas {
+      width: 120px;
+      height: 120px;
+      margin: 0 auto;
+    }
+
+    button {
+      width: 100%;
+      border: none;
+      padding: 12px 14px;
+      border-radius: 12px;
+      background: #38bdf8;
+      color: #082f49;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      background: #7dd3fc;
+    }
+
+    .controls {
+      line-height: 1.8;
+      font-size: 13px;
+      color: #cbd5e1;
+    }
+
+    .controls strong {
+      color: #f8fafc;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      border-radius: 14px;
+      background: rgba(2, 6, 23, 0.82);
+      padding: 20px;
+    }
+
+    .overlay.active {
+      display: flex;
+    }
+
+    .overlay h2 {
+      margin: 0 0 10px;
+      font-size: 28px;
+    }
+
+    .overlay p {
+      margin: 0;
+      color: #cbd5e1;
+      font-size: 14px;
+    }
+
+    @media (max-width: 720px) {
+      body {
+        align-items: flex-start;
+        padding: 16px;
+      }
+
+      .game-wrapper {
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+      }
+
+      .side-panel {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="game-wrapper">
+    <section class="board-area">
+      <canvas id="gameCanvas" width="300" height="600"></canvas>
+      <div id="overlay" class="overlay active">
+        <div>
+          <h2>TETRIS</h2>
+          <p>시작 버튼을 눌러 게임을 시작하세요.</p>
+        </div>
+      </div>
+    </section>
+
+    <aside class="side-panel">
+      <div>
+        <h1>TETRIS</h1>
+        <p class="subtitle">HTML Canvas + JavaScript</p>
+      </div>
+
+      <div class="card">
+        <div class="info-row">
+          <span>점수</span>
+          <span id="score" class="value">0</span>
+        </div>
+        <div class="info-row">
+          <span>레벨</span>
+          <span id="level" class="value">1</span>
+        </div>
+        <div class="info-row">
+          <span>제거한 줄</span>
+          <span id="lines" class="value">0</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <p class="next-title">다음 블록</p>
+        <canvas id="nextCanvas" width="120" height="120"></canvas>
+      </div>
+
+      <button id="startButton">게임 시작</button>
+      <button id="pauseButton">일시정지</button>
+
+      <div class="card controls">
+        <div><strong>← / →</strong> : 이동</div>
+        <div><strong>↓</strong> : 빠르게 내리기</div>
+        <div><strong>↑</strong> : 회전</div>
+        <div><strong>Space</strong> : 즉시 내리기</div>
+        <div><strong>P</strong> : 일시정지</div>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const nextCanvas = document.getElementById('nextCanvas');
+    const nextCtx = nextCanvas.getContext('2d');
+
+    const scoreElement = document.getElementById('score');
+    const levelElement = document.getElementById('level');
+    const linesElement = document.getElementById('lines');
+    const overlay = document.getElementById('overlay');
+    const startButton = document.getElementById('startButton');
+    const pauseButton = document.getElementById('pauseButton');
+
+    const COLS = 10;
+    const ROWS = 20;
+    const BLOCK_SIZE = 30;
+    const NEXT_BLOCK_SIZE = 24;
+
+    const COLORS = {
+      I: '#22d3ee',
+      J: '#60a5fa',
+      L: '#fb923c',
+      O: '#facc15',
+      S: '#4ade80',
+      T: '#c084fc',
+      Z: '#f87171'
+    };
+
+    const SHAPES = {
+      I: [
+        [0, 0, 0, 0],
+        [1, 1, 1, 1],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0]
+      ],
+      J: [
+        [1, 0, 0],
+        [1, 1, 1],
+        [0, 0, 0]
+      ],
+      L: [
+        [0, 0, 1],
+        [1, 1, 1],
+        [0, 0, 0]
+      ],
+      O: [
+        [1, 1],
+        [1, 1]
+      ],
+      S: [
+        [0, 1, 1],
+        [1, 1, 0],
+        [0, 0, 0]
+      ],
+      T: [
+        [0, 1, 0],
+        [1, 1, 1],
+        [0, 0, 0]
+      ],
+      Z: [
+        [1, 1, 0],
+        [0, 1, 1],
+        [0, 0, 0]
+      ]
+    };
+
+    let board;
+    let currentPiece;
+    let nextPiece;
+    let score;
+    let level;
+    let lines;
+    let dropCounter;
+    let dropInterval;
+    let lastTime;
+    let animationId;
+    let isPlaying = false;
+    let isPaused = false;
+
+    function createBoard() {
+      return Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+    }
+
+    function createPiece() {
+      const types = Object.keys(SHAPES);
+      const type = types[Math.floor(Math.random() * types.length)];
+      return {
+        type,
+        shape: SHAPES[type].map(row => [...row]),
+        color: COLORS[type],
+        x: Math.floor(COLS / 2) - Math.ceil(SHAPES[type][0].length / 2),
+        y: 0
+      };
+    }
+
+    function drawBlock(context, x, y, size, color) {
+      context.fillStyle = color;
+      context.fillRect(x * size, y * size, size, size);
+      context.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+      context.lineWidth = 2;
+      context.strokeRect(x * size + 1, y * size + 1, size - 2, size - 2);
+    }
+
+    function drawBoard() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.08)';
+      for (let x = 0; x <= COLS; x++) {
+        ctx.beginPath();
+        ctx.moveTo(x * BLOCK_SIZE, 0);
+        ctx.lineTo(x * BLOCK_SIZE, canvas.height);
+        ctx.stroke();
+      }
+      for (let y = 0; y <= ROWS; y++) {
+        ctx.beginPath();
+        ctx.moveTo(0, y * BLOCK_SIZE);
+        ctx.lineTo(canvas.width, y * BLOCK_SIZE);
+        ctx.stroke();
+      }
+
+      board.forEach((row, y) => {
+        row.forEach((color, x) => {
+          if (color) drawBlock(ctx, x, y, BLOCK_SIZE, color);
+        });
+      });
+    }
+
+    function drawPiece(piece, context = ctx, size = BLOCK_SIZE, offsetX = 0, offsetY = 0) {
+      piece.shape.forEach((row, y) => {
+        row.forEach((value, x) => {
+          if (value) {
+            drawBlock(context, piece.x + x + offsetX, piece.y + y + offsetY, size, piece.color);
+          }
+        });
+      });
+    }
+
+    function drawNextPiece() {
+      nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
+      const previewPiece = {
+        ...nextPiece,
+        x: 1,
+        y: 1,
+        shape: nextPiece.shape
+      };
+      drawPiece(previewPiece, nextCtx, NEXT_BLOCK_SIZE);
+    }
+
+    function isCollision(piece, moveX = 0, moveY = 0, newShape = piece.shape) {
+      for (let y = 0; y < newShape.length; y++) {
+        for (let x = 0; x < newShape[y].length; x++) {
+          if (!newShape[y][x]) continue;
+
+          const nextX = piece.x + x + moveX;
+          const nextY = piece.y + y + moveY;
+
+          if (nextX < 0 || nextX >= COLS || nextY >= ROWS) {
+            return true;
+          }
+
+          if (nextY >= 0 && board[nextY][nextX]) {
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+
+    function mergePiece() {
+      currentPiece.shape.forEach((row, y) => {
+        row.forEach((value, x) => {
+          if (value) {
+            const boardY = currentPiece.y + y;
+            const boardX = currentPiece.x + x;
+            if (boardY >= 0) {
+              board[boardY][boardX] = currentPiece.color;
+            }
+          }
+        });
+      });
+    }
+
+    function rotateMatrix(matrix) {
+      return matrix[0].map((_, index) => matrix.map(row => row[index]).reverse());
+    }
+
+    function rotatePiece() {
+      const rotatedShape = rotateMatrix(currentPiece.shape);
+      if (!isCollision(currentPiece, 0, 0, rotatedShape)) {
+        currentPiece.shape = rotatedShape;
+        return;
+      }
+
+      // 벽에 붙어 있을 때 살짝 밀어서 회전 시도
+      if (!isCollision(currentPiece, -1, 0, rotatedShape)) {
+        currentPiece.x -= 1;
+        currentPiece.shape = rotatedShape;
+      } else if (!isCollision(currentPiece, 1, 0, rotatedShape)) {
+        currentPiece.x += 1;
+        currentPiece.shape = rotatedShape;
+      }
+    }
+
+    function movePiece(direction) {
+      if (!isCollision(currentPiece, direction, 0)) {
+        currentPiece.x += direction;
+      }
+    }
+
+    function softDrop() {
+      if (!isCollision(currentPiece, 0, 1)) {
+        currentPiece.y += 1;
+      } else {
+        lockPiece();
+      }
+      dropCounter = 0;
+    }
+
+    function hardDrop() {
+      while (!isCollision(currentPiece, 0, 1)) {
+        currentPiece.y += 1;
+        score += 2;
+      }
+      lockPiece();
+      updateInfo();
+    }
+
+    function lockPiece() {
+      mergePiece();
+      clearLines();
+      currentPiece = nextPiece;
+      nextPiece = createPiece();
+      drawNextPiece();
+
+      if (isCollision(currentPiece)) {
+        gameOver();
+      }
+    }
+
+    function clearLines() {
+      let removed = 0;
+
+      for (let y = ROWS - 1; y >= 0; y--) {
+        if (board[y].every(cell => cell !== null)) {
+          board.splice(y, 1);
+          board.unshift(Array(COLS).fill(null));
+          removed++;
+          y++;
+        }
+      }
+
+      if (removed > 0) {
+        const points = [0, 100, 300, 500, 800];
+        score += points[removed] * level;
+        lines += removed;
+        level = Math.floor(lines / 10) + 1;
+        dropInterval = Math.max(120, 900 - (level - 1) * 80);
+        updateInfo();
+      }
+    }
+
+    function updateInfo() {
+      scoreElement.textContent = score;
+      levelElement.textContent = level;
+      linesElement.textContent = lines;
+    }
+
+    function update(time = 0) {
+      if (!isPlaying || isPaused) return;
+
+      const deltaTime = time - lastTime;
+      lastTime = time;
+      dropCounter += deltaTime;
+
+      if (dropCounter > dropInterval) {
+        softDrop();
+      }
+
+      drawBoard();
+      drawPiece(currentPiece);
+      animationId = requestAnimationFrame(update);
+    }
+
+    function startGame() {
+      cancelAnimationFrame(animationId);
+      board = createBoard();
+      score = 0;
+      level = 1;
+      lines = 0;
+      dropCounter = 0;
+      dropInterval = 900;
+      lastTime = 0;
+      isPlaying = true;
+      isPaused = false;
+      currentPiece = createPiece();
+      nextPiece = createPiece();
+      overlay.classList.remove('active');
+      startButton.textContent = '다시 시작';
+      pauseButton.textContent = '일시정지';
+      updateInfo();
+      drawNextPiece();
+      update();
+    }
+
+    function togglePause() {
+      if (!isPlaying) return;
+      isPaused = !isPaused;
+
+      if (isPaused) {
+        cancelAnimationFrame(animationId);
+        pauseButton.textContent = '계속하기';
+        overlay.innerHTML = '<div><h2>PAUSED</h2><p>P 또는 계속하기 버튼으로 재개하세요.</p></div>';
+        overlay.classList.add('active');
+      } else {
+        lastTime = 0;
+        pauseButton.textContent = '일시정지';
+        overlay.classList.remove('active');
+        update();
+      }
+    }
+
+    function gameOver() {
+      isPlaying = false;
+      cancelAnimationFrame(animationId);
+      overlay.innerHTML = `<div><h2>GAME OVER</h2><p>최종 점수: ${score}<br />다시 시작 버튼을 눌러 재도전하세요.</p></div>`;
+      overlay.classList.add('active');
+    }
+
+    document.addEventListener('keydown', event => {
+      if (!isPlaying || isPaused) {
+        if (event.key.toLowerCase() === 'p') togglePause();
+        return;
+      }
+
+      switch (event.key) {
+        case 'ArrowLeft':
+          movePiece(-1);
+          break;
+        case 'ArrowRight':
+          movePiece(1);
+          break;
+        case 'ArrowDown':
+          softDrop();
+          score += 1;
+          updateInfo();
+          break;
+        case 'ArrowUp':
+          rotatePiece();
+          break;
+        case ' ':
+          event.preventDefault();
+          hardDrop();
+          break;
+        case 'p':
+        case 'P':
+          togglePause();
+          break;
+      }
+
+      drawBoard();
+      drawPiece(currentPiece);
+    });
+
+    startButton.addEventListener('click', startGame);
+    pauseButton.addEventListener('click', togglePause);
+
+    board = createBoard();
+    nextPiece = createPiece();
+    drawBoard();
+    drawNextPiece();
+  </script>
+</body>
+</html>
