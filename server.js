@@ -54,17 +54,6 @@ const CAR_TYPES = {
     weight: 0.92,
     turnSmooth: 18
   },
-  porsche: {
-    label: "Porsche Style",
-    color: "#fb923c",
-    accent: "#020617",
-    maxSpeed: 390,
-    boostSpeed: 515,
-    acceleration: 1120,
-    radius: 28,
-    weight: 1.0,
-    turnSmooth: 17
-  },
   suv: {
     label: "Heavy SUV",
     color: "#4ade80",
@@ -79,7 +68,6 @@ const CAR_TYPES = {
 };
 
 const DEFAULT_CAR_TYPE = "bugatti";
-const FALLBACK_COLORS = ["#38bdf8", "#fb7185", "#facc15", "#4ade80", "#c084fc", "#fb923c", "#22d3ee", "#f472b6"];
 
 const players = {};
 const chatHistory = [];
@@ -128,7 +116,7 @@ function createPlayer(socketId, payload) {
     nickname: safeNickname(nickname),
     carType: selectedCarType,
     carLabel: carSpec.label,
-    color: carSpec.color || FALLBACK_COLORS[count % FALLBACK_COLORS.length],
+    color: carSpec.color,
     accent: carSpec.accent,
     x: spawn.x,
     y: spawn.y,
@@ -147,7 +135,8 @@ function createPlayer(socketId, payload) {
       right: false,
       boost: false,
       brake: false
-    }
+    },
+    hitFlash: 0
   };
 }
 
@@ -185,6 +174,7 @@ function resetRound() {
     p.targetAngle = spawn.angle;
     p.alive = true;
     p.boost = 100;
+    p.hitFlash = 0;
   });
 
   round += 1;
@@ -196,6 +186,10 @@ function updatePlayer(p, dt) {
 
   const spec = CAR_TYPES[p.carType] || CAR_TYPES[DEFAULT_CAR_TYPE];
   const input = p.input;
+
+  if (p.hitFlash > 0) {
+    p.hitFlash = Math.max(0, p.hitFlash - dt * 3);
+  }
 
   let inputX = 0;
   let inputY = 0;
@@ -224,8 +218,8 @@ function updatePlayer(p, dt) {
     const forwardX = Math.cos(p.angle);
     const forwardY = Math.sin(p.angle);
 
-    const directControl = 0.72;
-    const carControl = 0.28;
+    const directControl = 0.74;
+    const carControl = 0.26;
 
     const driveX = inputX * directControl + forwardX * carControl;
     const driveY = inputY * directControl + forwardY * carControl;
@@ -314,11 +308,11 @@ function resolveCollisions() {
 
         const rvx = b.vx - a.vx;
         const rvy = b.vy - a.vy;
-        const normalVelocity = rvx * nx + rvy * ny;
+        const impactSpeed = rvx * nx + rvy * ny;
 
-        if (normalVelocity < 0) {
-          const restitution = 0.83;
-          const impulse = -(1 + restitution) * normalVelocity / (1 / aSpec.weight + 1 / bSpec.weight);
+        if (impactSpeed < 0) {
+          const restitution = 0.92;
+          const impulse = -(1 + restitution) * impactSpeed / (1 / aSpec.weight + 1 / bSpec.weight);
 
           const ix = impulse * nx;
           const iy = impulse * ny;
@@ -328,12 +322,27 @@ function resolveCollisions() {
           b.vx += ix / bSpec.weight;
           b.vy += iy / bSpec.weight;
 
-          const extraPush = clamp(Math.abs(impulse) / 125, 0, 1);
+          const tangentX = -ny;
+          const tangentY = nx;
+          const sideForce = (rvx * tangentX + rvy * tangentY) * 0.08;
 
-          a.vx -= nx * 22 * extraPush / aSpec.weight;
-          a.vy -= ny * 22 * extraPush / aSpec.weight;
-          b.vx += nx * 22 * extraPush / bSpec.weight;
-          b.vy += ny * 22 * extraPush / bSpec.weight;
+          a.angle = normalizeAngle(a.angle - sideForce / aSpec.weight * 0.035);
+          b.angle = normalizeAngle(b.angle + sideForce / bSpec.weight * 0.035);
+
+          const hitPower = Math.min(Math.abs(impulse) / 100, 1);
+
+          a.vx -= nx * 34 * hitPower / aSpec.weight;
+          a.vy -= ny * 34 * hitPower / aSpec.weight;
+          b.vx += nx * 34 * hitPower / bSpec.weight;
+          b.vy += ny * 34 * hitPower / bSpec.weight;
+
+          a.vx += tangentX * sideForce * 0.3 / aSpec.weight;
+          a.vy += tangentY * sideForce * 0.3 / aSpec.weight;
+          b.vx -= tangentX * sideForce * 0.3 / bSpec.weight;
+          b.vy -= tangentY * sideForce * 0.3 / bSpec.weight;
+
+          a.hitFlash = Math.max(a.hitFlash, hitPower);
+          b.hitFlash = Math.max(b.hitFlash, hitPower);
         }
       }
     }
@@ -348,7 +357,7 @@ function gameLoop() {
   if (isGameRunning) {
     Object.values(players).forEach(p => updatePlayer(p, dt));
 
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 4; i++) {
       resolveCollisions();
     }
 
