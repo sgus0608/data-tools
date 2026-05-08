@@ -1,6 +1,6 @@
 {
-  "name": "bumper-car-natural-cars",
-  "version": "1.3.0",
+  "name": "bumper-car-full-upgrade",
+  "version": "1.4.0",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
