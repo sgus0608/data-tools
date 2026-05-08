@@ -6,9 +6,11 @@ const path = require("path");
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
+
 const PORT = process.env.PORT || 3000;
 
 app.use(express.static(path.join(__dirname, "public")));
+
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "BumperCar.html"));
 });
@@ -25,21 +27,28 @@ const COLORS = [
 ];
 
 const players = {};
+const chatHistory = [];
+
 let round = 1;
 let isGameRunning = false;
 let lastUpdate = Date.now();
 
-function safeNickname(nickname) {
-  return String(nickname || "Player")
+function safeText(value, maxLength = 80) {
+  return String(value || "")
     .trim()
     .replace(/[<>]/g, "")
-    .slice(0, 12) || "Player";
+    .slice(0, maxLength);
+}
+
+function safeNickname(nickname) {
+  return safeText(nickname, 12) || "Player";
 }
 
 function randomSpawn(index = 0) {
   const count = Math.max(2, Object.keys(players).length + 1);
   const angle = Math.PI * 2 * index / count;
   const radius = 165;
+
   return {
     x: CENTER.x + Math.cos(angle) * radius,
     y: CENTER.y + Math.sin(angle) * radius,
@@ -55,16 +64,18 @@ function createPlayer(socketId, nickname) {
     id: socketId,
     nickname: safeNickname(nickname),
     color: COLORS[count % COLORS.length],
+
     x: spawn.x,
     y: spawn.y,
     vx: 0,
     vy: 0,
     angle: spawn.angle,
-    angularVelocity: 0,
+
     radius: CAR_RADIUS,
     alive: true,
     score: 0,
     boost: 100,
+
     input: {
       up: false,
       down: false,
@@ -90,17 +101,23 @@ function normalizeAngle(angle) {
   return angle;
 }
 
+function lerpAngle(current, target, amount) {
+  let diff = normalizeAngle(target - current);
+  return normalizeAngle(current + diff * amount);
+}
+
 function resetRound() {
   const ids = Object.keys(players);
+
   ids.forEach((id, index) => {
     const spawn = randomSpawn(index);
     const p = players[id];
+
     p.x = spawn.x;
     p.y = spawn.y;
     p.vx = 0;
     p.vy = 0;
     p.angle = spawn.angle;
-    p.angularVelocity = 0;
     p.alive = true;
     p.boost = 100;
   });
@@ -114,73 +131,61 @@ function updatePlayer(p, dt) {
 
   const input = p.input;
 
-  const fx = Math.cos(p.angle);
-  const fy = Math.sin(p.angle);
-  const rx = Math.cos(p.angle + Math.PI / 2);
-  const ry = Math.sin(p.angle + Math.PI / 2);
+  let moveX = 0;
+  let moveY = 0;
 
-  let forwardSpeed = p.vx * fx + p.vy * fy;
-  let sideSpeed = p.vx * rx + p.vy * ry;
+  if (input.left) moveX -= 1;
+  if (input.right) moveX += 1;
+  if (input.up) moveY -= 1;
+  if (input.down) moveY += 1;
 
-  let force = 0;
-  if (input.up) force += 760;
-  if (input.down) force -= 470;
+  const hasMoveInput = moveX !== 0 || moveY !== 0;
 
-  if (input.boost && input.up && p.boost > 0) {
-    force += 980;
-    p.boost = Math.max(0, p.boost - 42 * dt);
+  if (hasMoveInput) {
+    const length = Math.hypot(moveX, moveY);
+    moveX /= length;
+    moveY /= length;
+
+    const targetAngle = Math.atan2(moveY, moveX);
+    p.angle = lerpAngle(p.angle, targetAngle, clamp(dt * 12, 0, 1));
+
+    let acceleration = 920;
+
+    if (input.boost && p.boost > 0) {
+      acceleration = 1450;
+      p.boost = Math.max(0, p.boost - 45 * dt);
+    } else {
+      p.boost = Math.min(100, p.boost + 18 * dt);
+    }
+
+    p.vx += moveX * acceleration * dt;
+    p.vy += moveY * acceleration * dt;
   } else {
-    p.boost = Math.min(100, p.boost + 16 * dt);
-  }
-
-  p.vx += fx * force * dt;
-  p.vy += fy * force * dt;
-
-  forwardSpeed = p.vx * fx + p.vy * fy;
-  sideSpeed = p.vx * rx + p.vy * ry;
-
-  const absForwardSpeed = Math.abs(forwardSpeed);
-  const speedFactor = clamp(absForwardSpeed / 230, 0.22, 1);
-  const turn = (input.right ? 1 : 0) - (input.left ? 1 : 0);
-
-  if (turn !== 0) {
-    const direction = forwardSpeed >= -20 ? 1 : -1;
-    p.angularVelocity += turn * direction * 5.6 * speedFactor * dt;
-  }
-
-  p.angle = normalizeAngle(p.angle + p.angularVelocity * dt);
-  p.angularVelocity *= Math.pow(0.045, dt);
-
-  const sideGrip = input.brake ? 0.78 : 0.9;
-  const forwardGrip = input.brake ? 0.84 : 0.985;
-
-  forwardSpeed *= Math.pow(forwardGrip, dt * 60);
-  sideSpeed *= Math.pow(sideGrip, dt * 60);
-
-  p.vx = fx * forwardSpeed + rx * sideSpeed;
-  p.vy = fy * forwardSpeed + ry * sideSpeed;
-
-  if (input.brake) {
-    p.vx *= Math.pow(0.94, dt * 60);
-    p.vy *= Math.pow(0.94, dt * 60);
+    p.boost = Math.min(100, p.boost + 22 * dt);
   }
 
   const speed = Math.hypot(p.vx, p.vy);
-  const maxSpeed = input.boost ? 500 : 390;
+  const maxSpeed = input.boost ? 470 : 360;
 
   if (speed > maxSpeed) {
     p.vx = p.vx / speed * maxSpeed;
     p.vy = p.vy / speed * maxSpeed;
   }
 
+  const drag = input.brake ? 0.87 : hasMoveInput ? 0.96 : 0.91;
+  p.vx *= Math.pow(drag, dt * 60);
+  p.vy *= Math.pow(drag, dt * 60);
+
   p.x += p.vx * dt;
   p.y += p.vy * dt;
 
-  const idleDrag = input.up || input.down ? 0.995 : 0.982;
-  p.vx *= Math.pow(idleDrag, dt * 60);
-  p.vy *= Math.pow(idleDrag, dt * 60);
+  const currentSpeed = Math.hypot(p.vx, p.vy);
+  if (!hasMoveInput && currentSpeed > 15) {
+    p.angle = lerpAngle(p.angle, Math.atan2(p.vy, p.vx), clamp(dt * 5, 0, 1));
+  }
 
   const distanceFromCenter = Math.hypot(p.x - CENTER.x, p.y - CENTER.y);
+
   if (distanceFromCenter > ARENA_RADIUS + p.radius * 0.7) {
     p.alive = false;
     p.vx = 0;
@@ -195,6 +200,7 @@ function resolveCollisions() {
     for (let j = i + 1; j < list.length; j++) {
       const a = list[i];
       const b = list[j];
+
       if (!a.alive || !b.alive) continue;
 
       const dx = b.x - a.x;
@@ -217,8 +223,9 @@ function resolveCollisions() {
         const normalVelocity = rvx * nx + rvy * ny;
 
         if (normalVelocity < 0) {
-          const restitution = 0.78;
+          const restitution = 0.82;
           const impulse = -(1 + restitution) * normalVelocity / 2;
+
           const ix = impulse * nx;
           const iy = impulse * ny;
 
@@ -227,17 +234,11 @@ function resolveCollisions() {
           b.vx += ix;
           b.vy += iy;
 
-          const tx = -ny;
-          const ty = nx;
-          const sideImpact = (rvx * tx + rvy * ty) * 0.0018;
-          a.angularVelocity -= sideImpact;
-          b.angularVelocity += sideImpact;
-
-          const pushPower = clamp(Math.abs(impulse) / 90, 0, 1);
-          a.vx -= nx * 18 * pushPower;
-          a.vy -= ny * 18 * pushPower;
-          b.vx += nx * 18 * pushPower;
-          b.vy += ny * 18 * pushPower;
+          const extraPush = clamp(Math.abs(impulse) / 80, 0, 1);
+          a.vx -= nx * 26 * extraPush;
+          a.vy -= ny * 26 * extraPush;
+          b.vx += nx * 26 * extraPush;
+          b.vy += ny * 26 * extraPush;
         }
       }
     }
@@ -293,7 +294,11 @@ io.on("connection", socket => {
       isGameRunning = true;
     }
 
-    socket.emit("joined", { id: socket.id });
+    socket.emit("joined", {
+      id: socket.id,
+      chatHistory
+    });
+
     io.emit("system", `${players[socket.id].nickname} joined`);
   });
 
@@ -310,6 +315,28 @@ io.on("connection", socket => {
     };
   });
 
+  socket.on("chat", message => {
+    const player = players[socket.id];
+    if (!player) return;
+
+    const cleanMessage = safeText(message, 80);
+    if (!cleanMessage) return;
+
+    const chat = {
+      nickname: player.nickname,
+      color: player.color,
+      message: cleanMessage,
+      time: Date.now()
+    };
+
+    chatHistory.push(chat);
+    if (chatHistory.length > 30) {
+      chatHistory.shift();
+    }
+
+    io.emit("chat", chat);
+  });
+
   socket.on("restart", () => {
     if (Object.keys(players).length >= 2) {
       resetRound();
@@ -317,7 +344,12 @@ io.on("connection", socket => {
   });
 
   socket.on("disconnect", () => {
+    const nickname = players[socket.id]?.nickname;
     delete players[socket.id];
+
+    if (nickname) {
+      io.emit("system", `${nickname} left`);
+    }
 
     if (Object.keys(players).length < 2) {
       isGameRunning = false;
