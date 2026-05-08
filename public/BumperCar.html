@@ -24,7 +24,7 @@
 
     .shell {
       display: grid;
-      grid-template-columns: 280px 760px 320px;
+      grid-template-columns: 280px 760px 340px;
       gap: 22px;
       padding: 24px;
       border-radius: 30px;
@@ -92,7 +92,7 @@
     }
 
     .overlay-box {
-      width: min(420px, 100%);
+      width: min(480px, 100%);
       padding: 24px;
       border-radius: 24px;
       background: rgba(15,23,42,.92);
@@ -111,7 +111,7 @@
       font-size: 14px;
     }
 
-    input, button {
+    input, button, select {
       width: 100%;
       border: none;
       border-radius: 14px;
@@ -121,7 +121,7 @@
       outline: none;
     }
 
-    input {
+    input, select {
       margin-bottom: 10px;
       color: #f8fafc;
       background: rgba(2,6,23,.9);
@@ -144,6 +144,62 @@
     button:hover {
       transform: translateY(-1px);
       filter: brightness(1.08);
+    }
+
+    .car-select-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin: 12px 0 14px;
+    }
+
+    .car-card {
+      padding: 12px;
+      border-radius: 16px;
+      background: rgba(2,6,23,.56);
+      border: 1px solid rgba(148,163,184,.18);
+      cursor: pointer;
+      transition: .18s;
+      text-align: left;
+    }
+
+    .car-card.active {
+      border-color: #38bdf8;
+      box-shadow: 0 0 0 2px rgba(56,189,248,.15);
+      background: rgba(56,189,248,.1);
+    }
+
+    .car-preview {
+      width: 72px;
+      height: 36px;
+      border-radius: 18px 10px 10px 18px;
+      margin-bottom: 8px;
+      position: relative;
+      box-shadow: 0 8px 20px rgba(0,0,0,.25);
+    }
+
+    .car-preview::before {
+      content: "";
+      position: absolute;
+      left: 28px;
+      top: 7px;
+      width: 24px;
+      height: 22px;
+      border-radius: 8px;
+      background: rgba(2,6,23,.72);
+    }
+
+    .car-card-name {
+      font-size: 13px;
+      font-weight: 900;
+      color: #f8fafc;
+      margin-bottom: 4px;
+    }
+
+    .car-card-stat {
+      font-size: 11px;
+      color: #94a3b8;
+      line-height: 1.45;
     }
 
     .row {
@@ -261,7 +317,7 @@
       font-size: 13px;
     }
 
-    @media (max-width: 1420px) {
+    @media (max-width: 1440px) {
       body {
         align-items: flex-start;
         padding: 16px;
@@ -282,6 +338,10 @@
         width: 92vw;
         height: 92vw;
       }
+
+      .car-select-grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -290,7 +350,7 @@
     <aside class="panel">
       <div class="card">
         <h1>BUMPER<br />ARENA</h1>
-        <p class="subtitle">조작감 개선판입니다. 누른 방향으로 바로 이동하고, 차량은 이동 방향을 따라 자연스럽게 회전합니다.</p>
+        <p class="subtitle">이동은 즉각 반응하고, 차체 회전은 이동 방향을 자연스럽게 따라갑니다.</p>
       </div>
 
       <div class="card controls">
@@ -308,7 +368,7 @@
       </div>
 
       <div class="card tip">
-        이번 버전은 회전키를 따로 쓰지 않습니다. 이동 방향으로 차량 머리가 자동 회전해서 훨씬 직관적입니다.
+        회전키로 억지로 돌리는 방식이 아니라, 입력한 방향으로 움직이고 차가 부드럽게 따라 도는 방식입니다.
       </div>
     </aside>
 
@@ -318,8 +378,32 @@
       <div id="joinOverlay" class="overlay">
         <div class="overlay-box">
           <h2>입장하기</h2>
-          <p>닉네임을 입력하고 같은 링크로 접속한 사람들과 대결하세요.</p>
+          <p>닉네임과 차종을 선택하고 같은 링크로 접속한 사람들과 대결하세요.</p>
           <input id="nicknameInput" maxlength="12" placeholder="닉네임 입력" />
+
+          <div class="car-select-grid">
+            <div class="car-card active" data-car="bugatti">
+              <div class="car-preview" style="background:#38bdf8"></div>
+              <div class="car-card-name">Bugatti Style</div>
+              <div class="car-card-stat">밸런스형 · 안정적</div>
+            </div>
+            <div class="car-card" data-car="lamborghini">
+              <div class="car-preview" style="background:#facc15"></div>
+              <div class="car-card-name">Lamborghini Style</div>
+              <div class="car-card-stat">최고속도 · 민첩</div>
+            </div>
+            <div class="car-card" data-car="ferrari">
+              <div class="car-preview" style="background:#ef4444"></div>
+              <div class="car-card-name">Ferrari Style</div>
+              <div class="car-card-stat">가속력 · 빠른 반응</div>
+            </div>
+            <div class="car-card" data-car="suv">
+              <div class="car-preview" style="background:#4ade80"></div>
+              <div class="car-card-name">Heavy SUV</div>
+              <div class="car-card-stat">무게감 · 밀치기 강함</div>
+            </div>
+          </div>
+
           <button id="joinButton">방 입장</button>
         </div>
       </div>
@@ -380,15 +464,34 @@
     const chatForm = document.getElementById("chatForm");
     const chatInput = document.getElementById("chatInput");
 
+    const carCards = document.querySelectorAll(".car-card");
+    let selectedCarType = "bugatti";
+
     const WIDTH = canvas.width;
     const HEIGHT = canvas.height;
     const CENTER = { x: WIDTH / 2, y: HEIGHT / 2 };
     const ARENA_RADIUS = 315;
 
+    const CAR_META = {
+      bugatti: { name: "Bugatti Style", color: "#38bdf8", accent: "#0f172a", shape: "round" },
+      lamborghini: { name: "Lamborghini Style", color: "#facc15", accent: "#111827", shape: "sharp" },
+      ferrari: { name: "Ferrari Style", color: "#ef4444", accent: "#f8fafc", shape: "race" },
+      porsche: { name: "Porsche Style", color: "#fb923c", accent: "#020617", shape: "round" },
+      suv: { name: "Heavy SUV", color: "#4ade80", accent: "#052e16", shape: "suv" }
+    };
+
     let myId = null;
     let latestState = { players: {}, round: 1, isGameRunning: false, aliveCount: 0 };
     const renderPlayers = {};
     const keys = new Set();
+
+    carCards.forEach(card => {
+      card.addEventListener("click", () => {
+        carCards.forEach(item => item.classList.remove("active"));
+        card.classList.add("active");
+        selectedCarType = card.dataset.car;
+      });
+    });
 
     function joinGame() {
       const nickname = nicknameInput.value.trim();
@@ -398,7 +501,11 @@
         return;
       }
 
-      socket.emit("join", nickname);
+      socket.emit("join", {
+        nickname,
+        carType: selectedCarType
+      });
+
       joinOverlay.classList.add("hidden");
     }
 
@@ -464,12 +571,10 @@
     function addChat(chat) {
       const item = document.createElement("div");
       item.className = "chat-item";
-
       item.innerHTML = `
         <span class="chat-name" style="color:${chat.color || "#38bdf8"}">${escapeHtml(chat.nickname || "Player")}</span>
         <span class="chat-message">${escapeHtml(chat.message || "")}</span>
       `;
-
       chatBox.appendChild(item);
       chatBox.scrollTop = chatBox.scrollHeight;
 
@@ -488,9 +593,13 @@
           renderPlayers[p.id].targetAngle = p.angle;
           renderPlayers[p.id].nickname = p.nickname;
           renderPlayers[p.id].color = p.color;
+          renderPlayers[p.id].accent = p.accent;
           renderPlayers[p.id].alive = p.alive;
           renderPlayers[p.id].score = p.score;
           renderPlayers[p.id].boost = p.boost;
+          renderPlayers[p.id].carType = p.carType;
+          renderPlayers[p.id].carLabel = p.carLabel;
+          renderPlayers[p.id].radius = p.radius;
         }
       });
 
@@ -501,14 +610,14 @@
 
     function updateRenderPlayers() {
       Object.values(renderPlayers).forEach(p => {
-        p.x += (p.targetX - p.x) * 0.38;
-        p.y += (p.targetY - p.y) * 0.38;
+        p.x += (p.targetX - p.x) * 0.42;
+        p.y += (p.targetY - p.y) * 0.42;
 
         let diff = p.targetAngle - p.angle;
         while (diff > Math.PI) diff -= Math.PI * 2;
         while (diff < -Math.PI) diff += Math.PI * 2;
 
-        p.angle += diff * 0.38;
+        p.angle += diff * 0.42;
       });
     }
 
@@ -546,14 +655,7 @@
 
     function sendInput() {
       if (document.activeElement === chatInput || document.activeElement === nicknameInput) {
-        socket.emit("input", {
-          up: false,
-          down: false,
-          left: false,
-          right: false,
-          boost: false,
-          brake: false
-        });
+        socket.emit("input", { up: false, down: false, left: false, right: false, boost: false, brake: false });
         return;
       }
 
@@ -627,7 +729,7 @@
       ctx.restore();
     }
 
-    function roundRect(x, y, width, height, radius) {
+    function drawRoundRect(x, y, width, height, radius) {
       ctx.beginPath();
       ctx.moveTo(x + radius, y);
       ctx.lineTo(x + width - radius, y);
@@ -641,34 +743,73 @@
       ctx.closePath();
     }
 
+    function drawCarBody(p) {
+      const meta = CAR_META[p.carType] || CAR_META.bugatti;
+      const mainColor = p.color || meta.color;
+      const accent = p.accent || meta.accent;
+
+      ctx.fillStyle = mainColor;
+
+      if (meta.shape === "sharp") {
+        ctx.beginPath();
+        ctx.moveTo(34, 0);
+        ctx.lineTo(18, -21);
+        ctx.lineTo(-27, -19);
+        ctx.lineTo(-36, 0);
+        ctx.lineTo(-27, 19);
+        ctx.lineTo(18, 21);
+        ctx.closePath();
+        ctx.fill();
+      } else if (meta.shape === "race") {
+        ctx.beginPath();
+        ctx.moveTo(36, 0);
+        ctx.lineTo(20, -20);
+        ctx.lineTo(-24, -21);
+        ctx.lineTo(-34, -10);
+        ctx.lineTo(-34, 10);
+        ctx.lineTo(-24, 21);
+        ctx.lineTo(20, 20);
+        ctx.closePath();
+        ctx.fill();
+      } else if (meta.shape === "suv") {
+        drawRoundRect(-34, -24, 68, 48, 8);
+        ctx.fill();
+      } else {
+        drawRoundRect(-34, -21, 68, 42, 17);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = "rgba(255,255,255,.16)";
+      drawRoundRect(-20, -16, 40, 32, 12);
+      ctx.fill();
+
+      ctx.fillStyle = accent;
+      drawRoundRect(-6, -14, 22, 28, 8);
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(255,255,255,.9)";
+      ctx.fillRect(24, -13, 5, 8);
+      ctx.fillRect(24, 5, 5, 8);
+
+      ctx.fillStyle = "#020617";
+      ctx.fillRect(-25, -27, 15, 7);
+      ctx.fillRect(10, -27, 15, 7);
+      ctx.fillRect(-25, 20, 15, 7);
+      ctx.fillRect(10, 20, 15, 7);
+
+      ctx.fillStyle = "rgba(2,6,23,.35)";
+      ctx.fillRect(-30, -3, 60, 6);
+    }
+
     function drawCar(p) {
       ctx.save();
       ctx.translate(p.x, p.y);
       ctx.rotate(p.angle);
       ctx.globalAlpha = p.alive ? 1 : 0.22;
-
-      ctx.shadowColor = p.color;
+      ctx.shadowColor = p.color || "#38bdf8";
       ctx.shadowBlur = p.alive ? 16 : 0;
 
-      ctx.fillStyle = p.color;
-      roundRect(-32, -21, 64, 42, 10);
-      ctx.fill();
-
-      ctx.shadowBlur = 0;
-
-      ctx.fillStyle = "rgba(15,23,42,.76)";
-      roundRect(-9, -16, 24, 32, 8);
-      ctx.fill();
-
-      ctx.fillStyle = "rgba(255,255,255,.92)";
-      ctx.fillRect(22, -15, 4, 8);
-      ctx.fillRect(22, 7, 4, 8);
-
-      ctx.fillStyle = "#020617";
-      ctx.fillRect(-24, -25, 15, 7);
-      ctx.fillRect(9, -25, 15, 7);
-      ctx.fillRect(-24, 18, 15, 7);
-      ctx.fillRect(9, 18, 15, 7);
+      drawCarBody(p);
 
       ctx.restore();
 
@@ -676,19 +817,19 @@
       ctx.textAlign = "center";
       ctx.font = p.id === myId ? "bold 14px Arial" : "bold 12px Arial";
       ctx.fillStyle = p.id === myId ? "#ffffff" : "#e2e8f0";
-      ctx.fillText(p.nickname, p.x, p.y - 42);
+      ctx.fillText(p.nickname, p.x, p.y - 46);
 
       if (p.id === myId && p.alive) {
         ctx.fillStyle = "rgba(15,23,42,.75)";
-        ctx.fillRect(p.x - 28, p.y + 39, 56, 7);
+        ctx.fillRect(p.x - 28, p.y + 42, 56, 7);
         ctx.fillStyle = "#38bdf8";
-        ctx.fillRect(p.x - 28, p.y + 39, 56 * (p.boost / 100), 7);
+        ctx.fillRect(p.x - 28, p.y + 42, 56 * (p.boost / 100), 7);
       }
 
       if (!p.alive) {
         ctx.font = "bold 12px Arial";
         ctx.fillStyle = "#fb7185";
-        ctx.fillText("OUT", p.x, p.y + 44);
+        ctx.fillText("OUT", p.x, p.y + 48);
       }
 
       ctx.restore();
