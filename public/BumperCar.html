@@ -6,6 +6,7 @@
   <title>Bumper Car Arena</title>
   <style>
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       min-height: 100vh;
@@ -20,9 +21,10 @@
         linear-gradient(135deg, #020617, #0f172a);
       overflow-x: hidden;
     }
+
     .shell {
       display: grid;
-      grid-template-columns: 280px 760px 280px;
+      grid-template-columns: 280px 760px 320px;
       gap: 22px;
       padding: 24px;
       border-radius: 30px;
@@ -31,15 +33,34 @@
       box-shadow: 0 30px 90px rgba(0,0,0,.45);
       backdrop-filter: blur(18px);
     }
-    .panel { display: flex; flex-direction: column; gap: 14px; }
+
+    .panel {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
     .card {
       padding: 16px;
       border-radius: 20px;
       background: rgba(15,23,42,.9);
       border: 1px solid rgba(255,255,255,.08);
     }
-    h1 { margin: 0; font-size: 32px; line-height: 1.05; letter-spacing: 1px; }
-    .subtitle { margin: 10px 0 0; color: #94a3b8; font-size: 14px; line-height: 1.55; }
+
+    h1 {
+      margin: 0;
+      font-size: 32px;
+      line-height: 1.05;
+      letter-spacing: 1px;
+    }
+
+    .subtitle {
+      margin: 10px 0 0;
+      color: #94a3b8;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+
     canvas {
       display: block;
       width: 760px;
@@ -48,7 +69,11 @@
       background: #020617;
       border: 2px solid rgba(148,163,184,.2);
     }
-    .arena-wrap { position: relative; }
+
+    .arena-wrap {
+      position: relative;
+    }
+
     .overlay {
       position: absolute;
       inset: 0;
@@ -61,7 +86,11 @@
       padding: 32px;
       z-index: 10;
     }
-    .overlay.hidden { display: none; }
+
+    .overlay.hidden {
+      display: none;
+    }
+
     .overlay-box {
       width: min(420px, 100%);
       padding: 24px;
@@ -69,8 +98,19 @@
       background: rgba(15,23,42,.92);
       border: 1px solid rgba(255,255,255,.1);
     }
-    .overlay h2 { margin: 0 0 14px; font-size: 34px; }
-    .overlay p { margin: 0 0 18px; color: #cbd5e1; line-height: 1.7; font-size: 14px; }
+
+    .overlay h2 {
+      margin: 0 0 14px;
+      font-size: 34px;
+    }
+
+    .overlay p {
+      margin: 0 0 18px;
+      color: #cbd5e1;
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
     input, button {
       width: 100%;
       border: none;
@@ -80,24 +120,32 @@
       font-weight: 800;
       outline: none;
     }
+
     input {
       margin-bottom: 10px;
       color: #f8fafc;
       background: rgba(2,6,23,.9);
       border: 1px solid rgba(148,163,184,.25);
     }
+
     button {
       cursor: pointer;
       color: #082f49;
       background: linear-gradient(135deg, #38bdf8, #22d3ee);
       transition: .18s;
     }
+
     button.secondary {
       color: #e2e8f0;
       background: rgba(51,65,85,.94);
       border: 1px solid rgba(255,255,255,.08);
     }
-    button:hover { transform: translateY(-1px); filter: brightness(1.08); }
+
+    button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.08);
+    }
+
     .row {
       display: flex;
       align-items: center;
@@ -108,7 +156,11 @@
       font-size: 14px;
       color: #cbd5e1;
     }
-    .row:last-child { border-bottom: none; }
+
+    .row:last-child {
+      border-bottom: none;
+    }
+
     .player-name {
       display: inline-flex;
       align-items: center;
@@ -117,25 +169,119 @@
       color: #f8fafc;
       min-width: 0;
     }
+
     .nickname {
       max-width: 145px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    .dot { width: 11px; height: 11px; border-radius: 999px; display: inline-block; flex: 0 0 auto; }
-    .value { font-weight: 900; color: #38bdf8; font-variant-numeric: tabular-nums; }
-    .controls { font-size: 13px; color: #cbd5e1; line-height: 1.9; }
-    .controls strong { color: #fff; }
-    .message { min-height: 34px; color: #bae6fd; font-size: 13px; line-height: 1.6; }
-    .tip { color: #94a3b8; font-size: 12px; line-height: 1.7; }
-    @media (max-width: 1380px) {
-      body { align-items: flex-start; padding: 16px; }
-      .shell { grid-template-columns: 1fr; justify-items: center; }
-      .panel { width: min(760px, 100%); }
+
+    .dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 999px;
+      display: inline-block;
+      flex: 0 0 auto;
     }
+
+    .value {
+      font-weight: 900;
+      color: #38bdf8;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .controls {
+      font-size: 13px;
+      color: #cbd5e1;
+      line-height: 1.9;
+    }
+
+    .controls strong {
+      color: #fff;
+    }
+
+    .message {
+      min-height: 34px;
+      color: #bae6fd;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .tip {
+      color: #94a3b8;
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    .chat-box {
+      height: 285px;
+      overflow-y: auto;
+      padding-right: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .chat-item {
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: rgba(2,6,23,.45);
+      border: 1px solid rgba(148,163,184,.12);
+      font-size: 13px;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+
+    .chat-name {
+      font-weight: 900;
+      margin-right: 5px;
+    }
+
+    .chat-message {
+      color: #e2e8f0;
+    }
+
+    .chat-form {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .chat-form input {
+      margin: 0;
+      flex: 1;
+      padding: 11px 12px;
+      font-size: 13px;
+    }
+
+    .chat-form button {
+      width: 74px;
+      padding: 11px 10px;
+      font-size: 13px;
+    }
+
+    @media (max-width: 1420px) {
+      body {
+        align-items: flex-start;
+        padding: 16px;
+      }
+
+      .shell {
+        grid-template-columns: 1fr;
+        justify-items: center;
+      }
+
+      .panel {
+        width: min(760px, 100%);
+      }
+    }
+
     @media (max-width: 820px) {
-      canvas { width: 92vw; height: 92vw; }
+      canvas {
+        width: 92vw;
+        height: 92vw;
+      }
     }
   </style>
 </head>
@@ -144,15 +290,15 @@
     <aside class="panel">
       <div class="card">
         <h1>BUMPER<br />ARENA</h1>
-        <p class="subtitle">조작감 개선판입니다. 속도가 있을 때 자연스럽게 회전하고, 브레이크로 드리프트를 줄입니다.</p>
+        <p class="subtitle">조작감 개선판입니다. 누른 방향으로 바로 이동하고, 차량은 이동 방향을 따라 자연스럽게 회전합니다.</p>
       </div>
 
       <div class="card controls">
-        <div><strong>W</strong> : 전진</div>
-        <div><strong>S</strong> : 후진</div>
-        <div><strong>A / D</strong> : 좌우 조향</div>
+        <div><strong>WASD</strong> : 이동</div>
+        <div><strong>방향키</strong> : 이동</div>
         <div><strong>Shift</strong> : 부스터</div>
         <div><strong>Space</strong> : 브레이크</div>
+        <div><strong>Enter</strong> : 채팅 입력</div>
       </div>
 
       <div class="card">
@@ -161,7 +307,9 @@
         <div class="row"><span>상태</span><span id="gameStatus" class="value">대기</span></div>
       </div>
 
-      <div class="card tip">차량이 너무 미끄럽거나 느리면 server.js의 engineForce, sideGrip, maxSpeed 값을 조정하면 됩니다.</div>
+      <div class="card tip">
+        이번 버전은 회전키를 따로 쓰지 않습니다. 이동 방향으로 차량 머리가 자동 회전해서 훨씬 직관적입니다.
+      </div>
     </aside>
 
     <section class="arena-wrap">
@@ -185,8 +333,23 @@
     </section>
 
     <aside class="panel">
-      <div class="card"><div id="playerList"></div></div>
-      <div class="card"><div class="message" id="systemMessage">서버에 접속 중...</div></div>
+      <div class="card">
+        <div id="playerList"></div>
+      </div>
+
+      <div class="card">
+        <div class="message" id="systemMessage">서버에 접속 중...</div>
+      </div>
+
+      <div class="card">
+        <div style="font-weight:900;margin-bottom:10px;">채팅</div>
+        <div id="chatBox" class="chat-box"></div>
+        <form id="chatForm" class="chat-form">
+          <input id="chatInput" maxlength="80" placeholder="메시지 입력" />
+          <button type="submit">전송</button>
+        </form>
+      </div>
+
       <button id="restartButton" class="secondary">라운드 재시작</button>
     </aside>
   </main>
@@ -212,6 +375,10 @@
     const roundEl = document.getElementById("round");
     const aliveCountEl = document.getElementById("aliveCount");
     const gameStatusEl = document.getElementById("gameStatus");
+
+    const chatBox = document.getElementById("chatBox");
+    const chatForm = document.getElementById("chatForm");
+    const chatInput = document.getElementById("chatInput");
 
     const WIDTH = canvas.width;
     const HEIGHT = canvas.height;
@@ -242,12 +409,37 @@
 
     restartButton.addEventListener("click", () => socket.emit("restart"));
 
-    socket.on("connect", () => systemMessage.textContent = "서버에 연결되었습니다.");
+    chatForm.addEventListener("submit", event => {
+      event.preventDefault();
+
+      const message = chatInput.value.trim();
+      if (!message) return;
+
+      socket.emit("chat", message);
+      chatInput.value = "";
+      chatInput.blur();
+    });
+
+    socket.on("connect", () => {
+      systemMessage.textContent = "서버에 연결되었습니다.";
+    });
+
     socket.on("joined", data => {
       myId = data.id;
       systemMessage.textContent = "방에 입장했습니다.";
+
+      if (Array.isArray(data.chatHistory)) {
+        data.chatHistory.forEach(addChat);
+      }
     });
-    socket.on("system", message => systemMessage.textContent = message);
+
+    socket.on("system", message => {
+      systemMessage.textContent = message;
+    });
+
+    socket.on("chat", chat => {
+      addChat(chat);
+    });
 
     socket.on("roundEnd", data => {
       messageTitle.textContent = data.winner === "DRAW" ? "DRAW!" : `${data.winner} WINS!`;
@@ -268,6 +460,23 @@
         messageOverlay.classList.add("hidden");
       }
     });
+
+    function addChat(chat) {
+      const item = document.createElement("div");
+      item.className = "chat-item";
+
+      item.innerHTML = `
+        <span class="chat-name" style="color:${chat.color || "#38bdf8"}">${escapeHtml(chat.nickname || "Player")}</span>
+        <span class="chat-message">${escapeHtml(chat.message || "")}</span>
+      `;
+
+      chatBox.appendChild(item);
+      chatBox.scrollTop = chatBox.scrollHeight;
+
+      while (chatBox.children.length > 40) {
+        chatBox.removeChild(chatBox.firstChild);
+      }
+    }
 
     function syncRenderPlayers(players) {
       Object.values(players).forEach(p => {
@@ -292,14 +501,14 @@
 
     function updateRenderPlayers() {
       Object.values(renderPlayers).forEach(p => {
-        p.x += (p.targetX - p.x) * 0.35;
-        p.y += (p.targetY - p.y) * 0.35;
+        p.x += (p.targetX - p.x) * 0.38;
+        p.y += (p.targetY - p.y) * 0.38;
 
         let diff = p.targetAngle - p.angle;
         while (diff > Math.PI) diff -= Math.PI * 2;
         while (diff < -Math.PI) diff += Math.PI * 2;
 
-        p.angle += diff * 0.35;
+        p.angle += diff * 0.38;
       });
     }
 
@@ -336,6 +545,18 @@
     }
 
     function sendInput() {
+      if (document.activeElement === chatInput || document.activeElement === nicknameInput) {
+        socket.emit("input", {
+          up: false,
+          down: false,
+          left: false,
+          right: false,
+          boost: false,
+          brake: false
+        });
+        return;
+      }
+
       socket.emit("input", {
         up: keys.has("w") || keys.has("W") || keys.has("ArrowUp"),
         down: keys.has("s") || keys.has("S") || keys.has("ArrowDown"),
@@ -349,9 +570,17 @@
     setInterval(sendInput, 1000 / 60);
 
     document.addEventListener("keydown", event => {
+      if (event.key === "Enter" && myId && document.activeElement !== chatInput && document.activeElement !== nicknameInput) {
+        chatInput.focus();
+        return;
+      }
+
       if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(event.code)) {
         event.preventDefault();
       }
+
+      if (document.activeElement === chatInput || document.activeElement === nicknameInput) return;
+
       keys.add(event.key === " " ? " " : event.key);
     });
 
