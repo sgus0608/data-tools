@@ -19,12 +19,67 @@ const WIDTH = 760;
 const HEIGHT = 760;
 const CENTER = { x: WIDTH / 2, y: HEIGHT / 2 };
 const ARENA_RADIUS = 315;
-const CAR_RADIUS = 29;
 
-const COLORS = [
-  "#38bdf8", "#fb7185", "#facc15", "#4ade80",
-  "#c084fc", "#fb923c", "#22d3ee", "#f472b6"
-];
+const CAR_TYPES = {
+  bugatti: {
+    label: "Bugatti Style",
+    color: "#38bdf8",
+    accent: "#0f172a",
+    maxSpeed: 405,
+    boostSpeed: 535,
+    acceleration: 1080,
+    radius: 30,
+    weight: 1.08,
+    turnSmooth: 13
+  },
+  lamborghini: {
+    label: "Lamborghini Style",
+    color: "#facc15",
+    accent: "#111827",
+    maxSpeed: 430,
+    boostSpeed: 560,
+    acceleration: 1160,
+    radius: 29,
+    weight: 0.96,
+    turnSmooth: 16
+  },
+  ferrari: {
+    label: "Ferrari Style",
+    color: "#ef4444",
+    accent: "#f8fafc",
+    maxSpeed: 415,
+    boostSpeed: 545,
+    acceleration: 1220,
+    radius: 28,
+    weight: 0.92,
+    turnSmooth: 18
+  },
+  porsche: {
+    label: "Porsche Style",
+    color: "#fb923c",
+    accent: "#020617",
+    maxSpeed: 390,
+    boostSpeed: 515,
+    acceleration: 1120,
+    radius: 28,
+    weight: 1.0,
+    turnSmooth: 17
+  },
+  suv: {
+    label: "Heavy SUV",
+    color: "#4ade80",
+    accent: "#052e16",
+    maxSpeed: 350,
+    boostSpeed: 455,
+    acceleration: 980,
+    radius: 34,
+    weight: 1.35,
+    turnSmooth: 11
+  }
+};
+
+const DEFAULT_CAR_TYPE = "bugatti";
+const FALLBACK_COLORS = ["#38bdf8", "#fb7185", "#facc15", "#4ade80", "#c084fc", "#fb923c", "#22d3ee", "#f472b6"];
 
 const players = {};
 const chatHistory = [];
@@ -44,6 +99,10 @@ function safeNickname(nickname) {
   return safeText(nickname, 12) || "Player";
 }
 
+function safeCarType(carType) {
+  return CAR_TYPES[carType] ? carType : DEFAULT_CAR_TYPE;
+}
+
 function randomSpawn(index = 0) {
   const count = Math.max(2, Object.keys(players).length + 1);
   const angle = Math.PI * 2 * index / count;
@@ -56,26 +115,31 @@ function randomSpawn(index = 0) {
   };
 }
 
-function createPlayer(socketId, nickname) {
+function createPlayer(socketId, payload) {
+  const nickname = typeof payload === "object" ? payload.nickname : payload;
+  const selectedCarType = safeCarType(typeof payload === "object" ? payload.carType : DEFAULT_CAR_TYPE);
+  const carSpec = CAR_TYPES[selectedCarType];
+
   const count = Object.keys(players).length;
   const spawn = randomSpawn(count);
 
   return {
     id: socketId,
     nickname: safeNickname(nickname),
-    color: COLORS[count % COLORS.length],
-
+    carType: selectedCarType,
+    carLabel: carSpec.label,
+    color: carSpec.color || FALLBACK_COLORS[count % FALLBACK_COLORS.length],
+    accent: carSpec.accent,
     x: spawn.x,
     y: spawn.y,
     vx: 0,
     vy: 0,
     angle: spawn.angle,
-
-    radius: CAR_RADIUS,
+    targetAngle: spawn.angle,
+    radius: carSpec.radius,
     alive: true,
     score: 0,
     boost: 100,
-
     input: {
       up: false,
       down: false,
@@ -102,7 +166,7 @@ function normalizeAngle(angle) {
 }
 
 function lerpAngle(current, target, amount) {
-  let diff = normalizeAngle(target - current);
+  const diff = normalizeAngle(target - current);
   return normalizeAngle(current + diff * amount);
 }
 
@@ -118,6 +182,7 @@ function resetRound() {
     p.vx = 0;
     p.vy = 0;
     p.angle = spawn.angle;
+    p.targetAngle = spawn.angle;
     p.alive = true;
     p.boost = 100;
   });
@@ -129,60 +194,82 @@ function resetRound() {
 function updatePlayer(p, dt) {
   if (!p.alive) return;
 
+  const spec = CAR_TYPES[p.carType] || CAR_TYPES[DEFAULT_CAR_TYPE];
   const input = p.input;
 
-  let moveX = 0;
-  let moveY = 0;
+  let inputX = 0;
+  let inputY = 0;
 
-  if (input.left) moveX -= 1;
-  if (input.right) moveX += 1;
-  if (input.up) moveY -= 1;
-  if (input.down) moveY += 1;
+  if (input.left) inputX -= 1;
+  if (input.right) inputX += 1;
+  if (input.up) inputY -= 1;
+  if (input.down) inputY += 1;
 
-  const hasMoveInput = moveX !== 0 || moveY !== 0;
+  const hasInput = inputX !== 0 || inputY !== 0;
 
-  if (hasMoveInput) {
-    const length = Math.hypot(moveX, moveY);
-    moveX /= length;
-    moveY /= length;
+  if (hasInput) {
+    const inputLength = Math.hypot(inputX, inputY);
+    inputX /= inputLength;
+    inputY /= inputLength;
 
-    const targetAngle = Math.atan2(moveY, moveX);
-    p.angle = lerpAngle(p.angle, targetAngle, clamp(dt * 12, 0, 1));
+    const desiredAngle = Math.atan2(inputY, inputX);
+    p.targetAngle = desiredAngle;
 
-    let acceleration = 920;
+    const currentSpeed = Math.hypot(p.vx, p.vy);
+    const speedRatio = clamp(currentSpeed / spec.maxSpeed, 0, 1);
+
+    const steerResponse = spec.turnSmooth + speedRatio * 8;
+    p.angle = lerpAngle(p.angle, desiredAngle, clamp(dt * steerResponse, 0, 1));
+
+    const forwardX = Math.cos(p.angle);
+    const forwardY = Math.sin(p.angle);
+
+    const directControl = 0.72;
+    const carControl = 0.28;
+
+    const driveX = inputX * directControl + forwardX * carControl;
+    const driveY = inputY * directControl + forwardY * carControl;
+
+    const driveLength = Math.hypot(driveX, driveY) || 1;
+    const finalDriveX = driveX / driveLength;
+    const finalDriveY = driveY / driveLength;
+
+    let acceleration = spec.acceleration;
 
     if (input.boost && p.boost > 0) {
-      acceleration = 1450;
+      acceleration *= 1.42;
       p.boost = Math.max(0, p.boost - 45 * dt);
     } else {
-      p.boost = Math.min(100, p.boost + 18 * dt);
+      p.boost = Math.min(100, p.boost + 19 * dt);
     }
 
-    p.vx += moveX * acceleration * dt;
-    p.vy += moveY * acceleration * dt;
+    p.vx += finalDriveX * acceleration * dt;
+    p.vy += finalDriveY * acceleration * dt;
   } else {
-    p.boost = Math.min(100, p.boost + 22 * dt);
+    p.boost = Math.min(100, p.boost + 24 * dt);
+
+    const speed = Math.hypot(p.vx, p.vy);
+    if (speed > 18) {
+      p.targetAngle = Math.atan2(p.vy, p.vx);
+      p.angle = lerpAngle(p.angle, p.targetAngle, clamp(dt * 5.5, 0, 1));
+    }
   }
 
   const speed = Math.hypot(p.vx, p.vy);
-  const maxSpeed = input.boost ? 470 : 360;
+  const maxSpeed = input.boost ? spec.boostSpeed : spec.maxSpeed;
 
   if (speed > maxSpeed) {
     p.vx = p.vx / speed * maxSpeed;
     p.vy = p.vy / speed * maxSpeed;
   }
 
-  const drag = input.brake ? 0.87 : hasMoveInput ? 0.96 : 0.91;
+  const drag = input.brake ? 0.82 : hasInput ? 0.955 : 0.895;
+
   p.vx *= Math.pow(drag, dt * 60);
   p.vy *= Math.pow(drag, dt * 60);
 
   p.x += p.vx * dt;
   p.y += p.vy * dt;
-
-  const currentSpeed = Math.hypot(p.vx, p.vy);
-  if (!hasMoveInput && currentSpeed > 15) {
-    p.angle = lerpAngle(p.angle, Math.atan2(p.vy, p.vx), clamp(dt * 5, 0, 1));
-  }
 
   const distanceFromCenter = Math.hypot(p.x - CENTER.x, p.y - CENTER.y);
 
@@ -213,32 +300,40 @@ function resolveCollisions() {
         const ny = dy / dist;
         const overlap = minDist - dist;
 
-        a.x -= nx * overlap * 0.52;
-        a.y -= ny * overlap * 0.52;
-        b.x += nx * overlap * 0.52;
-        b.y += ny * overlap * 0.52;
+        const aSpec = CAR_TYPES[a.carType] || CAR_TYPES[DEFAULT_CAR_TYPE];
+        const bSpec = CAR_TYPES[b.carType] || CAR_TYPES[DEFAULT_CAR_TYPE];
+
+        const totalWeight = aSpec.weight + bSpec.weight;
+        const aMove = bSpec.weight / totalWeight;
+        const bMove = aSpec.weight / totalWeight;
+
+        a.x -= nx * overlap * aMove;
+        a.y -= ny * overlap * aMove;
+        b.x += nx * overlap * bMove;
+        b.y += ny * overlap * bMove;
 
         const rvx = b.vx - a.vx;
         const rvy = b.vy - a.vy;
         const normalVelocity = rvx * nx + rvy * ny;
 
         if (normalVelocity < 0) {
-          const restitution = 0.82;
-          const impulse = -(1 + restitution) * normalVelocity / 2;
+          const restitution = 0.83;
+          const impulse = -(1 + restitution) * normalVelocity / (1 / aSpec.weight + 1 / bSpec.weight);
 
           const ix = impulse * nx;
           const iy = impulse * ny;
 
-          a.vx -= ix;
-          a.vy -= iy;
-          b.vx += ix;
-          b.vy += iy;
+          a.vx -= ix / aSpec.weight;
+          a.vy -= iy / aSpec.weight;
+          b.vx += ix / bSpec.weight;
+          b.vy += iy / bSpec.weight;
 
-          const extraPush = clamp(Math.abs(impulse) / 80, 0, 1);
-          a.vx -= nx * 26 * extraPush;
-          a.vy -= ny * 26 * extraPush;
-          b.vx += nx * 26 * extraPush;
-          b.vy += ny * 26 * extraPush;
+          const extraPush = clamp(Math.abs(impulse) / 125, 0, 1);
+
+          a.vx -= nx * 22 * extraPush / aSpec.weight;
+          a.vy -= ny * 22 * extraPush / aSpec.weight;
+          b.vx += nx * 22 * extraPush / bSpec.weight;
+          b.vy += ny * 22 * extraPush / bSpec.weight;
         }
       }
     }
@@ -287,8 +382,8 @@ function gameLoop() {
 setInterval(gameLoop, 1000 / 60);
 
 io.on("connection", socket => {
-  socket.on("join", nickname => {
-    players[socket.id] = createPlayer(socket.id, nickname);
+  socket.on("join", payload => {
+    players[socket.id] = createPlayer(socket.id, payload);
 
     if (Object.keys(players).length >= 2) {
       isGameRunning = true;
@@ -330,30 +425,21 @@ io.on("connection", socket => {
     };
 
     chatHistory.push(chat);
-    if (chatHistory.length > 30) {
-      chatHistory.shift();
-    }
+    if (chatHistory.length > 30) chatHistory.shift();
 
     io.emit("chat", chat);
   });
 
   socket.on("restart", () => {
-    if (Object.keys(players).length >= 2) {
-      resetRound();
-    }
+    if (Object.keys(players).length >= 2) resetRound();
   });
 
   socket.on("disconnect", () => {
     const nickname = players[socket.id]?.nickname;
     delete players[socket.id];
 
-    if (nickname) {
-      io.emit("system", `${nickname} left`);
-    }
-
-    if (Object.keys(players).length < 2) {
-      isGameRunning = false;
-    }
+    if (nickname) io.emit("system", `${nickname} left`);
+    if (Object.keys(players).length < 2) isGameRunning = false;
   });
 });
 
