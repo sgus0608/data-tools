@@ -111,7 +111,7 @@
       font-size: 14px;
     }
 
-    input, button, select {
+    input, button {
       width: 100%;
       border: none;
       border-radius: 14px;
@@ -121,7 +121,7 @@
       outline: none;
     }
 
-    input, select {
+    input {
       margin-bottom: 10px;
       color: #f8fafc;
       background: rgba(2,6,23,.9);
@@ -170,21 +170,40 @@
     }
 
     .car-preview {
-      width: 72px;
-      height: 36px;
-      border-radius: 18px 10px 10px 18px;
+      width: 78px;
+      height: 40px;
       margin-bottom: 8px;
       position: relative;
       box-shadow: 0 8px 20px rgba(0,0,0,.25);
     }
 
+    .car-preview.bugatti {
+      border-radius: 24px 14px 14px 24px;
+      background: #38bdf8;
+    }
+
+    .car-preview.lamborghini {
+      clip-path: polygon(100% 50%, 75% 0, 12% 8%, 0 50%, 12% 92%, 75% 100%);
+      background: #facc15;
+    }
+
+    .car-preview.ferrari {
+      clip-path: polygon(100% 50%, 75% 3%, 20% 0, 0 25%, 0 75%, 20% 100%, 75% 97%);
+      background: #ef4444;
+    }
+
+    .car-preview.suv {
+      border-radius: 10px;
+      background: #4ade80;
+    }
+
     .car-preview::before {
       content: "";
       position: absolute;
-      left: 28px;
-      top: 7px;
-      width: 24px;
-      height: 22px;
+      left: 34px;
+      top: 8px;
+      width: 26px;
+      height: 24px;
       border-radius: 8px;
       background: rgba(2,6,23,.72);
     }
@@ -350,7 +369,7 @@
     <aside class="panel">
       <div class="card">
         <h1>BUMPER<br />ARENA</h1>
-        <p class="subtitle">이동은 즉각 반응하고, 차체 회전은 이동 방향을 자연스럽게 따라갑니다.</p>
+        <p class="subtitle">충돌감과 차량 디자인 개선판입니다. 차종별 무게와 충돌 반응이 다릅니다.</p>
       </div>
 
       <div class="card controls">
@@ -368,7 +387,7 @@
       </div>
 
       <div class="card tip">
-        회전키로 억지로 돌리는 방식이 아니라, 입력한 방향으로 움직이고 차가 부드럽게 따라 도는 방식입니다.
+        실제 브랜드 로고나 정밀 복제는 사용하지 않고, 각 차량의 실루엣 느낌만 참고한 스타일 디자인입니다.
       </div>
     </aside>
 
@@ -383,22 +402,25 @@
 
           <div class="car-select-grid">
             <div class="car-card active" data-car="bugatti">
-              <div class="car-preview" style="background:#38bdf8"></div>
+              <div class="car-preview bugatti"></div>
               <div class="car-card-name">Bugatti Style</div>
               <div class="car-card-stat">밸런스형 · 안정적</div>
             </div>
+
             <div class="car-card" data-car="lamborghini">
-              <div class="car-preview" style="background:#facc15"></div>
+              <div class="car-preview lamborghini"></div>
               <div class="car-card-name">Lamborghini Style</div>
-              <div class="car-card-stat">최고속도 · 민첩</div>
+              <div class="car-card-stat">최고속도 · 날카로운 차체</div>
             </div>
+
             <div class="car-card" data-car="ferrari">
-              <div class="car-preview" style="background:#ef4444"></div>
+              <div class="car-preview ferrari"></div>
               <div class="car-card-name">Ferrari Style</div>
-              <div class="car-card-stat">가속력 · 빠른 반응</div>
+              <div class="car-card-stat">가속력 · 레이싱형</div>
             </div>
+
             <div class="car-card" data-car="suv">
-              <div class="car-preview" style="background:#4ade80"></div>
+              <div class="car-preview suv"></div>
               <div class="car-card-name">Heavy SUV</div>
               <div class="car-card-stat">무게감 · 밀치기 강함</div>
             </div>
@@ -473,10 +495,9 @@
     const ARENA_RADIUS = 315;
 
     const CAR_META = {
-      bugatti: { name: "Bugatti Style", color: "#38bdf8", accent: "#0f172a", shape: "round" },
-      lamborghini: { name: "Lamborghini Style", color: "#facc15", accent: "#111827", shape: "sharp" },
-      ferrari: { name: "Ferrari Style", color: "#ef4444", accent: "#f8fafc", shape: "race" },
-      porsche: { name: "Porsche Style", color: "#fb923c", accent: "#020617", shape: "round" },
+      bugatti: { name: "Bugatti Style", color: "#38bdf8", accent: "#0f172a", shape: "bugatti" },
+      lamborghini: { name: "Lamborghini Style", color: "#facc15", accent: "#111827", shape: "lamborghini" },
+      ferrari: { name: "Ferrari Style", color: "#ef4444", accent: "#f8fafc", shape: "ferrari" },
       suv: { name: "Heavy SUV", color: "#4ade80", accent: "#052e16", shape: "suv" }
     };
 
@@ -501,11 +522,7 @@
         return;
       }
 
-      socket.emit("join", {
-        nickname,
-        carType: selectedCarType
-      });
-
+      socket.emit("join", { nickname, carType: selectedCarType });
       joinOverlay.classList.add("hidden");
     }
 
@@ -600,6 +617,7 @@
           renderPlayers[p.id].carType = p.carType;
           renderPlayers[p.id].carLabel = p.carLabel;
           renderPlayers[p.id].radius = p.radius;
+          renderPlayers[p.id].hitFlash = p.hitFlash || 0;
         }
       });
 
@@ -750,55 +768,93 @@
 
       ctx.fillStyle = mainColor;
 
-      if (meta.shape === "sharp") {
+      if (meta.shape === "bugatti") {
         ctx.beginPath();
-        ctx.moveTo(34, 0);
-        ctx.lineTo(18, -21);
-        ctx.lineTo(-27, -19);
-        ctx.lineTo(-36, 0);
-        ctx.lineTo(-27, 19);
-        ctx.lineTo(18, 21);
+        ctx.moveTo(39, 0);
+        ctx.lineTo(19, -23);
+        ctx.lineTo(-20, -20);
+        ctx.quadraticCurveTo(-39, 0, -20, 20);
+        ctx.lineTo(19, 23);
         ctx.closePath();
         ctx.fill();
-      } else if (meta.shape === "race") {
+
+        ctx.strokeStyle = "rgba(255,255,255,.25)";
+        ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(36, 0);
-        ctx.lineTo(20, -20);
-        ctx.lineTo(-24, -21);
-        ctx.lineTo(-34, -10);
-        ctx.lineTo(-34, 10);
-        ctx.lineTo(-24, 21);
-        ctx.lineTo(20, 20);
+        ctx.arc(-6, 0, 18, 0, Math.PI * 2);
+        ctx.stroke();
+
+      } else if (meta.shape === "lamborghini") {
+        ctx.beginPath();
+        ctx.moveTo(42, 0);
+        ctx.lineTo(20, -23);
+        ctx.lineTo(-30, -18);
+        ctx.lineTo(-40, 0);
+        ctx.lineTo(-30, 18);
+        ctx.lineTo(20, 23);
         ctx.closePath();
         ctx.fill();
+
+        ctx.strokeStyle = "rgba(2,6,23,.35)";
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(-12, -15);
+        ctx.lineTo(14, 0);
+        ctx.lineTo(-12, 15);
+        ctx.stroke();
+
+      } else if (meta.shape === "ferrari") {
+        ctx.beginPath();
+        ctx.moveTo(41, 0);
+        ctx.lineTo(22, -20);
+        ctx.lineTo(-18, -23);
+        ctx.lineTo(-37, -10);
+        ctx.lineTo(-37, 10);
+        ctx.lineTo(-18, 23);
+        ctx.lineTo(22, 20);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = "rgba(255,255,255,.25)";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(-24, 0);
+        ctx.lineTo(26, 0);
+        ctx.stroke();
+
       } else if (meta.shape === "suv") {
-        drawRoundRect(-34, -24, 68, 48, 8);
+        drawRoundRect(-40, -25, 80, 50, 8);
         ctx.fill();
-      } else {
-        drawRoundRect(-34, -21, 68, 42, 17);
+
+        ctx.fillStyle = "rgba(2,6,23,.24)";
+        drawRoundRect(-28, -18, 28, 36, 6);
         ctx.fill();
       }
 
-      ctx.fillStyle = "rgba(255,255,255,.16)";
-      drawRoundRect(-20, -16, 40, 32, 12);
+      ctx.fillStyle = "rgba(255,255,255,.14)";
+      drawRoundRect(-18, -15, 36, 30, 10);
       ctx.fill();
 
       ctx.fillStyle = accent;
-      drawRoundRect(-6, -14, 22, 28, 8);
+      drawRoundRect(-6, -13, 24, 26, 7);
       ctx.fill();
 
-      ctx.fillStyle = "rgba(255,255,255,.9)";
-      ctx.fillRect(24, -13, 5, 8);
-      ctx.fillRect(24, 5, 5, 8);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(27, -13, 6, 8);
+      ctx.fillRect(27, 5, 6, 8);
 
       ctx.fillStyle = "#020617";
-      ctx.fillRect(-25, -27, 15, 7);
-      ctx.fillRect(10, -27, 15, 7);
-      ctx.fillRect(-25, 20, 15, 7);
-      ctx.fillRect(10, 20, 15, 7);
+      ctx.fillRect(-27, -28, 17, 8);
+      ctx.fillRect(10, -28, 17, 8);
+      ctx.fillRect(-27, 20, 17, 8);
+      ctx.fillRect(10, 20, 17, 8);
 
-      ctx.fillStyle = "rgba(2,6,23,.35)";
-      ctx.fillRect(-30, -3, 60, 6);
+      ctx.strokeStyle = "rgba(255,255,255,.18)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-16, 0);
+      ctx.lineTo(25, 0);
+      ctx.stroke();
     }
 
     function drawCar(p) {
@@ -811,25 +867,33 @@
 
       drawCarBody(p);
 
+      if (p.hitFlash > 0) {
+        ctx.globalAlpha = Math.min(0.55, p.hitFlash);
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(0, 0, 38 + p.hitFlash * 10, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
       ctx.restore();
 
       ctx.save();
       ctx.textAlign = "center";
       ctx.font = p.id === myId ? "bold 14px Arial" : "bold 12px Arial";
       ctx.fillStyle = p.id === myId ? "#ffffff" : "#e2e8f0";
-      ctx.fillText(p.nickname, p.x, p.y - 46);
+      ctx.fillText(p.nickname, p.x, p.y - 48);
 
       if (p.id === myId && p.alive) {
         ctx.fillStyle = "rgba(15,23,42,.75)";
-        ctx.fillRect(p.x - 28, p.y + 42, 56, 7);
+        ctx.fillRect(p.x - 28, p.y + 44, 56, 7);
         ctx.fillStyle = "#38bdf8";
-        ctx.fillRect(p.x - 28, p.y + 42, 56 * (p.boost / 100), 7);
+        ctx.fillRect(p.x - 28, p.y + 44, 56 * (p.boost / 100), 7);
       }
 
       if (!p.alive) {
         ctx.font = "bold 12px Arial";
         ctx.fillStyle = "#fb7185";
-        ctx.fillText("OUT", p.x, p.y + 48);
+        ctx.fillText("OUT", p.x, p.y + 50);
       }
 
       ctx.restore();
