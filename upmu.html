@@ -490,7 +490,7 @@ function initDates() {
   document.getElementById('nextWeek').value = getWeekRange(1);
 }
 
-function buildCellHTML(groups, order) {
+function buildCellHTML(groups, order, statusText = '완료') {
   let html = '';
   let num = 1;
   // ☐ 완료 뒤 텍스트와 - 항목을 맞추기 위해 padding-left로 들여쓰기
@@ -502,7 +502,7 @@ function buildCellHTML(groups, order) {
     if (!items || !items.length) continue;
     if (num > 1) html += `\n    <p style="line-height: 22px; margin: 0; padding: 0;"><span style="font-family: Pretendard; font-size: 12pt;">&nbsp;</span></p>`;
     html += `\n    <p style="line-height: 22px; margin: 0; padding: 0;"><span style="font-family: Pretendard; font-size: 12pt; font-weight: bold;">${num}. ${cat}</span></p>`;
-    html += `\n    <p style="line-height: 22px; margin: 0; padding: 0;"><span style="font-family: Pretendard; font-size: 12pt;">&nbsp;&nbsp;&nbsp;&nbsp;☐ 완료</span></p>`;
+    html += `\n    <p style="line-height: 22px; margin: 0; padding: 0;"><span style="font-family: Pretendard; font-size: 12pt;">&nbsp;&nbsp;&nbsp;&nbsp;☐ ${statusText}</span></p>`;
     for (const item of items) {
       html += `\n    <p style="line-height: 22px; margin: 0; padding: 0 0 0 4em;"><span style="font-family: Pretendard; font-size: 12pt;">- ${escapeHtml(item)}</span></p>`;
     }
@@ -590,8 +590,8 @@ function generate() {
 
   const { groups, order } = parseInput(raw);
   const { groups: nextGroups, order: nextOrder } = parseInput(nextRaw);
-  const cellHTML = buildCellHTML(groups, order);
-  const nextCellHTML = buildCellHTML(nextGroups, nextOrder);
+  const cellHTML = buildCellHTML(groups, order, '완료');
+  const nextCellHTML = buildCellHTML(nextGroups, nextOrder, '예정');
   generatedHTML = buildFullHTML(cellHTML, nextCellHTML, thisWeek, nextWeek);
 
   // 빈 상태 숨기기
