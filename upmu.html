@@ -136,6 +136,33 @@
 
   .format-hint span { color: var(--accent2); }
 
+  .textarea-wrap {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 0;
+  }
+
+  .input-column {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .input-column + .input-column {
+    border-left: 1px solid var(--border);
+  }
+
+  .input-title {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    background: #131313;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.06em;
+  }
+
   textarea {
     flex: 1;
     background: transparent;
@@ -147,6 +174,7 @@
     padding: 20px;
     resize: none;
     outline: none;
+    min-height: 260px;
   }
 
   textarea::placeholder { color: var(--muted); }
@@ -279,6 +307,8 @@
   @media (max-width: 900px) {
     .main { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
     .panel-left { border-right: none; border-bottom: 1px solid var(--border); }
+    .textarea-wrap { grid-template-columns: 1fr; }
+    .input-column + .input-column { border-left: none; border-top: 1px solid var(--border); }
   }
 
   /* 스크롤바 */
@@ -319,7 +349,10 @@
       <p>예) <span>총무타임</span>일지 미발송 확인 &nbsp;/&nbsp; <span>ESCC</span>청구금액 수정</p>
     </div>
 
-    <textarea id="inputText" placeholder="총무타임일지 미발송 메일 전송 스케줄러 확인
+    <div class="textarea-wrap">
+      <div class="input-column">
+        <div class="input-title">금주 실적 입력</div>
+        <textarea id="inputText" placeholder="총무타임일지 미발송 메일 전송 스케줄러 확인
 총무타임총무닷컴 헬프데스크, 출입관리 기능 안내
 유토피아4월 조직개편 작업
 유토피아화환 메일 발송 기능 개발
@@ -327,6 +360,16 @@ ESCC청구금액 사업부 테이블 분리
 ESOP식권 사용 시 알림 기능 배포
 이트너스샵신규상품 등록 자동화 페이지 개발
 기타4/02 야구관리 미팅"></textarea>
+      </div>
+
+      <div class="input-column">
+        <div class="input-title">차주 계획 입력</div>
+        <textarea id="nextInputText" placeholder="총무타임일지 미발송 메일 전송 스케줄러 확인 예정
+ESCC청구금액 사업부 테이블 분리 작업 예정
+ESOP식권 사용 시 알림 기능 추가 테스트
+기타주간보고 양식 개선"></textarea>
+      </div>
+    </div>
 
     <button class="generate-btn" onclick="generate()">▶ 주간보고 생성</button>
   </div>
@@ -393,16 +436,24 @@ function parseInput(raw) {
 
   for (const line of lines) {
     let matched = false;
+
     for (const cat of CATEGORIES) {
       if (line.startsWith(cat)) {
-        const item = line.slice(cat.length).trim();
-        if (!item) continue;
+        matched = true;
+
+        // 엑셀/시트에서 복붙한 탭, 여러 공백도 제거해서 실제 업무 내용만 추출
+        const item = line.slice(cat.length).replace(/^\s+/, '').trim();
+
+        // 카테고리명만 있고 내용이 없는 줄은 완전히 제외
+        // 예: "ESCC", "ESCC	", "유토피아    "
+        if (!item) break;
+
         if (!groups[cat]) { groups[cat] = []; order.push(cat); }
         groups[cat].push(item);
-        matched = true;
         break;
       }
     }
+
     if (!matched && line) {
       // 카테고리 미인식 → '기타'로
       const cat = '기타';
@@ -464,7 +515,7 @@ function escapeHtml(str) {
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-function buildFullHTML(cellHTML, thisWeek, nextWeek) {
+function buildFullHTML(cellHTML, nextCellHTML, thisWeek, nextWeek) {
   return `<p style="text-align: center;"><strong><u><span style="font-size: 12pt; font-family: Pretendard;">주간 보고</span></u></strong></p>
 <p style="text-align: center;"><br /></p>
 <table align="center" border="1" cellpadding="1" cellspacing="0" style="width: 727px; border-color: rgb(102, 102, 102);">
@@ -486,8 +537,8 @@ function buildFullHTML(cellHTML, thisWeek, nextWeek) {
   </td>
   <td style="text-align: left; width: 317px; border-color: rgb(102, 102, 102);">${cellHTML}
   </td>
-  <td style="text-align: left; width: 315px; border-color: rgb(102, 102, 102);">
-    <p style="line-height: 22px; margin: 0; padding: 0;"><span style="font-family: Pretendard; font-size: 12pt;">&nbsp;</span></p>
+  <td style="text-align: left; width: 315px; border-color: rgb(102, 102, 102);">${nextCellHTML || `
+    <p style="line-height: 22px; margin: 0; padding: 0;"><span style="font-family: Pretendard; font-size: 12pt;">&nbsp;</span></p>`}
   </td>
 </tr>
 <tr>
@@ -531,14 +582,17 @@ let generatedHTML = '';
 
 function generate() {
   const raw = document.getElementById('inputText').value.trim();
+  const nextRaw = document.getElementById('nextInputText').value.trim();
   const thisWeek = document.getElementById('thisWeek').value.trim() || '　　　　월　　　일 ~ 　　　월　　　일';
   const nextWeek = document.getElementById('nextWeek').value.trim() || '　　　　월　　　일 ~ 　　　월　　　일';
 
-  if (!raw) { alert('내용을 입력해주세요.'); return; }
+  if (!raw && !nextRaw) { alert('금주 실적 또는 차주 계획 내용을 입력해주세요.'); return; }
 
   const { groups, order } = parseInput(raw);
+  const { groups: nextGroups, order: nextOrder } = parseInput(nextRaw);
   const cellHTML = buildCellHTML(groups, order);
-  generatedHTML = buildFullHTML(cellHTML, thisWeek, nextWeek);
+  const nextCellHTML = buildCellHTML(nextGroups, nextOrder);
+  generatedHTML = buildFullHTML(cellHTML, nextCellHTML, thisWeek, nextWeek);
 
   // 빈 상태 숨기기
   document.getElementById('empty-state-wrap').style.display = 'none';
@@ -594,6 +648,10 @@ initDates();
 
 // Cmd/Ctrl+Enter로 생성
 document.getElementById('inputText').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) generate();
+});
+
+document.getElementById('nextInputText').addEventListener('keydown', e => {
   if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) generate();
 });
 </script>
