@@ -1,0 +1,828 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --sidebar-w: 220px;
+  --header-h: 56px;
+  --purple-50: #EEEDFE; --purple-100: #CECBF6; --purple-200: #AFA9EC;
+  --purple-400: #7F77DD; --purple-600: #534AB7; --purple-800: #3C3489; --purple-900: #26215C;
+  --teal-50: #E1F5EE; --teal-100: #9FE1CB; --teal-200: #5DCAA5;
+  --teal-400: #1D9E75; --teal-600: #0F6E56; --teal-800: #085041;
+  --amber-50: #FAEEDA; --amber-100: #FAC775; --amber-400: #BA7517; --amber-600: #854F0B;
+  --coral-50: #FAECE7; --coral-100: #F5C4B3; --coral-400: #D85A30; --coral-600: #993C1D;
+  --blue-50: #E6F1FB; --blue-100: #B5D4F4; --blue-400: #378ADD; --blue-600: #185FA5;
+}
+body { font-family: var(--font-sans, system-ui, -apple-system, sans-serif); background: var(--color-background-tertiary); color: var(--color-text-primary); font-size: 14px; }
+
+.app { display: flex; height: 100vh; min-height: 700px; }
+
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--color-background-primary);
+  border-right: 0.5px solid var(--color-border-tertiary);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+.sidebar-logo {
+  padding: 16px 20px;
+  border-bottom: 0.5px solid var(--color-border-tertiary);
+  display: flex; align-items: center; gap: 10px;
+}
+.logo-icon {
+  width: 32px; height: 32px; border-radius: 8px;
+  background: var(--purple-600);
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-size: 16px;
+}
+.logo-text { font-weight: 500; font-size: 14px; line-height: 1.3; }
+.logo-sub { font-size: 11px; color: var(--color-text-secondary); }
+
+.nav-section { padding: 12px 12px 4px; }
+.nav-label { font-size: 10px; color: var(--color-text-tertiary); font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; padding: 0 8px; margin-bottom: 4px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: var(--border-radius-md);
+  cursor: pointer; font-size: 13px; color: var(--color-text-secondary);
+  transition: background 0.15s;
+}
+.nav-item:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+.nav-item.active { background: var(--purple-50); color: var(--purple-800); font-weight: 500; }
+.nav-item .ti { font-size: 16px; }
+.nav-badge { margin-left: auto; font-size: 10px; background: var(--purple-100); color: var(--purple-800); padding: 2px 7px; border-radius: 99px; font-weight: 500; }
+
+.sidebar-footer { margin-top: auto; padding: 12px; border-top: 0.5px solid var(--color-border-tertiary); }
+.user-card { display: flex; align-items: center; gap: 10px; padding: 8px; }
+.avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--purple-100); color: var(--purple-800); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; flex-shrink: 0; }
+
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+.topbar {
+  height: var(--header-h);
+  background: var(--color-background-primary);
+  border-bottom: 0.5px solid var(--color-border-tertiary);
+  display: flex; align-items: center; padding: 0 24px; gap: 16px;
+}
+.topbar-title { font-size: 15px; font-weight: 500; flex: 1; }
+.topbar-actions { display: flex; align-items: center; gap: 8px; }
+.btn { display: flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: transparent; cursor: pointer; font-size: 13px; color: var(--color-text-primary); font-family: inherit; }
+.btn:hover { background: var(--color-background-secondary); }
+.btn-primary { background: var(--purple-600); color: white; border-color: var(--purple-600); }
+.btn-primary:hover { background: var(--purple-800); border-color: var(--purple-800); }
+.icon-btn { width: 32px; height: 32px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-tertiary); background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--color-text-secondary); }
+.icon-btn:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+.notif-dot { position: relative; }
+.notif-dot::after { content:''; position:absolute; top:4px; right:4px; width:6px; height:6px; border-radius:50%; background: var(--coral-400); }
+
+.content { flex: 1; overflow-y: auto; padding: 24px; }
+
+.page { display: none; }
+.page.active { display: block; }
+
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.section-title { font-size: 18px; font-weight: 500; }
+.section-desc { font-size: 13px; color: var(--color-text-secondary); margin-top: 2px; }
+
+.metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.metric-card {
+  background: var(--color-background-secondary);
+  border-radius: var(--border-radius-md);
+  padding: 16px;
+}
+.metric-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+.metric-value { font-size: 26px; font-weight: 500; line-height: 1; }
+.metric-change { font-size: 12px; margin-top: 4px; }
+.up { color: var(--teal-400); } .down { color: var(--coral-400); }
+
+.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.chart-card {
+  background: var(--color-background-primary);
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-lg);
+  padding: 20px;
+}
+.chart-title { font-size: 13px; font-weight: 500; margin-bottom: 4px; }
+.chart-sub { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 16px; }
+
+.table-card {
+  background: var(--color-background-primary);
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-lg);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+.table-header { padding: 16px 20px; border-bottom: 0.5px solid var(--color-border-tertiary); display: flex; align-items: center; justify-content: space-between; }
+table { width: 100%; border-collapse: collapse; }
+th { font-size: 11px; font-weight: 500; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.06em; padding: 10px 20px; text-align: left; border-bottom: 0.5px solid var(--color-border-tertiary); }
+td { padding: 12px 20px; font-size: 13px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--color-background-secondary); }
+
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 500; }
+.badge-teal { background: var(--teal-50); color: var(--teal-800); }
+.badge-amber { background: var(--amber-50); color: var(--amber-600); }
+.badge-coral { background: var(--coral-50); color: var(--coral-600); }
+.badge-purple { background: var(--purple-50); color: var(--purple-800); }
+.badge-blue { background: var(--blue-50); color: var(--blue-600); }
+
+.search-bar {
+  display: flex; gap: 12px; margin-bottom: 20px;
+}
+.search-input-wrap { flex: 1; position: relative; }
+.search-input-wrap .ti { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--color-text-tertiary); font-size: 16px; }
+.search-input { width: 100%; padding: 9px 12px 9px 38px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-secondary); font-size: 14px; color: var(--color-text-primary); font-family: inherit; }
+.search-input:focus { outline: none; border-color: var(--purple-400); }
+
+.tags-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.tag { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 99px; font-size: 12px; border: 0.5px solid var(--color-border-secondary); background: var(--color-background-secondary); cursor: pointer; }
+.tag:hover { border-color: var(--purple-400); color: var(--purple-800); }
+.tag .ti { font-size: 12px; }
+
+.talent-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.talent-card {
+  background: var(--color-background-primary);
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-lg);
+  padding: 16px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.talent-card:hover { border-color: var(--purple-400); }
+.talent-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 500; margin-bottom: 10px; }
+.talent-name { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+.talent-role { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 8px; }
+.talent-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.talent-tag { font-size: 10px; padding: 2px 7px; border-radius: 99px; background: var(--purple-50); color: var(--purple-800); }
+
+.score-bar { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+.score-label { font-size: 12px; color: var(--color-text-secondary); width: 80px; flex-shrink: 0; }
+.bar-track { flex: 1; height: 5px; background: var(--color-border-tertiary); border-radius: 99px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 99px; }
+
+.chat-container { display: flex; flex-direction: column; height: calc(100vh - var(--header-h) - 48px); }
+.chat-messages { flex: 1; overflow-y: auto; padding: 8px 0; display: flex; flex-direction: column; gap: 16px; }
+.msg { display: flex; gap: 12px; }
+.msg-avatar { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; }
+.msg-ai .msg-avatar { background: var(--purple-100); color: var(--purple-800); }
+.msg-user .msg-avatar { background: var(--color-background-secondary); color: var(--color-text-primary); }
+.msg-bubble { max-width: 520px; }
+.msg-name { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 4px; }
+.msg-text { background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 12px 14px; font-size: 13px; line-height: 1.6; }
+.msg-ai .msg-text { background: var(--purple-50); color: var(--color-text-primary); }
+.msg-source { font-size: 11px; color: var(--color-text-tertiary); margin-top: 4px; }
+.law-ref { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 4px; background: var(--blue-50); color: var(--blue-600); font-size: 11px; margin: 2px; }
+
+.chat-input-wrap { display: flex; gap: 10px; padding-top: 16px; border-top: 0.5px solid var(--color-border-tertiary); }
+.chat-input { flex: 1; padding: 10px 14px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); font-size: 14px; font-family: inherit; background: var(--color-background-secondary); color: var(--color-text-primary); resize: none; }
+.chat-input:focus { outline: none; border-color: var(--purple-400); }
+
+.risk-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.risk-item {
+  background: var(--color-background-primary);
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-lg);
+  padding: 16px 20px;
+  display: flex; align-items: center; gap: 14px;
+}
+.risk-icon { width: 40px; height: 40px; border-radius: var(--border-radius-md); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+.risk-title { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+.risk-value { font-size: 22px; font-weight: 500; }
+.risk-meta { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+
+.progress-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
+.progress-label { font-size: 12px; width: 120px; color: var(--color-text-secondary); flex-shrink: 0; }
+.progress-track { flex: 1; height: 6px; background: var(--color-background-secondary); border-radius: 99px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 99px; }
+
+.recruit-card {
+  background: var(--color-background-primary);
+  border: 0.5px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-lg);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.recruit-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+.recruit-title { font-size: 15px; font-weight: 500; }
+.recruit-dept { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; }
+.recruit-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 0.5px solid var(--color-border-tertiary); }
+.recruit-metric { text-align: center; }
+.recruit-metric-val { font-size: 18px; font-weight: 500; }
+.recruit-metric-label { font-size: 11px; color: var(--color-text-secondary); margin-top: 2px; }
+
+.diff-meter { display: flex; gap: 4px; align-items: center; }
+.diff-dot { width: 8px; height: 8px; border-radius: 50%; }
+</style>
+
+<h2 class="sr-only">AI 기반 전략적 인재운영 플랫폼 (AI-HRBP) — 대시보드, 인재 검색, 노무 챗봇, 채용 전략, 리스크 예측 기능을 포함한 통합 HR 플랫폼</h2>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon"><i class="ti ti-brain" aria-hidden="true"></i></div>
+      <div>
+        <div class="logo-text">AI-HRBP</div>
+        <div class="logo-sub">인재운영 플랫폼</div>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">메인</div>
+      <div class="nav-item active" onclick="goPage('dashboard', this)">
+        <i class="ti ti-layout-dashboard" aria-hidden="true"></i> HR 대시보드
+      </div>
+      <div class="nav-item" onclick="goPage('talent', this)">
+        <i class="ti ti-search" aria-hidden="true"></i> Talent Finder
+        <span class="nav-badge">AI</span>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">AI 기능</div>
+      <div class="nav-item" onclick="goPage('recruit', this)">
+        <i class="ti ti-briefcase" aria-hidden="true"></i> 채용 전략
+      </div>
+      <div class="nav-item" onclick="goPage('chatbot', this)">
+        <i class="ti ti-message-chatbot" aria-hidden="true"></i> 노무 자문 챗봇
+        <span class="nav-badge">AI</span>
+      </div>
+      <div class="nav-item" onclick="goPage('risk', this)">
+        <i class="ti ti-alert-triangle" aria-hidden="true"></i> 리스크 예측
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="avatar">HR</div>
+        <div>
+          <div style="font-size:12px;font-weight:500;">인사그룹</div>
+          <div style="font-size:11px;color:var(--color-text-secondary);">관리자</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="page-title">HR 경영 대시보드</div>
+      <div class="topbar-actions">
+        <div class="icon-btn notif-dot"><i class="ti ti-bell" aria-hidden="true"></i></div>
+        <button class="btn btn-primary" onclick="sendPrompt('AI-HRBP 플랫폼의 주요 기능을 설명해줘')"><i class="ti ti-sparkles" aria-hidden="true"></i> AI 리포트 생성 ↗</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- 대시보드 -->
+      <div class="page active" id="page-dashboard">
+        <div class="section-header">
+          <div>
+            <div class="section-title">인력 현황 개요</div>
+            <div class="section-desc">2025년 6월 기준 — 실시간 업데이트</div>
+          </div>
+          <button class="btn"><i class="ti ti-download" aria-hidden="true"></i> 리포트 내보내기</button>
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-label"><i class="ti ti-users" style="font-size:14px" aria-hidden="true"></i> 전체 인원</div>
+            <div class="metric-value">1,284</div>
+            <div class="metric-change up"><i class="ti ti-trending-up" style="font-size:12px" aria-hidden="true"></i> +23명 (이번달)</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label"><i class="ti ti-user-plus" style="font-size:14px" aria-hidden="true"></i> 이번달 입사</div>
+            <div class="metric-value" style="color:var(--teal-400)">31</div>
+            <div class="metric-change up">목표 대비 103%</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label"><i class="ti ti-user-minus" style="font-size:14px" aria-hidden="true"></i> 이번달 퇴사</div>
+            <div class="metric-value" style="color:var(--coral-400)">8</div>
+            <div class="metric-change down">퇴직률 0.62%</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label"><i class="ti ti-target" style="font-size:14px" aria-hidden="true"></i> 충원율</div>
+            <div class="metric-value">94.2%</div>
+            <div class="metric-change up"><i class="ti ti-trending-up" style="font-size:12px" aria-hidden="true"></i> +2.1%p</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label"><i class="ti ti-briefcase" style="font-size:14px" aria-hidden="true"></i> 채용 진행중</div>
+            <div class="metric-value" style="color:var(--purple-600)">47</div>
+            <div class="metric-change" style="color:var(--color-text-secondary)">12개 포지션</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label"><i class="ti ti-coin" style="font-size:14px" aria-hidden="true"></i> 인건비 (월)</div>
+            <div class="metric-value" style="font-size:20px">38.2억</div>
+            <div class="metric-change down"><i class="ti ti-trending-down" style="font-size:12px" aria-hidden="true"></i> 예산 대비 -1.3%</div>
+          </div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="chart-title">사업부별 인원 현황</div>
+            <div class="chart-sub">2025년 6월 기준</div>
+            <div style="position:relative;height:200px">
+              <canvas id="deptChart" role="img" aria-label="사업부별 인원 현황 막대 차트">기술: 412, 영업: 287, 운영: 218, 기획: 156, 인사/총무: 89, 재무: 122</canvas>
+            </div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">월별 입퇴사 추이</div>
+            <div class="chart-sub">최근 6개월</div>
+            <div style="position:relative;height:200px">
+              <canvas id="trendChart" role="img" aria-label="월별 입퇴사 추이 라인 차트">입사: 28,34,22,41,36,31 / 퇴사: 12,8,15,9,11,8</canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-header">
+            <div style="font-size:13px;font-weight:500;">최근 채용 현황</div>
+            <div style="display:flex;gap:8px">
+              <span class="badge badge-teal"><i class="ti ti-circle-check" style="font-size:12px" aria-hidden="true"></i> 진행중 47</span>
+              <span class="badge badge-amber">검토중 18</span>
+            </div>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>포지션</th><th>사업부</th><th>단계</th><th>지원자</th><th>목표일</th><th>난이도</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="font-weight:500">시니어 백엔드 개발자</td>
+                <td>기술팀</td>
+                <td><span class="badge badge-purple">면접 진행중</span></td>
+                <td>34명</td>
+                <td>2025.07.15</td>
+                <td>
+                  <div class="diff-meter">
+                    <div class="diff-dot" style="background:var(--coral-400)"></div>
+                    <div class="diff-dot" style="background:var(--coral-400)"></div>
+                    <div class="diff-dot" style="background:var(--coral-400)"></div>
+                    <div class="diff-dot" style="background:var(--color-border-tertiary)"></div>
+                    <span style="font-size:11px;color:var(--coral-600);margin-left:4px">높음</span>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td style="font-weight:500">영업 매니저 (국방사업)</td>
+                <td>영업팀</td>
+                <td><span class="badge badge-amber">서류 검토</span></td>
+                <td>22명</td>
+                <td>2025.07.30</td>
+                <td>
+                  <div class="diff-meter">
+                    <div class="diff-dot" style="background:var(--amber-400)"></div>
+                    <div class="diff-dot" style="background:var(--amber-400)"></div>
+                    <div class="diff-dot" style="background:var(--color-border-tertiary)"></div>
+                    <div class="diff-dot" style="background:var(--color-border-tertiary)"></div>
+                    <span style="font-size:11px;color:var(--amber-400);margin-left:4px">중간</span>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td style="font-weight:500">인사 담당자</td>
+                <td>인사그룹</td>
+                <td><span class="badge badge-teal">최종 합격</span></td>
+                <td>58명</td>
+                <td>2025.06.30</td>
+                <td>
+                  <div class="diff-meter">
+                    <div class="diff-dot" style="background:var(--teal-400)"></div>
+                    <div class="diff-dot" style="background:var(--color-border-tertiary)"></div>
+                    <div class="diff-dot" style="background:var(--color-border-tertiary)"></div>
+                    <div class="diff-dot" style="background:var(--color-border-tertiary)"></div>
+                    <span style="font-size:11px;color:var(--teal-400);margin-left:4px">낮음</span>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td style="font-weight:500">글로벌 사업 PM (해외)</td>
+                <td>GMD팀</td>
+                <td><span class="badge badge-blue">공고중</span></td>
+                <td>9명</td>
+                <td>2025.08.15</td>
+                <td>
+                  <div class="diff-meter">
+                    <div class="diff-dot" style="background:var(--coral-400)"></div>
+                    <div class="diff-dot" style="background:var(--coral-400)"></div>
+                    <div class="diff-dot" style="background:var(--coral-400)"></div>
+                    <div class="diff-dot" style="background:var(--coral-400)"></div>
+                    <span style="font-size:11px;color:var(--coral-600);margin-left:4px">매우 높음</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Talent Finder -->
+      <div class="page" id="page-talent">
+        <div class="section-header">
+          <div>
+            <div class="section-title">AI Talent Finder</div>
+            <div class="section-desc">사내 인재를 조건 기반으로 검색하고 최적 후보를 추천합니다</div>
+          </div>
+          <span class="badge badge-purple"><i class="ti ti-sparkles" style="font-size:12px" aria-hidden="true"></i> AI 추천 활성화</span>
+        </div>
+
+        <div class="search-bar">
+          <div class="search-input-wrap">
+            <i class="ti ti-search" aria-hidden="true"></i>
+            <input class="search-input" type="text" placeholder="예: 영어 회화 가능, 해외 체류 경험, TOEIC 850 이상..." id="talentSearch" />
+          </div>
+          <button class="btn btn-primary" onclick="doTalentSearch()"><i class="ti ti-sparkles" aria-hidden="true"></i> AI 검색 ↗</button>
+        </div>
+
+        <div class="tags-row">
+          <div class="tag" onclick="setSearch('장교 출신, 국방사업 경험')"><i class="ti ti-shield" aria-hidden="true"></i> 국방사업 인재</div>
+          <div class="tag" onclick="setSearch('TOEIC 850 이상, 영어 회화, 해외 거주')"><i class="ti ti-world" aria-hidden="true"></i> 글로벌 GMD</div>
+          <div class="tag" onclick="setSearch('특정 대학 출신, 이공계 전공')"><i class="ti ti-school" aria-hidden="true"></i> 산학협력</div>
+          <div class="tag" onclick="setSearch('Java, Spring Boot, AWS 경험')"><i class="ti ti-code" aria-hidden="true"></i> 백엔드 기술</div>
+          <div class="tag" onclick="setSearch('평가등급 A 이상, 근속 5년 이상')"><i class="ti ti-star" aria-hidden="true"></i> 핵심 인재</div>
+        </div>
+
+        <div style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
+          <div style="font-size:12px;color:var(--color-text-secondary)">AI 추천 결과 — <strong>12명</strong> 발견 (적합도 순 정렬)</div>
+          <div style="display:flex;gap:8px">
+            <div class="icon-btn"><i class="ti ti-adjustments-horizontal" aria-hidden="true"></i></div>
+            <div class="icon-btn"><i class="ti ti-download" aria-hidden="true"></i></div>
+          </div>
+        </div>
+
+        <div class="talent-grid">
+          <div class="talent-card">
+            <div class="talent-avatar" style="background:var(--purple-100);color:var(--purple-800)">KM</div>
+            <div class="talent-name">김민준</div>
+            <div class="talent-role">기술팀 · 수석 개발자</div>
+            <div style="margin-bottom:8px">
+              <div class="score-bar"><span class="score-label">적합도</span><div class="bar-track"><div class="bar-fill" style="width:94%;background:var(--purple-600)"></div></div><span style="font-size:11px;font-weight:500;color:var(--purple-600)">94%</span></div>
+            </div>
+            <div class="talent-tags">
+              <span class="talent-tag">TOEIC 920</span>
+              <span class="talent-tag">미국 거주 3년</span>
+              <span class="talent-tag">영어 회화</span>
+            </div>
+          </div>
+          <div class="talent-card">
+            <div class="talent-avatar" style="background:var(--teal-50);color:var(--teal-800)">PJ</div>
+            <div class="talent-name">박지수</div>
+            <div class="talent-role">GMD팀 · 매니저</div>
+            <div style="margin-bottom:8px">
+              <div class="score-bar"><span class="score-label">적합도</span><div class="bar-track"><div class="bar-fill" style="width:88%;background:var(--teal-400)"></div></div><span style="font-size:11px;font-weight:500;color:var(--teal-400)">88%</span></div>
+            </div>
+            <div class="talent-tags">
+              <span class="talent-tag">영어 원어민급</span>
+              <span class="talent-tag">해외 파견 2회</span>
+              <span class="talent-tag">평가 A</span>
+            </div>
+          </div>
+          <div class="talent-card">
+            <div class="talent-avatar" style="background:var(--amber-50);color:var(--amber-600)">LH</div>
+            <div class="talent-name">이현우</div>
+            <div class="talent-role">영업팀 · 차장</div>
+            <div style="margin-bottom:8px">
+              <div class="score-bar"><span class="score-label">적합도</span><div class="bar-track"><div class="bar-fill" style="width:81%;background:var(--amber-400)"></div></div><span style="font-size:11px;font-weight:500;color:var(--amber-400)">81%</span></div>
+            </div>
+            <div class="talent-tags">
+              <span class="talent-tag">TOEIC 870</span>
+              <span class="talent-tag">장교 출신</span>
+              <span class="talent-tag">B2G 경험</span>
+            </div>
+          </div>
+          <div class="talent-card">
+            <div class="talent-avatar" style="background:var(--coral-50);color:var(--coral-600)">CY</div>
+            <div class="talent-name">최윤아</div>
+            <div class="talent-role">기획팀 · 과장</div>
+            <div style="margin-bottom:8px">
+              <div class="score-bar"><span class="score-label">적합도</span><div class="bar-track"><div class="bar-fill" style="width:76%;background:var(--coral-400)"></div></div><span style="font-size:11px;font-weight:500;color:var(--coral-400)">76%</span></div>
+            </div>
+            <div class="talent-tags">
+              <span class="talent-tag">TOEIC 855</span>
+              <span class="talent-tag">캐나다 유학</span>
+              <span class="talent-tag">Relocation OK</span>
+            </div>
+          </div>
+          <div class="talent-card" style="border:2px solid var(--purple-200)">
+            <div style="margin-bottom:8px"><span class="badge badge-purple" style="font-size:10px"><i class="ti ti-sparkles" style="font-size:10px" aria-hidden="true"></i> AI 특별 추천</span></div>
+            <div class="talent-avatar" style="background:var(--blue-50);color:var(--blue-600)">OH</div>
+            <div class="talent-name">오현석</div>
+            <div class="talent-role">운영팀 · 부장</div>
+            <div style="margin-bottom:8px">
+              <div class="score-bar"><span class="score-label">적합도</span><div class="bar-track"><div class="bar-fill" style="width:91%;background:var(--blue-400)"></div></div><span style="font-size:11px;font-weight:500;color:var(--blue-400)">91%</span></div>
+            </div>
+            <div class="talent-tags">
+              <span class="talent-tag">사택관리 5년</span>
+              <span class="talent-tag">영어 비즈니스</span>
+              <span class="talent-tag">해외 Relo 경험</span>
+            </div>
+          </div>
+          <div class="talent-card">
+            <div class="talent-avatar" style="background:var(--purple-50);color:var(--purple-800)">SS</div>
+            <div class="talent-name">심소연</div>
+            <div class="talent-role">기술팀 · 팀장</div>
+            <div style="margin-bottom:8px">
+              <div class="score-bar"><span class="score-label">적합도</span><div class="bar-track"><div class="bar-fill" style="width:72%;background:var(--purple-400)"></div></div><span style="font-size:11px;font-weight:500;color:var(--purple-400)">72%</span></div>
+            </div>
+            <div class="talent-tags">
+              <span class="talent-tag">TOEIC 850</span>
+              <span class="talent-tag">일본 주재 2년</span>
+              <span class="talent-tag">AWS 자격증</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 채용 전략 -->
+      <div class="page" id="page-recruit">
+        <div class="section-header">
+          <div>
+            <div class="section-title">AI 채용 전략 지원</div>
+            <div class="section-desc">시장 데이터 기반 채용 전략 및 연봉 분석</div>
+          </div>
+          <button class="btn btn-primary" onclick="sendPrompt('백엔드 개발자 채용 전략을 시장 데이터 기반으로 분석해줘')"><i class="ti ti-sparkles" aria-hidden="true"></i> AI 분석 요청 ↗</button>
+        </div>
+
+        <div class="recruit-card">
+          <div class="recruit-header">
+            <div>
+              <div class="recruit-title">시니어 백엔드 개발자 (Java/Spring)</div>
+              <div class="recruit-dept">기술팀 · 경력 5년 이상 · 서울</div>
+            </div>
+            <span class="badge badge-coral">채용 난이도: 높음</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div>
+              <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:8px;font-weight:500">경쟁사 채용 현황 (현재)</div>
+              <div class="progress-row"><span class="progress-label">카카오</span><div class="progress-track"><div class="progress-fill" style="width:85%;background:var(--coral-400)"></div></div><span style="font-size:11px">8개 공고</span></div>
+              <div class="progress-row"><span class="progress-label">네이버</span><div class="progress-track"><div class="progress-fill" style="width:70%;background:var(--coral-400)"></div></div><span style="font-size:11px">6개 공고</span></div>
+              <div class="progress-row"><span class="progress-label">라인플러스</span><div class="progress-track"><div class="progress-fill" style="width:55%;background:var(--amber-400)"></div></div><span style="font-size:11px">5개 공고</span></div>
+              <div class="progress-row"><span class="progress-label">쿠팡</span><div class="progress-track"><div class="progress-fill" style="width:90%;background:var(--coral-400)"></div></div><span style="font-size:11px">9개 공고</span></div>
+            </div>
+            <div>
+              <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:8px;font-weight:500">적정 연봉 분석 (AI 산출)</div>
+              <div style="background:var(--purple-50);border-radius:var(--border-radius-md);padding:14px">
+                <div style="font-size:11px;color:var(--purple-800);margin-bottom:4px">시장 중앙값</div>
+                <div style="font-size:24px;font-weight:500;color:var(--purple-800)">6,800만원</div>
+                <div style="font-size:11px;color:var(--purple-600);margin-top:4px">범위: 5,500 ~ 8,500만원</div>
+              </div>
+              <div style="margin-top:8px;font-size:12px;color:var(--color-text-secondary)">
+                <div style="margin-bottom:4px"><i class="ti ti-arrow-up" style="color:var(--teal-400)" aria-hidden="true"></i> 상위 25%: 7,800만원 이상 제시 시 경쟁력 확보</div>
+                <div><i class="ti ti-info-circle" style="color:var(--blue-400)" aria-hidden="true"></i> AWS 자격증 보유 시 +500~800만원 프리미엄</div>
+              </div>
+            </div>
+          </div>
+          <div class="recruit-metrics">
+            <div class="recruit-metric"><div class="recruit-metric-val" style="color:var(--teal-400)">34명</div><div class="recruit-metric-label">현재 지원자</div></div>
+            <div class="recruit-metric"><div class="recruit-metric-val" style="color:var(--amber-400)">4.2주</div><div class="recruit-metric-label">예상 소요 기간</div></div>
+            <div class="recruit-metric"><div class="recruit-metric-val" style="color:var(--coral-400)">23%</div><div class="recruit-metric-label">예상 합격률</div></div>
+            <div class="recruit-metric"><div class="recruit-metric-val" style="color:var(--purple-600)">★ 3.2</div><div class="recruit-metric-label">인재 수급 지수</div></div>
+          </div>
+        </div>
+
+        <div class="recruit-card">
+          <div class="recruit-header">
+            <div>
+              <div class="recruit-title">국방사업 영업 매니저 (B2G)</div>
+              <div class="recruit-dept">영업팀 · 경력 7년 이상 · 서울/대전</div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <span class="badge badge-teal"><i class="ti ti-user-check" style="font-size:12px" aria-hidden="true"></i> 내부 인재 3명 추천</span>
+              <span class="badge badge-amber">채용 난이도: 중간</span>
+            </div>
+          </div>
+          <div style="background:var(--teal-50);border-radius:var(--border-radius-md);padding:14px;border:0.5px solid var(--teal-100)">
+            <div style="font-size:12px;font-weight:500;color:var(--teal-800);margin-bottom:8px"><i class="ti ti-sparkles" aria-hidden="true"></i> AI 추천: 외부 채용 전 내부 후보 검토 권장</div>
+            <div style="display:flex;gap:8px">
+              <span class="badge badge-teal">이현우 (영업팀 차장) — 장교 출신, B2G 3년</span>
+              <span class="badge badge-teal">강태양 (운영팀 과장) — 군무원 출신, 공공사업 2년</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 노무 챗봇 -->
+      <div class="page" id="page-chatbot">
+        <div class="section-header">
+          <div>
+            <div class="section-title">AI 노무·인사 자문 챗봇</div>
+            <div class="section-desc">근로기준법, 판례, 사내 자문 이력 기반 즉시 답변</div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <span class="badge badge-purple">근로기준법 학습 완료</span>
+            <span class="badge badge-blue">판례 42,381건</span>
+          </div>
+        </div>
+        <div class="chat-container">
+          <div class="chat-messages" id="chatMessages">
+            <div class="msg msg-ai">
+              <div class="msg-avatar">AI</div>
+              <div class="msg-bubble">
+                <div class="msg-name">노무 자문 AI</div>
+                <div class="msg-text">안녕하세요. 근로기준법, 채용절차법, 남녀고용평등법 등 관련 법령과 판례를 기반으로 노무·인사 자문을 드립니다. 질문을 입력해 주세요.</div>
+                <div class="msg-source">
+                  <span class="law-ref"><i class="ti ti-book" style="font-size:11px" aria-hidden="true"></i> 근로기준법</span>
+                  <span class="law-ref"><i class="ti ti-book" style="font-size:11px" aria-hidden="true"></i> 채용절차법</span>
+                  <span class="law-ref"><i class="ti ti-book" style="font-size:11px" aria-hidden="true"></i> 대법원 판례</span>
+                </div>
+              </div>
+            </div>
+            <div class="msg msg-user">
+              <div class="msg-avatar" style="margin-left:auto;order:1">담</div>
+              <div class="msg-bubble" style="margin-left:auto">
+                <div class="msg-name" style="text-align:right">인사담당자</div>
+                <div class="msg-text" style="background:var(--color-background-secondary)">수습기간 3개월 중 2개월이 지난 직원을 해고할 수 있나요? 어떤 절차가 필요한가요?</div>
+              </div>
+            </div>
+            <div class="msg msg-ai">
+              <div class="msg-avatar">AI</div>
+              <div class="msg-bubble">
+                <div class="msg-name">노무 자문 AI</div>
+                <div class="msg-text">수습근로자 해고와 관련하여 다음 사항을 검토해야 합니다.<br><br>
+                <strong>1. 해고의 정당성</strong><br>수습기간이라도 근로기준법 제23조에 따라 정당한 이유 없이 해고할 수 없습니다. 단, 수습기간 중 업무 부적격성이 명백하게 확인된 경우 통상해고 사유가 될 수 있습니다.<br><br>
+                <strong>2. 해고예고</strong><br>3개월 미만 수습근로자는 해고예고(30일) 면제 대상이나, 귀사의 경우 이미 2개월이 경과하여 해고예고 의무가 발생합니다.<br><br>
+                <strong>3. 필요 절차</strong><br>① 업무 부적격 근거 서면 확보 → ② 소명 기회 부여 → ③ 해고 통보 (서면) → ④ 해고예고수당 또는 30일 전 통보
+                </div>
+                <div class="msg-source">
+                  <span class="law-ref"><i class="ti ti-scale" style="font-size:11px" aria-hidden="true"></i> 근로기준법 제23조 (해고 제한)</span>
+                  <span class="law-ref"><i class="ti ti-scale" style="font-size:11px" aria-hidden="true"></i> 제35조 (해고예고 예외)</span>
+                  <span class="law-ref"><i class="ti ti-gavel" style="font-size:11px" aria-hidden="true"></i> 대법원 2015다248342</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="chat-input-wrap">
+            <textarea class="chat-input" id="chatInput" rows="2" placeholder="법령 또는 인사 관련 질문을 입력하세요..."></textarea>
+            <button class="btn btn-primary" onclick="sendChat()" style="align-self:flex-end"><i class="ti ti-send" aria-hidden="true"></i> 전송</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 리스크 예측 -->
+      <div class="page" id="page-risk">
+        <div class="section-header">
+          <div>
+            <div class="section-title">조직 리스크 예측 시스템</div>
+            <div class="section-desc">AI가 인사 데이터를 분석하여 리스크를 사전 감지합니다</div>
+          </div>
+          <span class="badge badge-coral"><i class="ti ti-alert-triangle" style="font-size:12px" aria-hidden="true"></i> 주의 필요 3건</span>
+        </div>
+
+        <div class="risk-grid">
+          <div class="risk-item">
+            <div class="risk-icon" style="background:var(--coral-50)"><i class="ti ti-user-minus" style="color:var(--coral-400)" aria-hidden="true"></i></div>
+            <div style="flex:1">
+              <div class="risk-title">퇴직 위험 인원</div>
+              <div class="risk-value" style="color:var(--coral-400)">7명</div>
+              <div class="risk-meta">최근 30일 기준 — 기술팀 4명, 영업팀 3명</div>
+            </div>
+            <button class="btn" style="font-size:12px;padding:6px 10px" onclick="sendPrompt('퇴직 위험 인원 7명에 대한 리스크 완화 방안을 제안해줘')">분석 ↗</button>
+          </div>
+          <div class="risk-item">
+            <div class="risk-icon" style="background:var(--amber-50)"><i class="ti ti-calendar-off" style="color:var(--amber-400)" aria-hidden="true"></i></div>
+            <div style="flex:1">
+              <div class="risk-title">연차 소진율 미달</div>
+              <div class="risk-value" style="color:var(--amber-400)">24%</div>
+              <div class="risk-meta">전체 인원의 24% — 연차촉진제도 검토 필요</div>
+            </div>
+            <button class="btn" style="font-size:12px;padding:6px 10px">확인</button>
+          </div>
+          <div class="risk-item">
+            <div class="risk-icon" style="background:var(--purple-50)"><i class="ti ti-chart-line" style="color:var(--purple-600)" aria-hidden="true"></i></div>
+            <div style="flex:1">
+              <div class="risk-title">인력 공백 예측 (3개월)</div>
+              <div class="risk-value" style="color:var(--purple-600)">12명</div>
+              <div class="risk-meta">퇴직 예측 + 계획 인원 기준 선제적 충원 필요</div>
+            </div>
+            <button class="btn" style="font-size:12px;padding:6px 10px" onclick="sendPrompt('3개월 내 인력 공백 12명에 대한 선제적 채용 계획을 수립해줘')">계획 수립 ↗</button>
+          </div>
+          <div class="risk-item">
+            <div class="risk-icon" style="background:var(--teal-50)"><i class="ti ti-trending-down" style="color:var(--teal-400)" aria-hidden="true"></i></div>
+            <div style="flex:1">
+              <div class="risk-title">평가등급 하락 추이</div>
+              <div class="risk-value" style="color:var(--teal-400)">양호</div>
+              <div class="risk-meta">전기 대비 C등급 비율 1.2%p 증가 — 모니터링 중</div>
+            </div>
+            <button class="btn" style="font-size:12px;padding:6px 10px">모니터링</button>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-header">
+            <div style="font-size:13px;font-weight:500;">퇴직 위험군 상세 분석</div>
+            <span class="badge badge-coral">AI 감지</span>
+          </div>
+          <table>
+            <thead>
+              <tr><th>사번</th><th>부서</th><th>직급</th><th>위험 요인</th><th>위험도</th><th>권장 조치</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="color:var(--color-text-secondary)">KM-4821</td>
+                <td>기술팀</td>
+                <td>과장</td>
+                <td><span class="badge badge-coral">평가 B↓</span> <span class="badge badge-amber">연차 미사용</span></td>
+                <td><div style="display:flex;gap:2px"><div style="width:8px;height:8px;background:var(--coral-400);border-radius:2px"></div><div style="width:8px;height:8px;background:var(--coral-400);border-radius:2px"></div><div style="width:8px;height:8px;background:var(--coral-400);border-radius:2px"></div><div style="width:8px;height:8px;background:var(--color-border-tertiary);border-radius:2px"></div><div style="width:8px;height:8px;background:var(--color-border-tertiary);border-radius:2px"></div></div></td>
+                <td style="font-size:12px;color:var(--color-text-secondary)">면담 우선 권고</td>
+              </tr>
+              <tr>
+                <td style="color:var(--color-text-secondary)">SJ-2037</td>
+                <td>영업팀</td>
+                <td>차장</td>
+                <td><span class="badge badge-coral">근속 이상</span> <span class="badge badge-coral">경쟁사 접촉</span></td>
+                <td><div style="display:flex;gap:2px"><div style="width:8px;height:8px;background:var(--coral-400);border-radius:2px"></div><div style="width:8px;height:8px;background:var(--coral-400);border-radius:2px"></div><div style="width:8px;height:8px;background:var(--coral-400);border-radius:2px"></div><div style="width:8px;height:8px;background:var(--coral-400);border-radius:2px"></div><div style="width:8px;height:8px;background:var(--color-border-tertiary);border-radius:2px"></div></div></td>
+                <td style="font-size:12px;color:var(--coral-600);font-weight:500">즉시 면담 필요</td>
+              </tr>
+              <tr>
+                <td style="color:var(--color-text-secondary)">OH-1192</td>
+                <td>기술팀</td>
+                <td>대리</td>
+                <td><span class="badge badge-amber">1년 미만 재직</span></td>
+                <td><div style="display:flex;gap:2px"><div style="width:8px;height:8px;background:var(--amber-400);border-radius:2px"></div><div style="width:8px;height:8px;background:var(--amber-400);border-radius:2px"></div><div style="width:8px;height:8px;background:var(--color-border-tertiary);border-radius:2px"></div><div style="width:8px;height:8px;background:var(--color-border-tertiary);border-radius:2px"></div><div style="width:8px;height:8px;background:var(--color-border-tertiary);border-radius:2px"></div></div></td>
+                <td style="font-size:12px;color:var(--color-text-secondary)">온보딩 점검</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+function goPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  el.classList.add('active');
+  const titles = { dashboard:'HR 경영 대시보드', talent:'AI Talent Finder', recruit:'AI 채용 전략 지원', chatbot:'노무·인사 자문 챗봇', risk:'조직 리스크 예측' };
+  document.getElementById('page-title').textContent = titles[id];
+}
+
+function setSearch(val) {
+  document.getElementById('talentSearch').value = val;
+}
+
+function doTalentSearch() {
+  const val = document.getElementById('talentSearch').value;
+  if (val) sendPrompt('AI Talent Finder에서 "' + val + '" 조건으로 내부 인재를 검색하고 추천해줘');
+}
+
+function sendChat() {
+  const inp = document.getElementById('chatInput');
+  const q = inp.value.trim();
+  if (!q) return;
+  const msgs = document.getElementById('chatMessages');
+  const userMsg = `<div class="msg msg-user"><div class="msg-avatar" style="margin-left:auto;order:1">담</div><div class="msg-bubble" style="margin-left:auto"><div class="msg-name" style="text-align:right">인사담당자</div><div class="msg-text" style="background:var(--color-background-secondary)">${q}</div></div></div>`;
+  msgs.innerHTML += userMsg;
+  inp.value = '';
+  msgs.scrollTop = msgs.scrollHeight;
+  sendPrompt('노무 자문 AI로서 다음 질문에 근로기준법 및 판례를 인용하여 답변해줘: ' + q);
+}
+
+const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+const textColor = isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.45)';
+
+new Chart(document.getElementById('deptChart'), {
+  type: 'bar',
+  data: {
+    labels: ['기술팀','영업팀','운영팀','기획팀','인사/총무','재무팀'],
+    datasets: [{
+      label: '인원수',
+      data: [412, 287, 218, 156, 89, 122],
+      backgroundColor: ['#7F77DD','#1D9E75','#BA7517','#D85A30','#378ADD','#534AB7'],
+      borderRadius: 4
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { font: { size: 11 }, color: textColor }, grid: { display: false } },
+      y: { ticks: { font: { size: 11 }, color: textColor }, grid: { color: gridColor } }
+    }
+  }
+});
+
+new Chart(document.getElementById('trendChart'), {
+  type: 'line',
+  data: {
+    labels: ['1월','2월','3월','4월','5월','6월'],
+    datasets: [
+      { label: '입사', data: [28,34,22,41,36,31], borderColor: '#1D9E75', backgroundColor: 'rgba(29,158,117,0.1)', tension: 0.4, fill: true, pointRadius: 3, borderWidth: 2 },
+      { label: '퇴사', data: [12,8,15,9,11,8], borderColor: '#D85A30', backgroundColor: 'rgba(216,90,48,0.08)', tension: 0.4, fill: true, pointRadius: 3, borderWidth: 2, borderDash: [4,4] }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { labels: { font: { size: 11 }, color: textColor, boxWidth: 10 } } },
+    scales: {
+      x: { ticks: { font: { size: 11 }, color: textColor }, grid: { display: false } },
+      y: { ticks: { font: { size: 11 }, color: textColor }, grid: { color: gridColor } }
+    }
+  }
+});
+</script>
