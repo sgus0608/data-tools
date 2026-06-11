@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>주간 보고 생성기</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #222; min-height: 100vh; }
+
+  .header {
+    background: #1a1f36;
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.3);
+  }
+  .header h1 { font-size: 1.15rem; font-weight: 600; letter-spacing: -.3px; }
+  .header span { font-size: .8rem; opacity: .55; }
+
+  .main { max-width: 1100px; margin: 0 auto; padding: 28px 20px; display: flex; gap: 20px; }
+
+  /* 왼쪽 입력 패널 */
+  .panel-left { flex: 0 0 360px; display: flex; flex-direction: column; gap: 16px; }
+
+  .card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.08);
+  }
+  .card label { display: block; font-size: .78rem; font-weight: 600; color: #555; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
+  .card input[type=text] {
+    width: 100%; padding: 9px 12px;
+    border: 1.5px solid #dde1e9; border-radius: 7px;
+    font-size: .92rem; transition: border .2s;
+    outline: none;
+  }
+  .card input[type=text]:focus { border-color: #4f7ef8; }
+
+  textarea {
+    width: 100%; height: 280px;
+    border: 1.5px solid #dde1e9; border-radius: 7px;
+    padding: 10px 12px; font-size: .82rem;
+    font-family: 'Consolas', monospace; resize: vertical;
+    outline: none; transition: border .2s; line-height: 1.5;
+  }
+  textarea:focus { border-color: #4f7ef8; }
+  .hint { font-size: .72rem; color: #999; margin-top: 6px; line-height: 1.5; }
+
+  .btn-generate {
+    width: 100%; padding: 13px;
+    background: linear-gradient(135deg, #4f7ef8, #7c5af6);
+    color: #fff; border: none; border-radius: 8px;
+    font-size: 1rem; font-weight: 600; cursor: pointer;
+    transition: opacity .2s, transform .1s;
+    letter-spacing: .3px;
+  }
+  .btn-generate:hover { opacity: .9; }
+  .btn-generate:active { transform: scale(.98); }
+
+  /* 오른쪽 출력 패널 */
+  .panel-right { flex: 1; display: flex; flex-direction: column; gap: 16px; }
+
+  .tab-bar { display: flex; gap: 8px; }
+  .tab {
+    padding: 8px 18px; border-radius: 7px 7px 0 0;
+    border: 1.5px solid #dde1e9; border-bottom: none;
+    background: #e8eaf0; font-size: .85rem; font-weight: 600;
+    cursor: pointer; color: #666; transition: background .15s;
+  }
+  .tab.active { background: #fff; color: #4f7ef8; }
+
+  .output-area {
+    background: #fff; border-radius: 0 10px 10px 10px;
+    border: 1.5px solid #dde1e9;
+    min-height: 500px; position: relative;
+  }
+  .pane { display: none; padding: 20px; }
+  .pane.active { display: block; }
+
+  /* 미리보기 */
+  #preview-pane { overflow-x: auto; }
+  #preview-pane table { font-family: 'Pretendard', 'Malgun Gothic', sans-serif; }
+
+  /* HTML 코드 */
+  #code-pane { position: relative; }
+  #html-output {
+    width: 100%; height: 460px;
+    border: 1.5px solid #eee; border-radius: 7px;
+    padding: 12px; font-size: .78rem;
+    font-family: 'Consolas', monospace; resize: vertical;
+    background: #fafbfc; outline: none; line-height: 1.6;
+  }
+  .btn-copy {
+    margin-top: 10px; padding: 9px 20px;
+    background: #1a1f36; color: #fff;
+    border: none; border-radius: 7px;
+    font-size: .88rem; font-weight: 600; cursor: pointer;
+    transition: opacity .2s;
+  }
+  .btn-copy:hover { opacity: .8; }
+
+  .empty-state {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    height: 400px; color: #bbb; gap: 10px;
+  }
+  .empty-state svg { opacity: .3; }
+  .empty-state p { font-size: .9rem; }
+
+  .toast {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+    background: #1a1f36; color: #fff;
+    padding: 10px 24px; border-radius: 20px;
+    font-size: .88rem; font-weight: 500;
+    opacity: 0; transition: opacity .3s; pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,.2);
+  }
+  .toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#7c5af6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 21V9"/></svg>
+  <h1>주간 보고 생성기</h1>
+  <span>엑셀 데이터 → HTML 자동 변환</span>
+</div>
+
+<div class="main">
+
+  <!-- 입력 패널 -->
+  <div class="panel-left">
+    <div class="card">
+      <label>금주 시작일</label>
+      <input type="text" id="start-date" placeholder="예: 2026.6.8" />
+      <p class="hint">비워두면 오늘 날짜 기준으로 자동 계산됩니다.</p>
+    </div>
+
+    <div class="card">
+      <label>데이터 붙여넣기</label>
+      <textarea id="raw-data" placeholder="엑셀에서 해당 주 데이터를 복사하여 붙여넣으세요.
+
+형식 (탭 구분):
+시작일  업무구분  내용  완료예정일  완료일  태그
+
+태그: 주간용 → 금주실적
+     차주용 → 차주계획
+완료일 있음 → 완료
+완료일 없음 → 진행중
+업무구분 '휴가' → 개인신상"></textarea>
+      <p class="hint">※ 내용이 없는 행은 자동으로 제외됩니다.</p>
+    </div>
+
+    <button class="btn-generate" onclick="generate()">주간 보고 생성</button>
+  </div>
+
+  <!-- 출력 패널 -->
+  <div class="panel-right">
+    <div class="tab-bar">
+      <div class="tab active" onclick="switchTab('preview')">미리보기</div>
+      <div class="tab" onclick="switchTab('code')">HTML 코드</div>
+    </div>
+    <div class="output-area">
+      <div class="pane active" id="preview-pane">
+        <div class="empty-state">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 9h18M9 21V9"/></svg>
+          <p>데이터를 입력하고 생성 버튼을 누르세요</p>
+        </div>
+      </div>
+      <div class="pane" id="code-pane">
+        <textarea id="html-output" readonly placeholder="생성된 HTML이 여기에 표시됩니다..."></textarea>
+        <button class="btn-copy" onclick="copyHtml()">클립보드에 복사</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast">복사됐습니다!</div>
+
+<script>
+// ── 탭 전환
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t, i) => {
+    t.classList.toggle('active', (i === 0) === (name === 'preview'));
+  });
+  document.getElementById('preview-pane').classList.toggle('active', name === 'preview');
+  document.getElementById('code-pane').classList.toggle('active', name === 'code');
+}
+
+// ── 날짜 유틸
+function parseDate(s) {
+  s = s.trim().replace(/\s/g, '');
+  const m = s.match(/^(\d{4})[.\-\/](\d{1,2})[.\-\/](\d{1,2})$/);
+  if (!m) return null;
+  return new Date(+m[1], +m[2] - 1, +m[3]);
+}
+
+function monday(d) {
+  const day = d.getDay();
+  const diff = (day === 0) ? -6 : 1 - day;
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() + diff);
+}
+
+function fmtRange(mon) {
+  const fri = new Date(mon); fri.setDate(mon.getDate() + 4);
+  const z = n => String(n).padStart(2, '0');
+  return `${z(mon.getMonth()+1)} 월 ${z(mon.getDate())} 일 ~ ${z(fri.getMonth()+1)} 월 ${z(fri.getDate())} 일`;
+}
+
+// ── HTML 이스케이프
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── 파싱
+function parseRows(text) {
+  const weekly = [], nextweek = [], holidays = [];
+  for (const line of text.split('\n')) {
+    const parts = line.split('\t');
+    while (parts.length < 6) parts.push('');
+    const category  = parts[1].trim();
+    const content   = parts[2].trim();
+    const compDate  = parts[4].trim();
+    const tag       = parts[5].trim();
+    if (!content || !category) continue;
+    if (tag === '주간용') {
+      if (category === '휴가') holidays.push(['current', content]);
+      else weekly.push({ category, content, complete: !!compDate });
+    } else if (tag === '차주용') {
+      if (category === '휴가') holidays.push(['next', content]);
+      else nextweek.push({ category, content });
+    }
+  }
+  return { weekly, nextweek, holidays };
+}
+
+function groupWeekly(items) {
+  const g = {};
+  for (const item of items) {
+    if (!g[item.category]) g[item.category] = { done: [], doing: [] };
+    (item.complete ? g[item.category].done : g[item.category].doing).push(item.content);
+  }
+  return g;
+}
+
+function groupNext(items) {
+  const g = {};
+  for (const item of items) {
+    if (!g[item.category]) g[item.category] = [];
+    g[item.category].push(item.content);
+  }
+  return g;
+}
+
+// ── HTML 조각
+const P = (t, bold=false) =>
+  `<p style="margin: 0px; padding: 0px;"><span style="font-size: 11pt; font-family: Pretendard;">`
+  + (bold ? `<strong>` : '') + t + (bold ? `</strong>` : '')
+  + `</span></p>\n`;
+
+const BLANK = `<p style="margin: 0px; padding: 0px;"><br /></p>\n`;
+
+function buildWeeklyCell(groups) {
+  let html = `<p style="margin: 0px; padding: 0px;"><span style="font-size: 11pt; font-family: Pretendard;">&nbsp;</span></p>\n`;
+  let idx = 1;
+  for (const [cat, st] of Object.entries(groups)) {
+    html += P(`&nbsp;${idx++}. ${esc(cat)}`, true);
+    if (st.done.length) {
+      html += P(`&nbsp; &nbsp;□ 완료`);
+      for (const c of st.done) html += P(`&nbsp; &nbsp; &nbsp;- ${esc(c)}`);
+    }
+    if (st.doing.length) {
+      html += P(`&nbsp; &nbsp;□ 진행중`);
+      for (const c of st.doing) html += P(`&nbsp; &nbsp; &nbsp;- ${esc(c)}`);
+    }
+    html += BLANK;
+  }
+  return html;
+}
+
+function buildNextCell(groups) {
+  let html = '', idx = 1;
+  for (const [cat, contents] of Object.entries(groups)) {
+    html += P(`&nbsp;${idx++}. ${esc(cat)}`, true);
+    for (const c of contents) html += P(`&nbsp; &nbsp; &nbsp;- ${esc(c)}`);
+    html += BLANK;
+  }
+  return html;
+}
+
+function tdInfo(vals, width) {
+  const inner = vals.length
+    ? vals.map(v => `<p style="line-height: 150%;"><span style="font-size: 12pt; font-family: Pretendard;">&nbsp;${esc(v)}</span></p>\n`).join('')
+    : `<p style="line-height: 150%;"><span style="font-size: 12pt; font-family: Pretendard;">&nbsp;</span></p>`;
+  return `<td style="text-align: left; width: ${width}px; border-color: rgb(102, 102, 102); height: 38px;">\n${inner}</td>\n`;
+}
+
+// ── 전체 HTML 빌드
+function buildHtml(cwStr, nwStr, wGroups, nGroups, currH, nextH) {
+  const TH = (text, width) =>
+    `<td style="width: ${width}px; text-align: center; background-color: rgb(211, 211, 211); height: 26px; border-color: rgb(102, 102, 102);">\n`
+    + `<p style="text-align: center; line-height: 150%;"><span style="font-size: 12pt; font-family: Pretendard;">${esc(text)}</span></p></td>\n`;
+
+  const SIDE = label =>
+    `<td style="width: 87px; height: 38px; text-align: center; background-color: rgb(234, 234, 234); border-color: rgb(102, 102, 102);">\n`
+    + `<p style="text-align: center; line-height: 150%;"><span style="font-size: 12pt; font-family: Pretendard; font-weight: bold;">${label}</span></p></td>\n`;
+
+  let html = `<p style="text-align: center;"><span style="font-size: 12pt; font-family: Pretendard;"><strong><u>주간 보고</u></strong></span></p>\n`
+    + `<p style="text-align: center;"><br /></p>\n`
+    + `<table align="center" border="1" cellpadding="1" cellspacing="0" style="height: 562px; width: 727px; border-color: rgb(102, 102, 102);">\n<tbody>\n`;
+
+  // 헤더
+  html += `<tr>\n` + TH('구분', 87) + TH(`금주실적 ( ${cwStr} )`, 317) + TH(`차주계획 ( ${nwStr} )`, 315) + `</tr>\n`;
+
+  // 주요업무
+  html += `<tr>\n`;
+  html += `<td style="width: 87px; text-align: center; background-color: rgb(234, 234, 234); border-color: rgb(102, 102, 102);">\n`
+        + `<p style="text-align: center; line-height: 150%;"><span style="font-size: 12pt; font-family: Pretendard; font-weight: bold;">주요업무</span></p></td>\n`;
+  html += `<td style="text-align: left; width: 317px; border-color: rgb(102, 102, 102);">\n` + buildWeeklyCell(wGroups) + `</td>\n`;
+  html += `<td style="text-align: left; width: 315px; border-color: rgb(102, 102, 102);">\n` + buildNextCell(nGroups) + `</td>\n`;
+  html += `</tr>\n`;
+
+  // 정보사항 / 개인신상 / 기타사항
+  for (const [label, cv, nv] of [['정보사항', [], []], ['개인신상', currH, nextH], ['기타사항', [], []]]) {
+    html += `<tr>\n` + SIDE(label) + tdInfo(cv, 317) + tdInfo(nv, 315) + `</tr>\n`;
+  }
+
+  html += `</tbody>\n</table>`;
+  return html;
+}
+
+// ── 메인 생성
+function generate() {
+  const raw = document.getElementById('raw-data').value;
+  if (!raw.trim()) { alert('데이터를 입력해주세요.'); return; }
+
+  const dateStr = document.getElementById('start-date').value.trim();
+  let base = dateStr ? parseDate(dateStr) : new Date();
+  if (!base) { alert('날짜 형식을 확인해주세요. (예: 2026.6.8)'); return; }
+
+  const curMon = monday(base);
+  const nxtMon = new Date(curMon); nxtMon.setDate(curMon.getDate() + 7);
+  const cwStr  = fmtRange(curMon);
+  const nwStr  = fmtRange(nxtMon);
+
+  const { weekly, nextweek, holidays } = parseRows(raw);
+  const wGroups = groupWeekly(weekly);
+  const nGroups = groupNext(nextweek);
+  const currH = holidays.filter(h => h[0]==='current').map(h => h[1]);
+  const nextH = holidays.filter(h => h[0]==='next').map(h => h[1]);
+
+  const html = buildHtml(cwStr, nwStr, wGroups, nGroups, currH, nextH);
+
+  // 미리보기
+  document.getElementById('preview-pane').innerHTML = html;
+  // 코드
+  document.getElementById('html-output').value = html;
+}
+
+// ── 복사
+function copyHtml() {
+  const ta = document.getElementById('html-output');
+  ta.select();
+  navigator.clipboard.writeText(ta.value).then(() => showToast('복사됐습니다!'));
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+</script>
+</body>
+</html>
