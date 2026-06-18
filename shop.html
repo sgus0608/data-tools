@@ -1019,8 +1019,10 @@
             }
 
             // 3. 유효 코드만 필터
-            const filtered = allEntries.filter(e => validCodes.has(e.code));
-            const skipped  = new Set(allEntries.filter(e => !validCodes.has(e.code)).map(e=>e.code));
+            const filtered   = allEntries.filter(e => validCodes.has(e.code));
+            const skipped    = new Set(allEntries.filter(e => !validCodes.has(e.code)).map(e=>e.code));
+            const foundCodes = new Set(filtered.map(e => e.code));
+            const noImage    = [...validCodes].filter(c => !foundCodes.has(c));
 
             if (!filtered.length) {
                 showAlert('alert-image','error','엑셀 상품코드와 매칭되는 이미지가 없습니다.');
@@ -1052,7 +1054,8 @@
             }
 
             let sub = `처리된 이미지: ${filtered.length}개 (상품코드 ${validCodes.size}개 기준)`;
-            if (skipped.size) sub += `\n제외된 코드 (엑셀 미등록): ${[...skipped].join(', ')}`;
+            if (noImage.length) sub += `\n⚠ 이미지 없는 상품코드 (${noImage.length}개): ${noImage.join(', ')}`;
+            if (skipped.size)   sub += `\n제외된 코드 (엑셀 미등록): ${[...skipped].join(', ')}`;
 
             setProgress(filtered.length, filtered.length, 'img ZIP 압축 중...');
             const imgZipBlob  = await imgZip.generateAsync({ type:'blob', compression:'DEFLATE', compressionOptions:{ level:6 } });
@@ -1072,7 +1075,9 @@
             document.getElementById('result-image').classList.add('show');
             document.getElementById('result-image').scrollIntoView({ behavior:'smooth' });
 
-            if (skipped.size) showAlert('alert-image','warn', `엑셀에 없어 제외된 코드 (${skipped.size}개):\n${[...skipped].join(', ')}`);
+            if (noImage.length) showAlert('alert-image','warn',
+                `이미지를 찾지 못한 상품코드 (${noImage.length}개):\n${noImage.join(', ')}`);
+            else if (skipped.size) showAlert('alert-image','warn', `엑셀에 없어 제외된 코드 (${skipped.size}개):\n${[...skipped].join(', ')}`);
 
         } catch(err) {
             const msg = err?.message || err?.toString() || JSON.stringify(err) || '알 수 없는 오류';
