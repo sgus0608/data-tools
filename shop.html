@@ -1000,8 +1000,13 @@
             // 2. 모든 ZIP에서 이미지 수집
             const allEntries = []; // { code, filename, blob, type:'thumb'|'spec' }
             for (const zipFile of FILES['img_zips']) {
-                const zipBuf = await zipFile.arrayBuffer();
-                const zip    = await JSZip.loadAsync(zipBuf);
+                const zipBuf = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload  = e => resolve(e.target.result);
+                    reader.onerror = reject;
+                    reader.readAsArrayBuffer(zipFile);
+                });
+                const zip = await JSZip.loadAsync(zipBuf);
                 zip.forEach((relPath, entry) => {
                     if (entry.dir) return;
                     const parts = relPath.replace(/\\/g,'/').split('/');
