@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>헬스장 한달 출석체크</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Pretendard, Arial, sans-serif;
+      background: #111;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .card {
+      width: 420px;
+      background: white;
+      border-radius: 24px;
+      padding: 28px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+    }
+
+    h1 {
+      text-align: center;
+      margin: 0;
+      font-size: 28px;
+    }
+
+    .title {
+      text-align: center;
+      font-size: 44px;
+      font-weight: 900;
+      color: #ff5a00;
+      margin: 18px 0;
+    }
+
+    .status {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .box {
+      flex: 1;
+      border: 2px solid #eee;
+      border-radius: 16px;
+      padding: 18px;
+      text-align: center;
+    }
+
+    .box span {
+      color: #ff5a00;
+      font-size: 36px;
+      font-weight: 900;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin: 20px 0;
+    }
+
+    .day {
+      height: 48px;
+      border-radius: 50%;
+      border: 2px solid #ddd;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      font-weight: 700;
+      background: #fff;
+    }
+
+    .day.checked {
+      background: #ff5a00;
+      color: white;
+      border-color: #ff5a00;
+    }
+
+    .progress-wrap {
+      height: 18px;
+      background: #eee;
+      border-radius: 20px;
+      overflow: hidden;
+      margin-top: 18px;
+    }
+
+    .progress {
+      height: 100%;
+      width: 0%;
+      background: #ff5a00;
+      transition: 0.3s;
+    }
+
+    .percent {
+      margin-top: 16px;
+      font-size: 28px;
+      font-weight: 900;
+      color: #ff5a00;
+    }
+
+    .message {
+      margin-top: 12px;
+      font-weight: 700;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <h1>헬스장 한달 도전!</h1>
+    <div class="title">30일 출석 체크</div>
+
+    <div class="status">
+      <div class="box">
+        오늘은<br />
+        <span id="currentDay">2</span>일차
+      </div>
+      <div class="box">
+        총 출석<br />
+        <span id="count">2</span>번
+      </div>
+    </div>
+
+    <div class="grid" id="days"></div>
+
+    <div class="progress-wrap">
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <div class="percent" id="percent">6.7%</div>
+    <div class="message">좋아! 지금 페이스면 충분히 성공할 수 있어!</div>
+  </div>
+
+  <script>
+    const totalDays = 30;
+    let checkedDays = JSON.parse(localStorage.getItem("gymCheck")) || [1, 2];
+
+    const daysEl = document.getElementById("days");
+    const countEl = document.getElementById("count");
+    const percentEl = document.getElementById("percent");
+    const progressEl = document.getElementById("progress");
+
+    function render() {
+      daysEl.innerHTML = "";
+
+      for (let i = 1; i <= totalDays; i++) {
+        const day = document.createElement("div");
+        day.className = "day";
+        day.textContent = i;
+
+        if (checkedDays.includes(i)) {
+          day.classList.add("checked");
+          day.textContent = "✓";
+        }
+
+        day.onclick = () => {
+          if (checkedDays.includes(i)) {
+            checkedDays = checkedDays.filter(d => d !== i);
+          } else {
+            checkedDays.push(i);
+          }
+
+          localStorage.setItem("gymCheck", JSON.stringify(checkedDays));
+          render();
+        };
+
+        daysEl.appendChild(day);
+      }
+
+      const count = checkedDays.length;
+      const percent = ((count / totalDays) * 100).toFixed(1);
+
+      countEl.textContent = count;
+      percentEl.textContent = percent + "%";
+      progressEl.style.width = percent + "%";
+    }
+
+    render();
+  </script>
+
+</body>
+</html>
