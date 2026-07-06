@@ -369,6 +369,10 @@
                     <label>배송비</label>
                     <input type="number" id="delivery-fee" value="990">
                 </div>
+                <div class="field" style="grid-column:1/-1;">
+                    <label>제외 키워드 (쉼표 구분) — 행에 이 단어가 포함되면 등록에서 제외</label>
+                    <input type="text" id="exclude-keywords" value="개인결재,개인결제">
+                </div>
             </div>
             <br>
             <label class="check-row">
@@ -797,6 +801,8 @@
             const seller   = document.getElementById('seller-id').value || 'samsung';
             const deli     = Number(document.getElementById('delivery-fee').value) || 990;
             const checkDup = document.getElementById('check-dup').checked;
+            const excludeKeywords = document.getElementById('exclude-keywords').value
+                .split(',').map(k => k.trim()).filter(Boolean);
 
             // 운영데이터
             const op = await loadOperateData(['op_pc','op_tv','op_living']);
@@ -839,6 +845,12 @@
                 const row  = reqData[i];
                 const code = String(row[codeIdx]??'').trim();
                 if (!code) continue;
+
+                const hitKeyword = excludeKeywords.find(k => row.some(c => String(c).includes(k)));
+                if (hitKeyword) {
+                    warnings.push(`⚠ 제외 키워드 "${hitKeyword}" 포함으로 제외됨: ${code}`);
+                    continue;
+                }
 
                 if (checkDup && op.codes.has(code)) {
                     warnings.push(`⚠ 중복 상품코드 (운영데이터 존재, 제외됨): ${code}`);
