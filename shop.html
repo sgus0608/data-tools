@@ -298,7 +298,7 @@
 <header>
     <div class="logo-dot"></div>
     <div class="logo-text">ETNERS <span>SHOP</span> Tool</div>
-    <div class="header-badge">v1.2</div>
+    <div class="header-badge">v1.3</div>
 </header>
 
 <div class="container">
@@ -497,7 +497,8 @@
                 • spec : 너비 기준 비율 축소 (높이 자동)<br>
                 • 결과 ZIP은 <b>폴더 없이 파일만</b> 담깁니다 — SHOP 업로드는 압축 루트에서만 파일을 찾습니다<br>
                 • 모든 출력 이미지는 <b>jpg로 변환</b>되고 파일명 확장자도 .jpg로 통일됩니다<br>
-                • 엑셀에 없는 상품코드의 이미지는 결과 ZIP에서 제외됩니다.
+                • 엑셀에 없는 상품코드의 이미지는 결과 ZIP에서 제외됩니다<br>
+                • 엑셀이 goods_insert_info 양식(큰이미지/다른이미지 컬럼 포함)이면 <b>실제 있는 이미지 파일명만 기재한 엑셀 수정본</b>도 함께 다운로드됩니다 — 없는 이미지는 빈칸 처리되어 업로드 실패가 안 납니다.
             </div>
         </div>
 
@@ -521,6 +522,7 @@
             <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
                 <button class="btn-download" id="dl-img">⬇️ img ZIP 다운로드</button>
                 <button class="btn-download" id="dl-spec">⬇️ spec ZIP 다운로드</button>
+                <button class="btn-download" id="dl-fixed-excel" style="display:none;">⬇️ 수정된 Excel 다운로드</button>
             </div>
         </div>
     </div>
@@ -1135,6 +1137,49 @@
             if (noImage.length) sub += `\n⚠ 이미지 없는 상품코드 (${noImage.length}개): ${noImage.join(', ')}`;
             if (skipped.size)   sub += `\n제외된 코드 (엑셀 미등록): ${[...skipped].join(', ')}`;
 
+            // 5. 엑셀 수정본 생성 — 실제 존재하는 이미지 파일명만 기재 (없으면 빈칸)
+            //    엑셀에 큰이미지/다른이미지 컬럼이 있는 경우(goods_insert_info 39컬럼 양식)만 동작
+            const dlFixedBtn = document.getElementById('dl-fixed-excel');
+            dlFixedBtn.style.display = 'none';
+            const bigIdx   = exMap['큰이미지']   ?? null;
+            const midIdx   = exMap['중간이미지'] ?? null;
+            const smallIdx = exMap['작은이미지'] ?? null;
+            const etcIdx   = exMap['다른이미지'] ?? null;
+            let fixedExcel = null;
+            if (bigIdx !== null && etcIdx !== null) {
+                // 처리된 thumb 이미지들을 코드별로 정리 (출력 파일명 .jpg 기준)
+                const codeImgs = new Map();
+                for (const e of filtered) {
+                    if (e.type !== 'thumb') continue;
+                    const outName = e.filename.replace(/\.(png|jpe?g)$/i, '.jpg');
+                    const mm = e.filename.match(/_(img\d*)\./i);
+                    if (!codeImgs.has(e.code)) codeImgs.set(e.code, { img1: null, etc: [] });
+                    if (mm && /^img1$/i.test(mm[1])) codeImgs.get(e.code).img1 = outName;
+                    else codeImgs.get(e.code).etc.push(outName);
+                }
+                for (const v of codeImgs.values()) v.etc.sort();
+
+                let clearedEtc = 0, clearedBig = 0;
+                fixedExcel = excelData.map(r => [...r]);
+                for (let i = exHi + 1; i < fixedExcel.length; i++) {
+                    const row  = fixedExcel[i];
+                    const code = String(row[codeColIdx] ?? '').trim();
+                    if (!code) continue;
+                    const found = codeImgs.get(code);
+                    const hadEtc = String(row[etcIdx] ?? '').trim() !== '';
+                    const hadBig = String(row[bigIdx] ?? '').trim() !== '';
+                    row[bigIdx] = (found && found.img1) ? found.img1 : '';
+                    row[etcIdx] = (found && found.etc.length) ? found.etc.join('\n') : '';
+                    if (!row[bigIdx] && midIdx   !== null) row[midIdx]   = '';
+                    if (!row[bigIdx] && smallIdx !== null) row[smallIdx] = '';
+                    if (hadEtc && !row[etcIdx]) clearedEtc++;
+                    if (hadBig && !row[bigIdx]) clearedBig++;
+                }
+                sub += `\n엑셀 수정본: 다른이미지 빈칸 처리 ${clearedEtc}건, 큰이미지 빈칸 처리 ${clearedBig}건`;
+            } else {
+                sub += '\n(엑셀에 큰이미지/다른이미지 컬럼이 없어 엑셀 수정본은 생성하지 않았습니다)';
+            }
+
             setProgress(filtered.length, filtered.length, 'img ZIP 압축 중...');
             const imgZipBlob  = await imgZip.generateAsync({ type:'blob', compression:'DEFLATE', compressionOptions:{ level:6 } });
             setProgress(filtered.length, filtered.length, 'spec ZIP 압축 중...');
@@ -1150,6 +1195,10 @@
             document.getElementById('result-image-sub').textContent   = sub;
             document.getElementById('dl-img').onclick  = makeDownload(imgZipBlob,  ts + 'images_img.zip');
             document.getElementById('dl-spec').onclick = makeDownload(specZipBlob, ts + 'images_spec.zip');
+            if (fixedExcel) {
+                dlFixedBtn.style.display = 'inline-flex';
+                dlFixedBtn.onclick = () => downloadXlsx(fixedExcel, ts + 'goods_insert_info_fixed.xlsx');
+            }
             document.getElementById('result-image').classList.add('show');
             document.getElementById('result-image').scrollIntoView({ behavior:'smooth' });
 
