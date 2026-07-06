@@ -256,7 +256,7 @@
         .result-card.show { display: block; animation: fadeIn .3s ease; }
         .result-icon { font-size: 40px; margin-bottom: 12px; }
         .result-title { font-size: 18px; font-weight: 900; margin-bottom: 6px; color: var(--green); }
-        .result-sub   { font-size: 12px; color: var(--text-dim); margin-bottom: 20px; line-height: 1.6; }
+        .result-sub   { font-size: 12px; color: var(--text-dim); margin-bottom: 20px; line-height: 1.6; white-space: pre-wrap; }
         .btn-download {
             display: inline-flex; align-items: center; gap: 8px;
             background: var(--green); color: #fff;
@@ -298,7 +298,7 @@
 <header>
     <div class="logo-dot"></div>
     <div class="logo-text">ETNERS <span>SHOP</span> Tool</div>
-    <div class="header-badge">v1.1</div>
+    <div class="header-badge">v1.2</div>
 </header>
 
 <div class="container">
@@ -333,6 +333,18 @@
             <div class="upload-grid" id="drop-grid-insert">
                 <!-- JS로 렌더 -->
             </div>
+            <div class="upload-grid" style="grid-template-columns:1fr;margin-top:12px;">
+                <div class="upload-item">
+                    <div class="upload-label"><span class="num-badge">6</span> 이미지 ZIP (선택) — 첨부하면 ZIP에 실제 존재하는 이미지 파일명만 엑셀에 기재됩니다</div>
+                    <div class="file-drop" id="zone-ins_zips" ondragover="onDragOver(event,this)" ondragleave="onDragLeave(this)" ondrop="onDropMulti(event,'ins_zips',this)">
+                        <input type="file" accept=".zip" multiple onchange="onFileChangeMulti(this,'ins_zips')">
+                        <div class="drop-icon">📦</div>
+                        <div class="drop-text">이미지 처리 탭에서 만든 img ZIP (여러 개 가능)</div>
+                        <div class="drop-hint">미첨부 시 모든 상품에 _img1/_img2가 기재됩니다 — 이미지가 없는 상품은 SHOP 업로드에서 실패하니 첨부를 권장</div>
+                        <div class="file-name" id="fname-ins_zips"></div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="card">
@@ -343,7 +355,7 @@
                     <input type="text" id="img-month" maxlength="6" placeholder="예: 202604">
                 </div>
                 <div class="field">
-                    <label>이미지 확장자 기본값</label>
+                    <label>이미지 확장자 기본값 (이미지 처리 탭 사용 시 jpg 고정)</label>
                     <select id="img-ext">
                         <option value="jpg">jpg</option>
                         <option value="png">png</option>
@@ -444,7 +456,7 @@
                 </div>
                 <div class="upload-item">
                     <div class="upload-label"><span class="num-badge">2</span> ZIP 파일 (이미지 폴더)<span class="req">*</span></div>
-                    <div class="file-drop" id="zone-img-zip" ondragover="onDragOver(event,this)" ondragleave="onDragLeave(this)" ondrop="onDropMulti(event,'img_zips',this)">
+                    <div class="file-drop" id="zone-img_zips" ondragover="onDragOver(event,this)" ondragleave="onDragLeave(this)" ondrop="onDropMulti(event,'img_zips',this)">
                         <input type="file" accept=".zip" multiple onchange="onFileChangeMulti(this,'img_zips')">
                         <div class="drop-icon">📦</div>
                         <div class="drop-text">ZIP 파일 여러 개 동시 선택 가능</div>
@@ -479,7 +491,9 @@
             <div style="font-size:11px;color:var(--text-mute);line-height:1.7;">
                 • img1·img2 : 비율 유지 후 흰 배경으로 정사각형 패딩 처리<br>
                 • spec : 너비 기준 비율 축소 (높이 자동)<br>
-                • 엑셀에 없는 상품코드 폴더의 이미지는 결과 ZIP에서 제외됩니다.
+                • 결과 ZIP은 <b>폴더 없이 파일만</b> 담깁니다 — SHOP 업로드는 압축 루트에서만 파일을 찾습니다<br>
+                • 모든 출력 이미지는 <b>jpg로 변환</b>되고 파일명 확장자도 .jpg로 통일됩니다<br>
+                • 엑셀에 없는 상품코드의 이미지는 결과 ZIP에서 제외됩니다.
             </div>
         </div>
 
@@ -700,6 +714,35 @@
     }
 
     // ═══════════════════════════════════════════════════
+    // 이미지 ZIP 스캔 → Map<상품코드, {img1, etc:[]}>
+    // 파일명은 이미지 처리 탭 출력 규칙(.jpg 통일)에 맞춰 정규화
+    // ═══════════════════════════════════════════════════
+    async function scanZipImages(zipFiles) {
+        const map = new Map();
+        for (const zf of zipFiles) {
+            const zip = await JSZip.loadAsync(zf);
+            zip.forEach((relPath, entry) => {
+                if (entry.dir) return;
+                const fname = relPath.replace(/\\/g,'/').split('/').pop();
+                const m = fname.match(/^(.+?)_(img\d*)\.(jpg|jpeg|png)$/i);
+                if (!m) return;
+                const code = m[1];
+                const norm = fname.replace(/\.(png|jpe?g)$/i, '.jpg');
+                if (!map.has(code)) map.set(code, { img1: null, etc: [] });
+                if (/^img1$/i.test(m[2])) map.get(code).img1 = norm;
+                else map.get(code).etc.push(norm);
+            });
+        }
+        for (const v of map.values()) v.etc.sort();
+        return map;
+    }
+
+    // 상품코드에서 파일명으로 쓸 수 없는 문자 치환 (예: HW-LS50H/KR)
+    function toFileCode(code) {
+        return code.replace(/[\/\\:*?"<>|]/g, '-');
+    }
+
+    // ═══════════════════════════════════════════════════
     // HTML 상품설명 생성
     // ═══════════════════════════════════════════════════
     function makeHtml(code, month, ext) {
@@ -761,6 +804,11 @@
             // 카테고리 맵
             const catMap = await loadCatMap(FILES['category']);
 
+            // 이미지 ZIP(선택) — 첨부 시 실제 존재하는 이미지만 엑셀에 기재
+            const imgMap = (FILES['ins_zips'] && FILES['ins_zips'].length)
+                ? await scanZipImages(FILES['ins_zips'])
+                : null;
+
             // 신규요청 읽기
             const reqData = await readFile(FILES['new_req']);
             const reqHi   = findHeaderRow(reqData);
@@ -808,12 +856,28 @@
                 const sell = sellIdx !== null ? Number(String(row[sellIdx]??'').replace(/[,\s]/g,''))||0 : 0;
                 const supp = suppIdx !== null ? Number(String(row[suppIdx]??'').replace(/[,\s]/g,''))||0 : 0;
                 const name = String(row[nameIdx]??code).trim();
-                const html = makeHtml(code, month, ext);
+
+                // 이미지 파일명 — 코드에 파일명 불가 문자가 있으면 치환된 이름 사용
+                const fileCode = toFileCode(code);
+                if (fileCode !== code) warnings.push(`⚠ 상품코드에 '/' 등 파일명 불가 문자 포함 → 이미지 파일명은 ${fileCode} 기준: ${code}`);
+
+                let imgB, imgEtc;
+                if (imgMap) {
+                    const found = imgMap.get(code) || imgMap.get(fileCode);
+                    imgB   = (found && found.img1) ? found.img1 : '';
+                    imgEtc = (found && found.etc.length) ? found.etc.join('\n') : '';
+                    if (!imgB) warnings.push(`⚠ ZIP에 큰이미지(_img1) 없음 → 이미지 없이 등록됨: ${code}`);
+                } else {
+                    imgB   = `${fileCode}_img1.${ext}`;
+                    imgEtc = `${fileCode}_img2.${ext}`;
+                }
+
+                const html = makeHtml(fileCode, month, ext);
 
                 results.push([
                     rowNum,'',seller,code,'',catCode,
                     name,code,'','Y',
-                    `${code}_img1.${ext}`,'','',`${code}_img2.${ext}`,
+                    imgB,'','',imgEtc,
                     '무제한','N','Y',
                     msr,'과세','기본',sell,supp,1,'기본정책',0,
                     '삼성전자(주)','세부 스펙 이미지 참조','제조사:삼성전자(주)',html,html,
@@ -833,6 +897,8 @@
 
             // 결과 표시
             let sub = `총 ${rowNum-1}개 상품이 포함되었습니다.`;
+            if (imgMap) sub += '\n이미지 ZIP 기준으로 실제 존재하는 파일명만 기재했습니다.';
+            else sub += '\n⚠ 이미지 ZIP 미첨부 — 모든 상품에 _img1/_img2가 기재되었습니다. 실제 이미지가 없는 상품은 SHOP 업로드에서 실패합니다.';
             if (warnings.length) sub += '\n' + warnings.join('\n');
 
             document.getElementById('result-insert-title').textContent = `${rowNum-1}건 신규상품 Excel 생성 완료!`;
@@ -946,18 +1012,17 @@
     // 다중 파일 이벤트 (ZIP 복수 선택)
     // ═══════════════════════════════════════════════════
     function onFileChangeMulti(input, key) {
-        if (input.files.length) readAndStoreZips(key, Array.from(input.files));
+        if (input.files.length) readAndStoreZips(key, Array.from(input.files), input.closest('.file-drop'));
     }
     function onDropMulti(e, key, el) {
         e.preventDefault(); el.classList.remove('over');
         const files = Array.from(e.dataTransfer.files).filter(f => f.name.endsWith('.zip'));
-        if (files.length) readAndStoreZips(key, files);
+        if (files.length) readAndStoreZips(key, files, el);
     }
-    function readAndStoreZips(key, files) {
+    function readAndStoreZips(key, files, zone) {
         FILES[key] = files; // File 객체 그대로 보관 (JSZip이 Blob/File 직접 처리)
-        const zone  = document.getElementById('zone-img-zip');
-        const fname = document.getElementById('fname-' + key);
         zone.classList.add('done');
+        const fname = document.getElementById('fname-' + key);
         fname.textContent = '✓ ' + files.map(f => f.name).join(', ');
         fname.style.display = 'block';
     }
@@ -998,7 +1063,7 @@
             if (!validCodes.size) { showAlert('alert-image','error','엑셀에서 상품코드를 찾을 수 없습니다.'); setLoading('image',false); return; }
 
             // 2. 모든 ZIP에서 이미지 수집
-            const allEntries = []; // { code, filename, blob, type:'thumb'|'spec' }
+            const allEntries = []; // { code, filename, entry, type:'thumb'|'spec' }
             for (const zipFile of FILES['img_zips']) {
                 const zip = await JSZip.loadAsync(zipFile);
                 zip.forEach((relPath, entry) => {
@@ -1006,7 +1071,6 @@
                     const parts = relPath.replace(/\\/g,'/').split('/');
                     // 구조: 폴더명(=코드)/파일명  또는 파일명만
                     const fname = parts[parts.length-1];
-                    const lower = fname.toLowerCase();
                     if (!/\.(jpg|jpeg|png)$/i.test(fname)) return;
                     // 코드 추출: 파일명에서 _img 또는 _spec 앞부분
                     const m = fname.match(/^(.+?)_(img\d*|spec)\.(jpg|jpeg|png)$/i);
@@ -1045,9 +1109,11 @@
                 const bmpBlob = entry.type === 'thumb'
                     ? await resizeThumb(blob, thumbSize, thumbQuality)
                     : await resizeSpec(blob, specWidth, specQuality);
-                // 출력 파일명: 코드/파일명 폴더 구조 유지
+                // SHOP 업로드는 압축 루트에서만 파일을 찾으므로 폴더 없이 저장.
+                // 항상 JPEG로 재인코딩되므로 파일명 확장자도 .jpg로 통일 (엑셀 기재 파일명과 일치)
+                const outName   = entry.filename.replace(/\.(png|jpe?g)$/i, '.jpg');
                 const targetZip = entry.type === 'spec' ? specZip : imgZip;
-                targetZip.file(entry.code + '/' + entry.filename, bmpBlob);
+                targetZip.file(outName, bmpBlob);
                 done++;
                 setProgress(done, filtered.length, entry.filename);
                 await new Promise(r => setTimeout(r, 0)); // UI 업데이트
@@ -1076,7 +1142,7 @@
             document.getElementById('result-image').scrollIntoView({ behavior:'smooth' });
 
             if (noImage.length) showAlert('alert-image','warn',
-                `이미지를 찾지 못한 상품코드 (${noImage.length}개):\n${noImage.join(', ')}`);
+                `이미지를 찾지 못한 상품코드 (${noImage.length}개):\n${noImage.join(', ')}\n이 상품들은 엑셀에 이미지 파일명이 기재되어 있으면 SHOP 업로드에서 실패합니다.`);
             else if (skipped.size) showAlert('alert-image','warn', `엑셀에 없어 제외된 코드 (${skipped.size}개):\n${[...skipped].join(', ')}`);
 
         } catch(err) {
