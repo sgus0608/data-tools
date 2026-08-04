@@ -330,6 +330,34 @@
       transform:translateY(-1px);
     }
 
+    .btn-gpt{
+      position:relative;
+      overflow:hidden;
+      padding:0 17px;
+      color:#1e1722;
+      border:1px solid rgba(255,255,255,.22);
+      background:linear-gradient(135deg, #f4e7c1, #d8bd82);
+      font-weight:800;
+      box-shadow:0 12px 30px rgba(216,189,130,.16);
+    }
+
+    .btn-gpt::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:linear-gradient(110deg, transparent 20%, rgba(255,255,255,.38) 48%, transparent 76%);
+      transform:translateX(-120%);
+      transition:transform .55s ease;
+    }
+
+    .btn-gpt:hover{
+      transform:translateY(-1px);
+    }
+
+    .btn-gpt:hover::before{
+      transform:translateX(120%);
+    }
+
     .spread-area{
       position:relative;
       padding:24px 26px 26px;
@@ -1036,7 +1064,7 @@
 
   <main class="shell">
     <header class="topbar">
-      <a class="brand" href="/" aria-label="DATATOOLS 홈">
+      <a class="brand" href="./" aria-label="DATATOOLS 타로 홈">
         <span class="brand-mark">D</span>
         <span>DATATOOLS</span>
       </a>
@@ -1248,7 +1276,8 @@
             </div>
 
             <div class="result-actions">
-              <button id="copyBtn" class="btn btn-secondary" type="button">결과 복사</button>
+              <button id="gptCopyBtn" class="btn btn-gpt" type="button">✦ GPT용 해석 프롬프트 복사</button>
+              <button id="copyBtn" class="btn btn-secondary" type="button">현재 결과 복사</button>
               <button id="modalBtn" class="btn btn-secondary" type="button">자세히 보기</button>
               <button id="redrawBtn" class="btn btn-primary" type="button">새 리딩 시작</button>
             </div>
@@ -1263,7 +1292,7 @@
         </div>
         <div class="history-list" id="historyList"></div>
         <p class="footer-note">
-          본 서비스는 오락과 자기 성찰을 위한 콘텐츠입니다. 중요한 재정·법률·의료 의사결정은 전문가와 상의하세요.
+          본 서비스는 오락과 자기 성찰을 위한 콘텐츠입니다. “GPT용 해석 프롬프트 복사”를 누르면 질문과 카드 정보가 클립보드에만 복사되며, 자동 전송되지는 않습니다. 중요한 재정·법률·의료 의사결정은 전문가와 상의하세요.
         </p>
       </aside>
     </section>
@@ -1329,6 +1358,7 @@
     const resetBtn = document.getElementById("resetBtn");
     const redrawBtn = document.getElementById("redrawBtn");
     const copyBtn = document.getElementById("copyBtn");
+    const gptCopyBtn = document.getElementById("gptCopyBtn");
     const modalBtn = document.getElementById("modalBtn");
     const closeModalBtn = document.getElementById("closeModalBtn");
     const clearHistoryBtn = document.getElementById("clearHistoryBtn");
@@ -1850,6 +1880,105 @@
       detailModal.setAttribute("aria-hidden", "true");
     }
 
+    function buildGptInterpretationPrompt(){
+      if(!currentCards.length || !revealed.every(Boolean)){
+        return "";
+      }
+
+      const q = questionInput.value.trim() || "지금 내게 필요한 메시지는 무엇일까요?";
+      const reading = buildDetailedReading(currentCards, q);
+
+      const cardLines = currentCards.map((card, idx)=>[
+        `${idx + 1}. ${positions[idx].label} 카드`,
+        `- 카드: ${card.name}`,
+        `- 방향: ${card.reversed ? "역방향" : "정방향"}`,
+        `- 기본 의미: ${card.reversed ? card.rev : card.up}`,
+        `- 핵심 키워드: ${card.keywords.join(", ")}`,
+        `- 카드 자체의 조언: ${card.advice}`,
+        `- 카드 자체의 경고: ${card.caution}`
+      ].join("\n")).join("\n\n");
+
+      return [
+        "당신은 타로카드의 상징과 카드 간 관계를 깊이 있게 설명하는 상담형 타로 리더입니다.",
+        "아래 질문과 과거·현재·미래 3장 스프레드를 바탕으로 한국어로 상세하게 해석해 주세요.",
+        "",
+        "[중요한 해석 원칙]",
+        "1. 카드 뜻을 각각 나열하는 데 그치지 말고, 과거 → 현재 → 미래가 어떤 원인과 흐름으로 연결되는지 설명해 주세요.",
+        "2. 정방향과 역방향이 서로 어떤 긴장이나 보완 관계를 만드는지 구체적으로 설명해 주세요.",
+        "3. 사용자의 질문에 직접 답하되, 미래나 상대방의 속마음을 확정적인 사실처럼 단언하지 말고 가능성·조건·경향으로 표현해 주세요.",
+        "4. 누구에게나 적용되는 막연한 표현을 반복하지 말고, 각 문단에서 어떤 카드 때문에 그런 해석이 나오는지 밝혀 주세요.",
+        "5. 긍정적인 가능성이 있다면 그것이 현실화되기 위한 조건을, 부정적인 흐름이 있다면 완화할 방법을 함께 설명해 주세요.",
+        "6. 공포를 조장하거나 타로에 의존하도록 유도하지 마세요.",
+        "7. 재정·의료·법률 질문이라면 전문적인 판단을 대신하지 말고 참고용 해석으로 제한해 주세요.",
+        "",
+        "[사용자 질문]",
+        q,
+        "",
+        `[질문 분야 자동 분류: ${reading.domain.label}]`,
+        "",
+        "[뽑힌 카드]",
+        cardLines,
+        "",
+        "[사이트 기본 리딩 초안]",
+        `핵심 서사: ${stripHtml(reading.overall)}`,
+        `과거 → 현재: ${reading.pastPresent}`,
+        `현재 → 미래: ${reading.presentFuture}`,
+        `질문 분야 해석: ${reading.domainText}`,
+        `현재 심리와 숨은 원인: ${reading.innerText}`,
+        "",
+        "[원하는 답변 구성]",
+        "1. 한눈에 보는 결론: 질문에 대한 핵심 답을 5~8문장",
+        "2. 카드별 심층 해석: 과거·현재·미래 각각 1개 문단",
+        "3. 과거가 현재에 미친 영향",
+        "4. 현재의 선택이 미래로 이어지는 방식",
+        "5. 세 카드의 조합에서만 읽히는 특별한 메시지",
+        "6. 현재 심리와 숨은 원인",
+        "7. 긍정적인 결과가 열리는 조건",
+        "8. 주의해야 할 행동이나 반복 패턴",
+        "9. 현실에서 실행할 수 있는 구체적인 행동 3가지",
+        "10. 스스로 답해 볼 질문 4가지",
+        "11. 마지막에 이번 리딩을 한 문장으로 요약",
+        "",
+        "답변은 충분히 자세하게 작성하되 같은 내용을 반복하지 말고, 사용자가 왜 이런 해석이 나왔는지 이해할 수 있게 논리적으로 설명해 주세요."
+      ].join("\n");
+    }
+
+    async function writeClipboardText(text){
+      try{
+        if(navigator.clipboard && window.isSecureContext){
+          await navigator.clipboard.writeText(text);
+          return;
+        }
+        throw new Error("Clipboard API unavailable");
+      }catch(error){
+        const area = document.createElement("textarea");
+        area.value = text;
+        area.setAttribute("readonly", "");
+        area.style.position = "fixed";
+        area.style.opacity = "0";
+        document.body.appendChild(area);
+        area.select();
+        const copied = document.execCommand("copy");
+        area.remove();
+        if(!copied) throw error;
+      }
+    }
+
+    async function copyGptPrompt(){
+      if(!currentCards.length || !revealed.every(Boolean)){
+        showToast("먼저 세 장의 카드를 모두 뒤집어 주세요.");
+        return;
+      }
+
+      const prompt = buildGptInterpretationPrompt();
+      try{
+        await writeClipboardText(prompt);
+        showToast("GPT용 프롬프트를 복사했습니다. ChatGPT에 붙여넣으세요.");
+      }catch(error){
+        showToast("복사하지 못했습니다. 브라우저의 클립보드 권한을 확인해 주세요.");
+      }
+    }
+
     function copyReading(){
       if(!currentCards.length || !revealed.every(Boolean)){
         showToast("먼저 세 장의 카드를 모두 뒤집어 주세요.");
@@ -1895,16 +2024,10 @@
         "※ 오락 및 자기 성찰용 결과입니다."
       ].join("\n");
 
-      navigator.clipboard.writeText(text).then(()=>{
+      writeClipboardText(text).then(()=>{
         showToast("상세 리딩 결과를 복사했습니다.");
       }).catch(()=>{
-        const area = document.createElement("textarea");
-        area.value = text;
-        document.body.appendChild(area);
-        area.select();
-        document.execCommand("copy");
-        area.remove();
-        showToast("상세 리딩 결과를 복사했습니다.");
+        showToast("복사하지 못했습니다. 브라우저의 클립보드 권한을 확인해 주세요.");
       });
     }
 
@@ -2056,6 +2179,7 @@
     drawBtn.addEventListener("click", prepareReading);
     resetBtn.addEventListener("click", resetReading);
     copyBtn.addEventListener("click", copyReading);
+    gptCopyBtn.addEventListener("click", copyGptPrompt);
     modalBtn.addEventListener("click", openDetailModal);
     redrawBtn.addEventListener("click", prepareReading);
     closeModalBtn.addEventListener("click", closeDetailModal);
