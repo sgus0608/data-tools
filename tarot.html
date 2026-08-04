@@ -830,6 +830,182 @@
       to{opacity:1;transform:translateY(0)}
     }
 
+
+    .deep-reading{
+      display:grid;
+      gap:14px;
+      margin-top:4px;
+    }
+
+    .reading-section{
+      padding:20px;
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.07);
+      background:rgba(255,255,255,.025);
+    }
+
+    .reading-section.feature{
+      position:relative;
+      overflow:hidden;
+      border-color:rgba(232,208,154,.17);
+      background:
+        radial-gradient(circle at 92% 0%, rgba(232,208,154,.08), transparent 32%),
+        rgba(255,255,255,.027);
+    }
+
+    .section-head{
+      display:flex;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-bottom:13px;
+    }
+
+    .section-number{
+      display:grid;
+      place-items:center;
+      width:30px;
+      height:30px;
+      border-radius:10px;
+      color:#241920;
+      background:linear-gradient(135deg, var(--gold), var(--gold-2));
+      font-size:11px;
+      font-weight:900;
+    }
+
+    .section-title{
+      font-size:15px;
+      font-weight:800;
+      letter-spacing:.03em;
+    }
+
+    .domain-badge{
+      margin-left:auto;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:7px 10px;
+      border-radius:999px;
+      border:1px solid rgba(232,208,154,.17);
+      background:rgba(232,208,154,.055);
+      color:var(--gold);
+      font-size:12px;
+    }
+
+    .reading-body{
+      color:#ddd3e6;
+      font-size:14px;
+      line-height:2;
+      white-space:pre-line;
+    }
+
+    .reading-body strong{
+      color:var(--text);
+    }
+
+    .timeline-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+    }
+
+    .timeline-card{
+      padding:19px;
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.07);
+      background:rgba(255,255,255,.024);
+    }
+
+    .timeline-card small{
+      display:block;
+      color:var(--gold);
+      font-weight:800;
+      letter-spacing:.1em;
+      text-transform:uppercase;
+      margin-bottom:9px;
+    }
+
+    .timeline-card h4{
+      margin:0 0 9px;
+      font-size:15px;
+    }
+
+    .timeline-card p{
+      margin:0;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.85;
+    }
+
+    .action-list{
+      list-style:none;
+      display:grid;
+      gap:10px;
+      padding:0;
+      margin:0;
+    }
+
+    .action-step{
+      display:grid;
+      grid-template-columns:32px 1fr;
+      gap:11px;
+      align-items:flex-start;
+      padding:12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.06);
+      background:rgba(255,255,255,.022);
+    }
+
+    .action-step span{
+      display:grid;
+      place-items:center;
+      width:32px;
+      height:32px;
+      border-radius:10px;
+      color:var(--gold);
+      background:rgba(232,208,154,.07);
+      border:1px solid rgba(232,208,154,.14);
+      font-size:12px;
+      font-weight:900;
+    }
+
+    .action-step p{
+      margin:0;
+      color:#ddd3e6;
+      font-size:14px;
+      line-height:1.75;
+    }
+
+    .reflection-list{
+      display:grid;
+      gap:9px;
+      margin:0;
+      padding:0;
+      list-style:none;
+    }
+
+    .reflection-list li{
+      position:relative;
+      padding-left:19px;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.75;
+    }
+
+    .reflection-list li::before{
+      content:"✦";
+      position:absolute;
+      left:0;
+      top:0;
+      color:var(--gold);
+    }
+
+    .reading-divider{
+      height:1px;
+      margin:2px 0;
+      background:linear-gradient(90deg, transparent, var(--line), transparent);
+    }
+
     @media (max-width:1100px){
       .hero{grid-template-columns:1fr}
       .app-grid{grid-template-columns:1fr}
@@ -849,7 +1025,7 @@
       .card-art{width:70px;height:70px;font-size:40px;margin:6px 0}
       .card-title{font-size:15px}
       .card-row,.card-kicker,.position-sub,.tap-hint{font-size:10px}
-      .summary-grid,.insight-grid{grid-template-columns:1fr}
+      .summary-grid,.insight-grid,.timeline-grid{grid-template-columns:1fr}
       .result-top{flex-direction:column}
       .energy{min-width:0;width:100%}
     }
@@ -879,7 +1055,7 @@
         <div class="hero-stats">
           <div class="stat"><strong>22 Cards</strong>메이저 아르카나 기반</div>
           <div class="stat"><strong>3 Card Spread</strong>과거 · 현재 · 미래</div>
-          <div class="stat"><strong>Premium Reading</strong>종합 해석 + 조언 + 경고</div>
+          <div class="stat"><strong>Premium Reading</strong>연결 해석 + 영역별 분석 + 행동 가이드</div>
           <div class="stat"><strong>Recent History</strong>최근 리딩 5개 저장</div>
         </div>
       </article>
@@ -1008,17 +1184,66 @@
 
             <div class="summary-grid" id="summaryGrid"></div>
 
-            <div class="insight-grid">
-              <article class="insight-card">
-                <small>종합 리딩</small>
-                <p id="overallText"></p>
+            <div class="deep-reading">
+              <article class="reading-section feature">
+                <div class="section-head">
+                  <span class="section-number">01</span>
+                  <span class="section-title">세 카드가 말하는 핵심 서사</span>
+                  <span class="domain-badge" id="domainBadge">✦ 종합운</span>
+                </div>
+                <div class="reading-body" id="overallText"></div>
                 <div class="chips" id="keywordChips"></div>
               </article>
 
-              <article class="insight-card">
-                <small>추가 인사이트</small>
-                <p id="adviceText" style="margin-bottom:12px;"></p>
-                <p id="cautionText"></p>
+              <div class="timeline-grid">
+                <article class="timeline-card">
+                  <small>Past → Present</small>
+                  <h4 id="pastPresentTitle">과거가 현재에 미친 영향</h4>
+                  <p id="pastPresentText"></p>
+                </article>
+                <article class="timeline-card">
+                  <small>Present → Future</small>
+                  <h4 id="presentFutureTitle">현재가 미래로 이어지는 방식</h4>
+                  <p id="presentFutureText"></p>
+                </article>
+              </div>
+
+              <div class="insight-grid">
+                <article class="insight-card">
+                  <small>질문 영역별 해석</small>
+                  <p id="domainText"></p>
+                </article>
+                <article class="insight-card">
+                  <small>현재 심리와 숨은 원인</small>
+                  <p id="innerText"></p>
+                </article>
+              </div>
+
+              <div class="insight-grid">
+                <article class="insight-card">
+                  <small>가장 중요한 조언</small>
+                  <p id="adviceText"></p>
+                </article>
+                <article class="insight-card">
+                  <small>주의해야 할 흐름</small>
+                  <p id="cautionText"></p>
+                </article>
+              </div>
+
+              <article class="reading-section">
+                <div class="section-head">
+                  <span class="section-number">02</span>
+                  <span class="section-title">현실에서 적용할 3단계 행동 가이드</span>
+                </div>
+                <ol class="action-list" id="actionList"></ol>
+              </article>
+
+              <article class="reading-section">
+                <div class="section-head">
+                  <span class="section-number">03</span>
+                  <span class="section-title">리딩을 내 상황에 연결하는 질문</span>
+                </div>
+                <ul class="reflection-list" id="reflectionList"></ul>
               </article>
             </div>
 
@@ -1049,7 +1274,7 @@
       <div class="modal-top">
         <div>
           <div class="mini-title">Detailed Reading</div>
-          <h3>세부 해석 보기</h3>
+          <h3>전체 상세 리딩</h3>
         </div>
         <button class="close-btn" id="closeModalBtn" aria-label="닫기">✕</button>
       </div>
@@ -1115,6 +1340,13 @@
     const overallText = document.getElementById("overallText");
     const adviceText = document.getElementById("adviceText");
     const cautionText = document.getElementById("cautionText");
+    const domainBadge = document.getElementById("domainBadge");
+    const pastPresentText = document.getElementById("pastPresentText");
+    const presentFutureText = document.getElementById("presentFutureText");
+    const domainText = document.getElementById("domainText");
+    const innerText = document.getElementById("innerText");
+    const actionList = document.getElementById("actionList");
+    const reflectionList = document.getElementById("reflectionList");
     const keywordChips = document.getElementById("keywordChips");
     const energyFill = document.getElementById("energyFill");
     const energyLabel = document.getElementById("energyLabel");
@@ -1220,6 +1452,284 @@
       return {score, label};
     }
 
+    function detectQuestionDomain(question){
+      const q = question.toLowerCase();
+      const rules = [
+        {key:"love", label:"연애·관계운", icon:"♡", words:["연애","사랑","관계","상대","썸","결혼","재회","연락","이별","남자","여자","마음"]},
+        {key:"career", label:"직장·사업운", icon:"♜", words:["회사","직장","업무","일","취업","이직","승진","프로젝트","사업","개발","합격","면접"]},
+        {key:"money", label:"금전·투자운", icon:"◎", words:["돈","금전","재정","투자","주식","수익","매출","가격","매수","매도","부동산"]},
+        {key:"decision", label:"선택·결정운", icon:"⚖", words:["할까","해야","선택","결정","시작","가능할까","괜찮을까","맞을까"]},
+        {key:"self", label:"마음·성장운", icon:"☾", words:["마음","불안","행복","나 자신","성장","회복","고민","생각","감정"]}
+      ];
+      return rules.find(rule => rule.words.some(word => q.includes(word)))
+        || {key:"general", label:"종합운", icon:"✦", words:[]};
+    }
+
+    function cardFamily(card){
+      const groups = {
+        action:["바보","마법사","전차","힘"],
+        intuition:["여사제","은둔자","달","매달린 사람"],
+        relationship:["여황제","연인","교황"],
+        structure:["황제","정의","절제"],
+        transformation:["운명의 수레바퀴","죽음","탑","심판"],
+        desire:["악마"],
+        hope:["별","태양"],
+        completion:["세계"]
+      };
+      return Object.entries(groups).find(([,names]) => names.includes(card.name))?.[0] || "general";
+    }
+
+    function directionWord(card){
+      return card.reversed ? "에너지가 안쪽으로 막히거나 왜곡된 상태" : "에너지가 비교적 자연스럽게 발현되는 상태";
+    }
+
+    function pairSpecialReading(first, second){
+      const names = [first.name, second.name];
+      const has = name => names.includes(name);
+
+      if((has("탑") || has("죽음")) && (has("별") || has("태양") || has("세계"))){
+        return "큰 정리나 충격 뒤에 회복과 완성의 가능성이 붙어 있습니다. 지금의 변화는 단순한 손실이라기보다 더 맞는 상태로 재편되는 과정으로 읽힙니다.";
+      }
+      if((has("악마") || has("달")) && (has("정의") || has("힘") || has("절제"))){
+        return "불안·집착·혼란을 현실적인 기준과 자기 통제로 다뤄야 하는 조합입니다. 감정이 강해도 확인 가능한 사실을 붙잡으면 흐름을 되돌릴 수 있습니다.";
+      }
+      if(has("연인") && (has("교황") || has("황제") || has("정의"))){
+        return "감정만의 문제가 아니라 약속, 책임, 관계의 기준을 정해야 하는 조합입니다. 서로의 의도와 관계의 형태를 명확히 할수록 결과가 안정됩니다.";
+      }
+      if((has("마법사") || has("전차")) && (has("태양") || has("세계"))){
+        return "실행력이 실제 성과로 이어지기 좋은 조합입니다. 다만 카드가 역방향이라면 능력 부족보다 집중력 분산이나 마무리 부족이 변수입니다.";
+      }
+      if((has("은둔자") || has("매달린 사람")) && (has("전차") || has("마법사"))){
+        return "오래 생각하고 멈춰 있던 흐름이 행동으로 전환되는 조합입니다. 충분히 고민했다면 이제는 작은 실행으로 답을 확인할 때입니다.";
+      }
+      if(has("운명의 수레바퀴")){
+        return "예상하지 못한 변수와 전환점이 개입하는 조합입니다. 계획을 고집하기보다 새로 열린 선택지를 빠르게 읽는 태도가 중요합니다.";
+      }
+      if(has("여사제") && has("달")){
+        return "아직 드러나지 않은 감정이나 정보가 많습니다. 직감은 중요하지만 추측과 사실을 반드시 구분해야 합니다.";
+      }
+      return "";
+    }
+
+    function buildTransitionReading(first, second, fromLabel, toLabel){
+      const firstFamily = cardFamily(first);
+      const secondFamily = cardFamily(second);
+      let flow;
+
+      if(!first.reversed && !second.reversed){
+        flow = `${first.name}의 에너지가 ${second.name}으로 비교적 자연스럽게 넘어갑니다. 이전 단계에서 형성된 경험이 다음 단계의 자원으로 사용되는 흐름입니다.`;
+      } else if(first.reversed && !second.reversed){
+        flow = `${first.name}에서 나타난 막힘이나 혼란을 지나 ${second.name}의 에너지가 회복의 출구를 만들고 있습니다. 문제를 인정하고 방식을 바꾸면 흐름이 빠르게 정리될 수 있습니다.`;
+      } else if(!first.reversed && second.reversed){
+        flow = `${first.name}에서 얻은 힘이 ${second.name} 단계에서 충분히 활용되지 못하고 있습니다. 능력이나 기회가 없는 것보다 현재의 망설임, 과도한 기대, 소통 부족이 장애가 될 가능성이 큽니다.`;
+      } else {
+        flow = `${first.name}과 ${second.name}이 모두 역방향이라 해결되지 않은 패턴이 다음 단계까지 이어지고 있습니다. 같은 방식으로 밀어붙이기보다 기준과 감정을 다시 정리해야 합니다.`;
+      }
+
+      if(firstFamily === secondFamily){
+        flow += " 두 카드가 같은 성격의 에너지를 반복하므로 이 주제가 일시적인 문제가 아니라 이번 질문의 핵심 축이라는 뜻이 강합니다.";
+      } else {
+        flow += ` ${firstFamily === "intuition" ? "내면의 판단" : "이전의 방식"}에서 ${secondFamily === "action" ? "실제 행동" : secondFamily === "structure" ? "현실적인 기준" : secondFamily === "transformation" ? "큰 변화" : "새로운 태도"}로 전환해야 흐름이 열립니다.`;
+      }
+
+      const special = pairSpecialReading(first, second);
+      return `${fromLabel}에서 ${toLabel}로 넘어가는 흐름을 보면, ${flow}${special ? " " + special : ""}`;
+    }
+
+    function buildDomainReading(cards, domain){
+      const [past, present, future] = cards;
+      const futureMeaning = future.reversed ? future.rev : future.up;
+      const presentFamily = cardFamily(present);
+      const futureFamily = cardFamily(future);
+      const reversedCount = cards.filter(card => card.reversed).length;
+
+      const intro = {
+        love:`이 질문을 관계의 관점에서 보면 현재 핵심은 ‘감정의 크기’보다 ‘서로가 같은 방향을 보고 있는지’입니다. ${present.name}은 지금 관계에서 가장 먼저 확인해야 할 태도를 보여주고, ${future.name}은 그 태도를 유지했을 때의 다음 장면을 암시합니다.`,
+        career:`직장·사업의 관점에서는 역량 자체보다 우선순위와 실행 방식이 결과를 좌우합니다. ${present.name}은 현재 업무에서 가장 크게 작동하는 변수이고, ${future.name}은 조직·성과·기회의 흐름이 어디로 움직일지 보여줍니다.`,
+        money:`금전·투자의 관점에서는 기대 수익보다 위험 관리와 판단 기준을 먼저 봐야 합니다. ${present.name}은 현재 판단을 흔드는 요소를, ${future.name}은 같은 방식이 이어졌을 때의 가능성을 나타냅니다.`,
+        decision:`선택의 관점에서 세 카드는 단순히 ‘된다/안 된다’보다 어떤 조건에서 결과가 달라지는지를 말합니다. ${present.name}이 요구하는 태도를 충족할 때 ${future.name}의 긍정적인 면이 더 강하게 나타납니다.`,
+        self:`마음과 성장의 관점에서는 외부 상황보다 내 안의 반복 패턴이 중요합니다. ${past.name}에서 시작된 감정이 ${present.name}의 형태로 나타나며, 이를 이해하면 ${future.name}이 말하는 다음 단계로 이동할 수 있습니다.`,
+        general:`종합적으로 보면 현재 상황은 하나의 사건보다 과거의 습관, 지금의 태도, 앞으로의 선택이 연결된 문제입니다. 특히 ${present.name}을 어떻게 다루느냐가 ${future.name}의 방향을 결정합니다.`
+      }[domain.key];
+
+      let condition;
+      if(!future.reversed && reversedCount <= 1){
+        condition = `미래 카드인 ${future.name}이 정방향이므로 결과 가능성은 비교적 열려 있습니다. 다만 자동으로 좋은 결과가 온다는 뜻은 아니며, 현재 카드가 요구하는 행동을 실제로 옮길 때 그 가능성이 현실화됩니다.`;
+      } else if(future.reversed){
+        condition = `미래의 ${future.name}이 역방향이기 때문에 결과가 완전히 닫혔다기보다 지연·오해·준비 부족이 개입할 수 있습니다. 지금과 같은 방식만 반복하면 “가능성은 있으나 체감되는 성과는 늦는” 흐름이 되기 쉽습니다.`;
+      } else {
+        condition = `세 장 중 역방향이 여러 장이라 외부 결과보다 내부 정비가 우선입니다. 결정을 늦추라는 뜻이 아니라, 기준 없이 움직이지 말라는 경고에 가깝습니다.`;
+      }
+
+      let focus = "";
+      if(presentFamily === "action") focus = "현재는 생각보다 행동의 질과 속도가 중요합니다. 작은 실행을 통해 상황의 반응을 확인하는 방식이 좋습니다.";
+      else if(presentFamily === "intuition") focus = "지금은 드러난 말보다 숨은 의도와 내 감정의 반응을 살펴야 합니다. 단, 추측은 확인 과정을 거쳐야 합니다.";
+      else if(presentFamily === "structure") focus = "현실적인 기준, 역할, 일정, 책임을 명확하게 정리하는 것이 우선입니다.";
+      else if(presentFamily === "transformation") focus = "지금은 기존 방식을 유지하는 것보다 무엇을 끝내고 무엇을 바꿀지 결정해야 합니다.";
+      else if(presentFamily === "relationship") focus = "혼자 판단하기보다 상대방 또는 관계자의 의도를 확인하고 기대 수준을 맞춰야 합니다.";
+      else focus = `현재 ${present.name}이 말하는 핵심을 구체적인 행동 기준으로 바꾸는 것이 필요합니다.`;
+
+      return `${intro}\n\n${condition} ${focus}\n\n미래 카드의 직접적인 메시지는 다음과 같습니다. “${futureMeaning}”`;
+    }
+
+    function buildInnerReading(cards){
+      const [past, present] = cards;
+      const reversedCount = cards.filter(card => card.reversed).length;
+      let state = `${present.name}이 현재 자리에 나온 것은 지금 가장 크게 작동하는 심리적 주제가 ‘${present.keywords.join(", ")}’와 연결되어 있다는 뜻입니다. ${directionWord(present)}입니다.`;
+
+      if(present.reversed){
+        state += ` 겉으로는 괜찮아 보이거나 이미 결정을 내린 것처럼 보여도, 실제로는 ${present.name}의 긍정적인 힘을 충분히 쓰지 못하고 있을 수 있습니다.`;
+      } else {
+        state += ` 지금 느끼는 감정이나 의지가 상황을 움직일 실제 동력으로 사용될 가능성이 큽니다.`;
+      }
+
+      if(past.reversed){
+        state += ` 과거의 ${past.name}이 역방향이므로 이전에 정리되지 않은 경험, 후회, 불신이 현재 판단에 섞여 있을 수 있습니다. 현재 문제만 보지 말고 “예전 경험 때문에 더 크게 반응하는 부분”이 있는지도 확인해야 합니다.`;
+      } else {
+        state += ` 과거의 ${past.name}이 정방향이라 이전 경험에서 얻은 자원과 교훈이 분명히 있습니다. 그것을 현재 상황에 맞게 다시 사용하는 것이 도움이 됩니다.`;
+      }
+
+      if(reversedCount >= 2){
+        state += " 역방향이 두 장 이상이라는 것은 운이 나쁘다는 의미보다 에너지가 외부보다 내부에서 충돌하고 있다는 뜻입니다. 결론보다 감정과 기준을 먼저 정리하면 카드의 부정적인 면이 완화됩니다.";
+      }
+
+      return state;
+    }
+
+    function buildAdvice(cards, domain){
+      const names = cards.map(c=>c.name);
+      const present = cards[1];
+      const future = cards[2];
+
+      let base;
+      if(names.includes("절제")) base = "속도를 조금 낮추고 사람·일정·감정의 균형을 맞추세요. 단기간의 강한 추진보다 지속할 수 있는 방식이 더 좋은 결과를 만듭니다.";
+      else if(names.includes("정의")) base = "느낌만으로 결정하지 말고 확인 가능한 사실, 조건, 책임을 문장으로 정리하세요. 모호한 부분을 명확히 하는 행동이 가장 먼저입니다.";
+      else if(names.includes("마법사")) base = "이미 가진 자원 중 지금 바로 쓸 수 있는 것을 하나 선택해 실행하세요. 더 준비하는 것보다 작은 결과를 만드는 편이 흐름을 강하게 만듭니다.";
+      else if(names.includes("별")) base = "지친 상태에서 큰 결론을 내리지 말고 회복할 시간을 확보하세요. 희망을 막연한 기대가 아니라 구체적인 다음 행동으로 바꾸는 것이 중요합니다.";
+      else if(names.includes("은둔자")) base = "타인의 말에서 잠시 거리를 두고 내 기준을 다시 세우세요. 다만 혼자 고민만 이어가기보다 정리한 뒤 필요한 사람에게 확인해야 합니다.";
+      else if(names.includes("죽음") || names.includes("탑")) base = "이미 끝났거나 작동하지 않는 방식을 인정하고 정리하세요. 유지 비용이 큰 것을 놓아야 새로운 선택지가 실제로 들어옵니다.";
+      else base = `현재 카드인 ${present.name}의 조언을 행동으로 바꾸고, 미래의 ${future.name}이 요구하는 조건을 미리 준비하세요.`;
+
+      const domainTail = {
+        love:" 관계에서는 상대의 마음을 추측하기보다 내가 원하는 관계와 받아들일 수 없는 기준을 먼저 명확히 하세요.",
+        career:" 업무에서는 목표·담당자·기한·완료 기준을 분명히 하면 불확실성이 크게 줄어듭니다.",
+        money:" 금전 문제는 기대 수익보다 손실 한도와 철회 기준을 먼저 정해야 합니다.",
+        decision:" 선택지를 두 개 이하로 줄이고, 각각의 최악의 결과를 감당할 수 있는지 비교해 보세요.",
+        self:" 감정을 없애려 하지 말고 감정이 무엇을 보호하려는지 이해한 뒤 행동을 선택하세요.",
+        general:" 지금 할 수 있는 가장 작은 확인 행동 하나를 정하고, 그 결과를 보고 다음 판단을 이어가세요."
+      }[domain.key];
+
+      return base + domainTail;
+    }
+
+    function buildCaution(cards, domain){
+      const names = cards.map(c=>c.name);
+      const reversedCount = cards.filter(c=>c.reversed).length;
+      let base;
+
+      if(names.includes("악마")) base = "익숙함, 집착, 손해를 인정하기 싫은 마음이 판단을 붙잡을 수 있습니다. 계속 생각나는 것과 실제로 필요한 것을 구분하세요.";
+      else if(names.includes("탑")) base = "이미 보이는 문제 신호를 무시하지 마세요. 작은 균열을 지금 다루는 것이 나중의 큰 충격을 막습니다.";
+      else if(names.includes("달")) base = "확인되지 않은 추측, 상대의 마음을 단정하는 행동, 불안에 근거한 결정을 주의해야 합니다.";
+      else if(names.includes("죽음")) base = "끝난 흐름을 되살리기 위해 과도한 시간과 감정을 쓰지 마세요. 정리도 하나의 적극적인 선택입니다.";
+      else if(reversedCount >= 2) base = "같은 문제를 머릿속에서 반복하면서 실제 확인은 미루는 패턴을 조심하세요. 생각의 양이 판단의 정확성을 보장하지는 않습니다.";
+      else base = "좋은 카드가 있더라도 결과를 확정된 미래처럼 받아들이지 마세요. 카드가 말하는 조건을 충족하지 않으면 흐름은 달라질 수 있습니다.";
+
+      const domainTail = {
+        love:" 특히 연락 횟수나 짧은 반응 하나만으로 상대의 전체 마음을 판단하지 않는 것이 좋습니다.",
+        career:" 업무에서는 구두 합의만 믿지 말고 요청 내용과 완료 기준을 기록으로 남기세요.",
+        money:" 손실을 만회하려는 급한 판단이나 계획 없는 추가 투입을 경계하세요.",
+        decision:" 결정을 계속 미루는 것도 하나의 결정이며, 그동안 잃는 기회비용을 함께 계산해야 합니다.",
+        self:" 감정이 강한 날에는 영구적인 결론보다 하루 뒤에도 유지되는 생각인지 확인하세요.",
+        general:" 불편한 사실을 피하기 위해 희망적인 해석만 선택하지 않도록 주의하세요."
+      }[domain.key];
+
+      return base + domainTail;
+    }
+
+    function buildActionPlan(cards, domain){
+      const [past, present, future] = cards;
+      const domainStep = {
+        love:"상대에게 확인하고 싶은 내용을 한 문장으로 정리하고, 추궁이 아닌 질문의 형태로 표현하세요.",
+        career:"목표, 담당자, 마감일, 완료 조건을 한 화면이나 문서에 정리하세요.",
+        money:"투입 가능 금액, 최대 손실, 중단 기준을 먼저 숫자로 적으세요.",
+        decision:"선택지별 장점보다 감당해야 할 비용과 최악의 경우를 먼저 비교하세요.",
+        self:"현재 감정, 그 감정이 생긴 사건, 내가 원하는 것을 각각 한 줄로 분리해서 적으세요.",
+        general:"현재 상황에서 확인되지 않은 사실 한 가지를 골라 직접 확인하세요."
+      }[domain.key];
+
+      const presentStep = present.reversed
+        ? `${present.name}의 역방향을 풀기 위해 ‘하지 말아야 할 행동’을 하나 정하세요. 예를 들어 미루기, 과잉 연락, 충동 결정처럼 반복되는 행동을 24시간 멈추고 반응을 관찰하세요.`
+        : `${present.name}의 정방향 에너지를 사용해 오늘 안에 완료할 수 있는 작은 행동 하나를 실행하세요. 카드의 핵심 키워드는 ${present.keywords.join(", ")}입니다.`;
+
+      const futureStep = future.reversed
+        ? `${future.name}이 역방향이므로 결과를 서두르지 말고 중간 점검일을 정하세요. 첫 행동 후 상황이 나아졌는지, 같은 문제가 반복되는지 확인한 뒤 다음 단계를 결정하세요.`
+        : `${future.name}의 긍정적인 가능성을 현실화하기 위해 필요한 조건을 미리 준비하세요. “${future.advice}”를 실제 일정이나 대화 계획으로 바꾸는 것이 좋습니다.`;
+
+      return [domainStep, presentStep, futureStep];
+    }
+
+    function buildReflectionQuestions(cards, domain){
+      const [past, present, future] = cards;
+      const q1 = `과거의 ${past.name}이 보여주는 경험 때문에 지금 상황을 실제보다 더 두렵거나 낙관적으로 보고 있지는 않은가?`;
+      const q2 = `현재의 ${present.name}이 요구하는 태도 중 내가 가장 피하고 있는 행동은 무엇인가?`;
+      const q3 = future.reversed
+        ? `미래의 ${future.name}이 지연될 수 있는 가장 현실적인 원인은 무엇이며, 그 원인을 지금 줄일 수 있는가?`
+        : `미래의 ${future.name}이 말하는 가능성을 얻기 위해 반드시 충족해야 할 조건은 무엇인가?`;
+
+      const domainQ = {
+        love:"나는 상대의 실제 행동을 보고 있는가, 아니면 내가 원하는 의미를 붙이고 있는가?",
+        career:"내가 생각하는 완료와 조직 또는 상대가 기대하는 완료가 같은가?",
+        money:"수익 가능성만큼 손실 가능성도 구체적으로 계산했는가?",
+        decision:"어느 선택이 더 편한지가 아니라 어느 결과를 더 책임질 수 있는가?",
+        self:"지금 해결하고 싶은 것은 상황인가, 불편한 감정 자체인가?",
+        general:"이 질문에서 내가 이미 알고 있지만 인정하기 싫은 사실은 무엇인가?"
+      }[domain.key];
+
+      return [q1, q2, q3, domainQ];
+    }
+
+    function buildDetailedReading(cards, question){
+      const domain = detectQuestionDomain(question);
+      const [past, present, future] = cards;
+      const reversedCount = cards.filter(c=>c.reversed).length;
+      const bright = cards.filter(c=>["태양","세계","별","여황제","마법사","전차"].includes(c.name)).length;
+      const intense = cards.filter(c=>["탑","악마","달","죽음"].includes(c.name)).length;
+
+      let tone;
+      if(reversedCount === 0){
+        tone = "세 카드가 모두 정방향이라 에너지의 연결이 비교적 분명합니다. 현재의 선택이 결과로 이어질 가능성이 높은 편이지만, 좋은 카드도 행동하지 않으면 잠재력으로만 남습니다.";
+      } else if(reversedCount === 1){
+        tone = "한 장의 역방향이 전체 흐름에서 병목 역할을 합니다. 모든 것이 막힌 것이 아니라 그 지점을 정확히 다루면 나머지 카드의 긍정적인 힘을 살릴 수 있습니다.";
+      } else if(reversedCount === 2){
+        tone = "두 장의 역방향은 외부 운보다 내부 갈등, 준비 부족, 소통 문제의 영향이 크다는 뜻입니다. 결론을 재촉하기보다 막힌 원인을 하나씩 풀어야 합니다.";
+      } else {
+        tone = "세 장이 모두 역방향이면 같은 방식으로 밀어붙일수록 혼란이 커질 수 있습니다. 실패의 예고가 아니라 멈춰서 질문 자체와 접근 방식을 다시 세우라는 강한 신호입니다.";
+      }
+
+      if(bright >= 2) tone += " 동시에 회복·성취 계열 카드가 강해, 조건만 정리되면 체감되는 변화가 빠르게 나타날 수 있습니다.";
+      if(intense >= 2) tone += " 변화와 불확실성 계열 카드도 강하므로 익숙한 상태를 유지하려는 태도가 오히려 부담이 될 수 있습니다.";
+
+      const overall =
+        `이 배열의 핵심은 <strong>${past.name} → ${present.name} → ${future.name}</strong>으로 이어지는 변화입니다.\n\n` +
+        `과거의 ${past.name}은 ${past.reversed ? "충분히 정리되지 않은 경험이나 왜곡된 기대" : "이미 얻은 경험과 자원"}가 현재까지 영향을 주고 있음을 보여줍니다. ` +
+        `현재의 ${present.name}은 지금 결과를 좌우하는 핵심이 <strong>${present.keywords.join(", ")}</strong>임을 말합니다. ` +
+        `미래의 ${future.name}은 ${future.reversed ? "가능성이 사라졌다기보다 지연되거나 다른 형태로 나타날 수 있음" : "현재 흐름을 올바르게 다룰 경우 해당 카드의 긍정적인 결과가 열릴 수 있음"}을 암시합니다.\n\n` +
+        tone;
+
+      return {
+        domain,
+        overall,
+        pastPresent:buildTransitionReading(past, present, "과거", "현재"),
+        presentFuture:buildTransitionReading(present, future, "현재", "미래"),
+        domainText:buildDomainReading(cards, domain),
+        innerText:buildInnerReading(cards),
+        advice:buildAdvice(cards, domain),
+        caution:buildCaution(cards, domain),
+        actions:buildActionPlan(cards, domain),
+        reflections:buildReflectionQuestions(cards, domain)
+      };
+    }
+
     function renderReading(){
       const q = questionInput.value.trim() || "지금 내게 필요한 메시지는 무엇일까요?";
       questionSummary.innerHTML = `<strong>질문</strong> · ${escapeHtml(q)}`;
@@ -1233,13 +1743,22 @@
         </article>
       `).join("");
 
-      const combinedKeywords = [...new Set(currentCards.flatMap(card=>card.keywords))].slice(0, 8);
+      const combinedKeywords = [...new Set(currentCards.flatMap(card=>card.keywords))].slice(0, 9);
       keywordChips.innerHTML = combinedKeywords.map(k=>`<span class="chip">✦ ${escapeHtml(k)}</span>`).join("");
 
-      const overall = buildOverallReading(currentCards);
-      overallText.textContent = overall.overall;
-      adviceText.textContent = `조언 · ${overall.advice}`;
-      cautionText.textContent = `주의 · ${overall.caution}`;
+      const reading = buildDetailedReading(currentCards, q);
+      domainBadge.textContent = `${reading.domain.icon} ${reading.domain.label}`;
+      overallText.innerHTML = reading.overall;
+      pastPresentText.textContent = reading.pastPresent;
+      presentFutureText.textContent = reading.presentFuture;
+      domainText.textContent = reading.domainText;
+      innerText.textContent = reading.innerText;
+      adviceText.textContent = reading.advice;
+      cautionText.textContent = reading.caution;
+      actionList.innerHTML = reading.actions.map((item, idx)=>`
+        <li class="action-step"><span>${idx+1}</span><p>${escapeHtml(item)}</p></li>
+      `).join("");
+      reflectionList.innerHTML = reading.reflections.map(item=>`<li>${escapeHtml(item)}</li>`).join("");
 
       const energy = readingEnergy(currentCards);
       energyFill.style.width = energy.score + "%";
@@ -1247,62 +1766,30 @@
 
       readingResult.classList.add("show");
       readingResult.scrollIntoView({behavior:"smooth", block:"nearest"});
-      statusText.textContent = "리딩이 완성되었습니다.";
+      statusText.textContent = "상세 상세 리딩이 완성되었습니다.";
 
       saveHistory({
         question:q,
         date:new Date().toLocaleString("ko-KR"),
         cards:currentCards.map(c=>({name:c.name,reversed:c.reversed})),
-        overall:overall.overall,
-        advice:overall.advice,
-        caution:overall.caution
+        domain:reading.domain.label,
+        overall:stripHtml(reading.overall),
+        pastPresent:reading.pastPresent,
+        presentFuture:reading.presentFuture,
+        domainText:reading.domainText,
+        innerText:reading.innerText,
+        advice:reading.advice,
+        caution:reading.caution,
+        actions:reading.actions,
+        reflections:reading.reflections
       });
       renderHistory();
     }
 
-    function buildOverallReading(cards){
-      const [past, present, future] = cards;
-      const reversedCount = cards.filter(c=>c.reversed).length;
-      const bright = cards.filter(c=>["태양","세계","별","여황제","마법사","전차"].includes(c.name)).length;
-      const intense = cards.filter(c=>["탑","악마","달","죽음"].includes(c.name)).length;
-
-      let tone = "";
-      if(reversedCount === 0){
-        tone = "전체적으로 흐름이 막히기보다 자연스럽게 연결되는 배열입니다.";
-      } else if(reversedCount === 1){
-        tone = "기본적인 흐름은 이어지지만 한 지점에서 오해나 망설임을 정리해야 합니다.";
-      } else {
-        tone = "지금은 결과를 서두르기보다 방향과 감정을 먼저 조정해야 하는 배열입니다.";
-      }
-
-      if(bright >= 2) tone += " 희망과 회복의 신호도 함께 강하게 보입니다.";
-      if(intense >= 2) tone += " 다만 변화의 강도가 크기 때문에 지나간 패턴을 그대로 가져가면 충돌이 커질 수 있습니다.";
-
-      const overall = `${past.name}이 보여주는 과거의 흔적이 현재 ${present.name}의 과제를 만들고 있으며, 앞으로는 ${future.name}의 에너지로 이어질 가능성이 큽니다. ${tone}`;
-
-      const advice = buildAdvice(cards);
-      const caution = buildCaution(cards);
-      return {overall, advice, caution};
-    }
-
-    function buildAdvice(cards){
-      const names = cards.map(c=>c.name);
-      if(names.includes("절제")) return "조금 느려 보여도 조율과 균형을 우선하세요. 과하지 않게 이어가는 꾸준함이 가장 강한 해답이 됩니다.";
-      if(names.includes("정의")) return "감정보다 사실을 먼저 정리해 보세요. 명확한 기준이 생기면 선택도 훨씬 편해집니다.";
-      if(names.includes("마법사")) return "이미 가진 능력을 믿고 실행으로 옮기세요. 생각이 길어질수록 기세가 약해집니다.";
-      if(names.includes("별")) return "조급함보다 회복과 믿음을 선택하세요. 지금은 희망을 복구하는 것 자체가 진전입니다.";
-      if(names.includes("은둔자")) return "잠깐의 혼자만의 시간이 큰 통찰을 줍니다. 외부 소음을 줄이고 내면을 정리해 보세요.";
-      return "한 번에 모든 답을 얻으려 하지 말고, 지금 당장 움직일 수 있는 가장 작은 행동부터 시작해 보세요.";
-    }
-
-    function buildCaution(cards){
-      const names = cards.map(c=>c.name);
-      if(names.includes("악마")) return "집착과 반복 습관을 경계하세요. 익숙한 패턴이 편안해 보여도 실제로는 발목을 잡을 수 있습니다.";
-      if(names.includes("탑")) return "무너지는 신호를 외면하지 마세요. 작은 균열을 빨리 인정할수록 충격은 줄어듭니다.";
-      if(names.includes("달")) return "불안 때문에 사실을 왜곡하지 마세요. 확인되지 않은 상상은 판단력을 흐리게 합니다.";
-      if(cards.filter(c=>c.reversed).length >= 2) return "마음과 상황이 엇갈릴 수 있으니 결과를 급히 단정하지 마세요. 지금은 정비가 우선입니다.";
-      if(names.includes("죽음")) return "끝난 흐름을 억지로 이어가려 하지 마세요. 놓아야 다음 단계가 열립니다.";
-      return "좋은 흐름이 보여도 디테일을 놓치면 성과가 흐려질 수 있습니다. 특히 말보다 실행을 점검하세요.";
+    function stripHtml(value){
+      const temp = document.createElement("div");
+      temp.innerHTML = value;
+      return temp.textContent || temp.innerText || "";
     }
 
     function openDetailModal(){
@@ -1311,8 +1798,19 @@
         return;
       }
 
+      const q = questionInput.value.trim() || "지금 내게 필요한 메시지는 무엇일까요?";
+      const reading = buildDetailedReading(currentCards, q);
+
       modalBody.innerHTML = `
         <div style="display:grid;gap:14px;">
+          <article class="reading-section feature">
+            <div class="section-head">
+              <span class="section-number">01</span>
+              <span class="section-title">${escapeHtml(reading.domain.label)} 핵심 해석</span>
+            </div>
+            <div class="reading-body">${reading.overall}</div>
+          </article>
+
           ${currentCards.map((card, idx)=>`
             <article class="summary-card">
               <small>${positions[idx].label}</small>
@@ -1324,10 +1822,22 @@
               <div class="chips">
                 ${card.keywords.map(k=>`<span class="chip">${escapeHtml(k)}</span>`).join("")}
               </div>
-              <p style="margin-top:12px;color:#ddd3e6;">조언 · ${escapeHtml(card.advice)}</p>
-              <p style="margin-top:8px;color:#ddd3e6;">주의 · ${escapeHtml(card.caution)}</p>
+              <p style="margin-top:12px;color:#ddd3e6;">카드 조언 · ${escapeHtml(card.advice)}</p>
+              <p style="margin-top:8px;color:#ddd3e6;">카드 경고 · ${escapeHtml(card.caution)}</p>
             </article>
           `).join("")}
+
+          <article class="reading-section">
+            <div class="section-head"><span class="section-number">02</span><span class="section-title">카드 연결 해석</span></div>
+            <div class="reading-body">${escapeHtml(reading.pastPresent)}\n\n${escapeHtml(reading.presentFuture)}</div>
+          </article>
+
+          <article class="reading-section">
+            <div class="section-head"><span class="section-number">03</span><span class="section-title">행동 가이드</span></div>
+            <ol class="action-list">
+              ${reading.actions.map((item, idx)=>`<li class="action-step"><span>${idx+1}</span><p>${escapeHtml(item)}</p></li>`).join("")}
+            </ol>
+          </article>
         </div>
       `;
 
@@ -1347,21 +1857,46 @@
       }
 
       const q = questionInput.value.trim() || "지금 내게 필요한 메시지는 무엇일까요?";
+      const reading = buildDetailedReading(currentCards, q);
       const text = [
-        "[DATATOOLS 달빛 타로 Premium]",
+        "[DATATOOLS 달빛 타로 Premium · 상세 리딩]",
         `질문: ${q}`,
+        `리딩 영역: ${reading.domain.label}`,
         "",
         ...currentCards.map((card, idx)=>`${positions[idx].label}: ${card.name} (${card.reversed ? "역방향" : "정방향"})\n- ${card.reversed ? card.rev : card.up}`),
         "",
-        `종합 리딩: ${overallText.textContent}`,
-        `조언: ${adviceText.textContent.replace("조언 · ","")}`,
-        `주의: ${cautionText.textContent.replace("주의 · ","")}`,
+        "[핵심 서사]",
+        stripHtml(reading.overall),
+        "",
+        "[과거 → 현재]",
+        reading.pastPresent,
+        "",
+        "[현재 → 미래]",
+        reading.presentFuture,
+        "",
+        "[질문 영역별 해석]",
+        reading.domainText,
+        "",
+        "[현재 심리와 숨은 원인]",
+        reading.innerText,
+        "",
+        "[조언]",
+        reading.advice,
+        "",
+        "[주의]",
+        reading.caution,
+        "",
+        "[행동 가이드]",
+        ...reading.actions.map((item, idx)=>`${idx+1}. ${item}`),
+        "",
+        "[스스로 확인할 질문]",
+        ...reading.reflections.map(item=>`- ${item}`),
         "",
         "※ 오락 및 자기 성찰용 결과입니다."
       ].join("\n");
 
       navigator.clipboard.writeText(text).then(()=>{
-        showToast("리딩 결과를 복사했습니다.");
+        showToast("상세 리딩 결과를 복사했습니다.");
       }).catch(()=>{
         const area = document.createElement("textarea");
         area.value = text;
@@ -1369,7 +1904,7 @@
         area.select();
         document.execCommand("copy");
         area.remove();
-        showToast("리딩 결과를 복사했습니다.");
+        showToast("상세 리딩 결과를 복사했습니다.");
       });
     }
 
@@ -1400,15 +1935,28 @@
       })[s]);
     }
 
+    let memoryHistory = [];
+
     function saveHistory(entry){
       const key = "datatools_tarot_history";
-      const list = JSON.parse(localStorage.getItem(key) || "[]");
-      list.unshift(entry);
-      localStorage.setItem(key, JSON.stringify(list.slice(0,5)));
+      try{
+        const list = JSON.parse(localStorage.getItem(key) || "[]");
+        list.unshift(entry);
+        const limited = list.slice(0,5);
+        localStorage.setItem(key, JSON.stringify(limited));
+        memoryHistory = limited;
+      }catch(error){
+        memoryHistory.unshift(entry);
+        memoryHistory = memoryHistory.slice(0,5);
+      }
     }
 
     function loadHistory(){
-      return JSON.parse(localStorage.getItem("datatools_tarot_history") || "[]");
+      try{
+        return JSON.parse(localStorage.getItem("datatools_tarot_history") || "[]");
+      }catch(error){
+        return memoryHistory;
+      }
     }
 
     function renderHistory(){
@@ -1437,17 +1985,57 @@
     }
 
     function showHistoryDetail(item){
+      const actions = Array.isArray(item.actions) ? item.actions : [];
+      const reflections = Array.isArray(item.reflections) ? item.reflections : [];
       modalBody.innerHTML = `
-        <div class="summary-card">
-          <small>저장된 리딩</small>
-          <h3 style="margin-bottom:8px;">${escapeHtml(item.question)}</h3>
-          <p style="margin:0 0 12px;color:var(--soft);">${escapeHtml(item.date)}</p>
-          <div class="chips" style="margin-bottom:14px;">
-            ${item.cards.map(card=>`<span class="chip">${escapeHtml(card.name)} ${card.reversed ? "역방향" : "정방향"}</span>`).join("")}
-          </div>
-          <p style="margin-bottom:12px;color:#ddd3e6;">종합 리딩 · ${escapeHtml(item.overall)}</p>
-          <p style="margin-bottom:10px;color:#ddd3e6;">조언 · ${escapeHtml(item.advice)}</p>
-          <p style="color:#ddd3e6;">주의 · ${escapeHtml(item.caution)}</p>
+        <div style="display:grid;gap:14px;">
+          <article class="summary-card">
+            <small>${escapeHtml(item.domain || "저장된 리딩")}</small>
+            <h3 style="margin-bottom:8px;">${escapeHtml(item.question)}</h3>
+            <p style="margin:0 0 12px;color:var(--soft);">${escapeHtml(item.date)}</p>
+            <div class="chips" style="margin-bottom:14px;">
+              ${item.cards.map(card=>`<span class="chip">${escapeHtml(card.name)} ${card.reversed ? "역방향" : "정방향"}</span>`).join("")}
+            </div>
+            <p style="margin-bottom:12px;color:#ddd3e6;white-space:pre-line;">종합 리딩 · ${escapeHtml(item.overall || "")}</p>
+          </article>
+
+          ${item.pastPresent ? `
+            <article class="reading-section">
+              <div class="section-head"><span class="section-number">01</span><span class="section-title">카드 연결 해석</span></div>
+              <div class="reading-body">${escapeHtml(item.pastPresent)}\n\n${escapeHtml(item.presentFuture || "")}</div>
+            </article>
+          ` : ""}
+
+          ${item.domainText ? `
+            <article class="reading-section">
+              <div class="section-head"><span class="section-number">02</span><span class="section-title">질문 영역별 해석</span></div>
+              <div class="reading-body">${escapeHtml(item.domainText)}\n\n${escapeHtml(item.innerText || "")}</div>
+            </article>
+          ` : ""}
+
+          <article class="summary-card">
+            <small>조언과 주의</small>
+            <p style="margin-bottom:10px;color:#ddd3e6;">조언 · ${escapeHtml(item.advice || "")}</p>
+            <p style="color:#ddd3e6;">주의 · ${escapeHtml(item.caution || "")}</p>
+          </article>
+
+          ${actions.length ? `
+            <article class="reading-section">
+              <div class="section-head"><span class="section-number">03</span><span class="section-title">행동 가이드</span></div>
+              <ol class="action-list">
+                ${actions.map((action, idx)=>`<li class="action-step"><span>${idx+1}</span><p>${escapeHtml(action)}</p></li>`).join("")}
+              </ol>
+            </article>
+          ` : ""}
+
+          ${reflections.length ? `
+            <article class="reading-section">
+              <div class="section-head"><span class="section-number">04</span><span class="section-title">스스로 확인할 질문</span></div>
+              <ul class="reflection-list">
+                ${reflections.map(item=>`<li>${escapeHtml(item)}</li>`).join("")}
+              </ul>
+            </article>
+          ` : ""}
         </div>
       `;
       detailModal.classList.add("show");
@@ -1455,7 +2043,12 @@
     }
 
     function clearHistory(){
-      localStorage.removeItem("datatools_tarot_history");
+      try{
+        localStorage.removeItem("datatools_tarot_history");
+      }catch(error){
+        // 브라우저 저장소가 제한된 환경에서는 메모리 기록만 초기화합니다.
+      }
+      memoryHistory = [];
       renderHistory();
       showToast("최근 리딩 기록을 삭제했습니다.");
     }
